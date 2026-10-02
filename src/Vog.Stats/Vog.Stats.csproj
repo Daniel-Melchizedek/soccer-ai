@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Vog.Stats</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vog.Contracts\Vog.Contracts.csproj" />
+    <ProjectReference Include="..\Vog.Domain\Vog.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

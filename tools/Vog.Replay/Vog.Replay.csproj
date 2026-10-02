@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Vog.Replay</RootNamespace>
+    <AssemblyName>vog-replay</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Vog.Contracts\Vog.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Vog.Domain\Vog.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Vog.Simulator\Vog.Simulator.csproj" />
+    <ProjectReference Include="..\..\src\Vog.Stats\Vog.Stats.csproj" />
+  </ItemGroup>
+
+</Project>

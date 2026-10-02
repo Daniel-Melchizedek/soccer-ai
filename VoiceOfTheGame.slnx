@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Vog.Contracts/Vog.Contracts.csproj" />
+    <Project Path="src/Vog.Domain/Vog.Domain.csproj" />
+    <Project Path="src/Vog.Simulator/Vog.Simulator.csproj" />
+    <Project Path="src/Vog.Stats/Vog.Stats.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Vog.Replay/Vog.Replay.csproj" />
+  </Folder>
+</Solution>

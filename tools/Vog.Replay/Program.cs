@@ -1,0 +1,45 @@
+using Vog.Replay;
+
+var command = args.Length > 0 ? args[0] : "help";
+var options = Options.Parse(args.Skip(1).ToArray());
+
+switch (command)
+{
+    case "datacard":
+        return DataCard.Run(options.Int("seeds", 20), options.ULong("seed", 1));
+
+    default:
+        Console.WriteLine("vog-replay: offline tools for the Voice of the Game pipeline");
+        Console.WriteLine();
+        Console.WriteLine("  datacard [--seeds 20] [--seed 1]   realism report over many seeded matches");
+        return command == "help" ? 0 : 1;
+}
+
+internal sealed class Options(Dictionary<string, string> values)
+{
+    public static Options Parse(string[] args)
+    {
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (!args[i].StartsWith("--", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var key = args[i][2..];
+            var hasValue = i + 1 < args.Length && !args[i + 1].StartsWith("--", StringComparison.Ordinal);
+            values[key] = hasValue ? args[++i] : "true";
+        }
+
+        return new Options(values);
+    }
+
+    public string String(string key, string fallback) => values.TryGetValue(key, out var v) ? v : fallback;
+
+    public int Int(string key, int fallback) => values.TryGetValue(key, out var v) && int.TryParse(v, out var n) ? n : fallback;
+
+    public ulong ULong(string key, ulong fallback) => values.TryGetValue(key, out var v) && ulong.TryParse(v, out var n) ? n : fallback;
+
+    public bool Flag(string key) => values.ContainsKey(key);
+}
