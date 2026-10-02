@@ -21,8 +21,9 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | (d) Schedule | `Vog.Booth` | The **Booth Producer**: decides what is spoken when on a serial audio channel, using priorities, preemption, staleness rules, location obligations and dead-ball colour |
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices signed in with Microsoft Entra ID (the resource has no keys), 24 kHz PCM streamed as it arrives, captions timed to the spoken words (WebVTT, at most 2 lines of 37 characters), and cuts at word boundaries when the booth interrupts |
+| (e) Render, live | `Vog.Gateway` | Plays the golden match in real time and broadcasts every channel that has listeners over SignalR: each line as the booth starts it, its audio streamed as it is synthesized, then word-timed captions. The listener page plays the audio through an AudioWorklet, with procedural earcons panned to where the action is. |
 
-Still to come, per the milestones: the audio path to the browser, voice Q&A (Voice Live), the Blazor listener app and overlay, the Foundry hosted-agent workflows, and Fabric.
+Still to come, per the milestones: voice Q&A (Voice Live), the Blazor listener app and overlay, the Foundry hosted-agent workflows, and Fabric.
 
 ### Sample: audio-description channel, golden match
 
@@ -60,7 +61,7 @@ The simulator passes its **synthetic data card** over 20 seeds. Means: 2.5 goals
 Prerequisite: the [.NET 10 SDK](https://dotnet.microsoft.com/download) (pinned in `global.json`).
 
 ```bash
-dotnet test                                   # 63 tests: determinism, physics, models, phrase banks, booth properties, golden match, captions
+dotnet test                                   # 66 tests: determinism, physics, models, phrase banks, booth properties, golden match, captions, credentials
 
 dotnet run --project tools/Vog.Replay -- commentary                    # full match, English audio description
 dotnet run --project tools/Vog.Replay -- commentary --lang es-ES       # Spanish (draft phrase bank)
@@ -86,6 +87,24 @@ dotnet run --project tools/Vog.Replay -- speak --from 78 --minutes 2   # out/aud
 
 The AI resource is pay-per-use, with no idle cost. `.env.local` holds endpoints only: there are no keys to hold.
 
+### Live: listen in a browser
+
+```powershell
+dotnet run --project src/Vog.Gateway                                  # http://localhost:5080
+dotnet run --project tools/Vog.Replay -- listen --seconds 30          # smoke test: joins a channel like a browser
+```
+
+Open http://localhost:5080, pick a language and mode, and select **Start listening**. Headphones help: earcons are panned to where the action is, as seen from the main stand. Without `.env.local` the gateway still runs, with captions only. Speech is synthesized only for channels that have listeners, so cost scales with channels in use, not with listeners.
+
+Measured on a developer network, from a cold start, English audio description:
+
+| Measure | p50 | p95 |
+|---|---|---|
+| Booth start → first audio chunk sent (server) | 0.59 s | 0.72 s |
+| Line received → playback started (browser) | 0.81 s | 1.39 s |
+
+A line that could only start well behind the booth's schedule is skipped, so a hold-up doesn't leave the channel permanently behind: after 1.5 s for most lines, after 4 s for urgent ones, and never for goals and red cards. Skips are counted at `/stats`. The next step is to synthesize lines while they wait in the booth's queue rather than when they start, which S1 measured at a median of 36 ms added.
+
 ## Repository layout
 
 ```
@@ -99,7 +118,8 @@ src/
   Vog.Booth          Booth Producer and coverage metrics
   Vog.Pipeline       offline composition and the golden match
   Vog.Voice          Azure neural TTS, captions, WAV, word-boundary cuts
-tools/Vog.Replay     CLI: commentary playback, coverage report, data card, speech rendering
+  Vog.Gateway        live broadcast over SignalR + listener page (AudioWorklet player, earcons)
+tools/Vog.Replay     CLI: commentary playback, coverage report, data card, speech rendering, gateway smoke test
 infra/               Bicep + Azure CLI provisioning (provision.ps1, teardown.ps1)
 tests/               xUnit v3 test projects
 ```

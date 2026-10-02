@@ -56,7 +56,7 @@ internal static class Speak
         }
 
         // 2. Speak each utterance and lay it on the timeline.
-        using var tts = new NeuralSynthesizer(new Uri(endpoint), AzureCredentials.Create(), VoiceCatalog.For(lang, mode));
+        using var tts = new NeuralSynthesizer(new Uri(endpoint), AzureCredentials.Shared, VoiceCatalog.For(lang, mode));
         await tts.SpeakAsync(lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? "Listo." : "Ready."); // warm-up, not measured
 
         var origin = played[0].StartPtsMs;

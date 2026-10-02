@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voice of the Game: listener</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <main>
+    <h1>Voice of the Game</h1>
+    <p class="note">Live AI commentary of a synthetic match in a fictional league.</p>
+
+    <section aria-labelledby="options-heading" class="options">
+      <h2 id="options-heading" class="visually-hidden">Listening options</h2>
+      <label for="lang">Language</label>
+      <select id="lang">
+        <option value="en-GB">English (UK)</option>
+        <option value="es-ES">Español (draft)</option>
+      </select>
+      <label for="mode">Mode</label>
+      <select id="mode">
+        <option value="AudioDescription">Audio description</option>
+        <option value="Commentary">Commentary</option>
+        <option value="Calm">Calm</option>
+      </select>
+      <button id="start" type="button">Start listening</button>
+    </section>
+
+    <!-- UI status only: commentary itself is spoken by the app, so it isn't pushed to screen readers. -->
+    <output id="status" class="status" aria-live="polite">Not listening.</output>
+
+    <section aria-labelledby="match-heading">
+      <h2 id="match-heading" class="visually-hidden">Match</h2>
+      <p id="score" class="score">Not started</p>
+    </section>
+
+    <section aria-labelledby="captions-heading">
+      <h2 id="captions-heading">Captions</h2>
+      <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
+      <div id="caption" class="caption" aria-hidden="true"></div>
+      <h2 id="history-heading">Recent commentary</h2>
+      <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off"></ol>
+    </section>
+
+    <details>
+      <summary>Latency</summary>
+      <p id="latency">No audio yet.</p>
+    </details>
+  </main>
+
+  <script src="lib/signalr/signalr.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

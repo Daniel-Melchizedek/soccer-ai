@@ -1,0 +1,106 @@
+:root {
+  color-scheme: light dark;
+  --fg: #111;
+  --bg: #fff;
+  --muted: #555;
+  --accent: #0b5cad;
+  --caption-bg: #000;
+  --caption-fg: #fff;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #f2f2f2;
+    --bg: #121212;
+    --muted: #bbb;
+    --accent: #7fb7ff;
+  }
+}
+
+body {
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+}
+
+main {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.note,
+details {
+  color: var(--muted);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+select,
+button {
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+}
+
+button {
+  min-height: 3rem;
+  min-width: 12rem;
+  border: 2px solid var(--accent);
+  border-radius: 0.5rem;
+  background: var(--accent);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.status {
+  display: block;
+  margin: 1rem 0;
+}
+
+.score {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.caption {
+  min-height: 3.4em;
+  padding: 0.5rem 0.75rem;
+  background: var(--caption-bg);
+  color: var(--caption-fg);
+  font-size: 1.5rem;
+  white-space: pre-line;
+}
+
+.history {
+  max-height: 16rem;
+  overflow-y: auto;
+  padding-left: 1.5rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}

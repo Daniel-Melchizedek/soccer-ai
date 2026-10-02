@@ -4,6 +4,7 @@
     <Project Path="src/Vog.Contracts/Vog.Contracts.csproj" />
     <Project Path="src/Vog.Describe/Vog.Describe.csproj" />
     <Project Path="src/Vog.Domain/Vog.Domain.csproj" />
+    <Project Path="src/Vog.Gateway/Vog.Gateway.csproj" />
     <Project Path="src/Vog.Pipeline/Vog.Pipeline.csproj" />
     <Project Path="src/Vog.Simulator/Vog.Simulator.csproj" />
     <Project Path="src/Vog.Stats/Vog.Stats.csproj" />

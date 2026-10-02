@@ -14,6 +14,9 @@ switch (command)
     case "speak":
         return await Speak.RunAsync(options);
 
+    case "listen":
+        return await Listen.RunAsync(options);
+
     default:
         Console.WriteLine("vog-replay: offline tools for the Voice of the Game pipeline");
         Console.WriteLine();
@@ -23,6 +26,8 @@ switch (command)
         Console.WriteLine("                                                    play a match as commentary + coverage report");
         Console.WriteLine("  speak      [--lang en-GB] [--mode ad] [--from MIN] [--minutes 2] [--out out/audio]");
         Console.WriteLine("                                                    render a window with Azure neural TTS: WAV + WebVTT");
+        Console.WriteLine("  listen     [--url http://localhost:5080] [--lang en-GB] [--mode AudioDescription] [--seconds 30]");
+        Console.WriteLine("                                                    smoke-test a running gateway as a browser listener would");
         return command == "help" ? 0 : 1;
 }
 

@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\src\Vog.Voice\Vog.Voice.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+  </ItemGroup>
+
 </Project>
