@@ -944,6 +944,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 
 ## 13. Infrastructure and delivery
 
+- **Decision (2 Oct 2026): provision with the Azure CLI + Bicep**, via `infra/provision.ps1` and `infra/teardown.ps1`, rather than azd. Built so far: the Foundry (AI Services) account with key auth disabled, the Foundry project, and the developer's data-plane roles in Sweden Central. The azd notes below are kept only for the hosted-agent tooling (`azd ai agent`), if needed later.
 - **azd** (`azure.yaml`):
   - Container Apps services: `gateway`, `web`, `mcp`, `simulator`, `companion`.
   - Three hosted agents via the `azure.ai.agents` azd extension: `azd ai agent init` creates each host's `agent.yaml` manifest. Verify how `azure.yaml` references them.

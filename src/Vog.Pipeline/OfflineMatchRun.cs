@@ -48,7 +48,7 @@ public static class OfflineMatchRun
         var booths = channels.Select(spec =>
         {
             var realizer = new Realizer(PhraseBankLoader.Get(spec.Lang));
-            var booth = new BoothProducer(spec.Id, ProducerPolicy.For(spec.Mode), realizer.Realize, reminders.BallLocation, reminders.ScoreTime);
+            var booth = new BoothProducer(spec.Id, ProducerPolicy.For(spec.Mode, spec.Lang), realizer.Realize, reminders.BallLocation, reminders.ScoreTime);
             return (Spec: spec, Booth: booth, Meter: new CoverageMeter());
         }).ToList();
 

@@ -92,7 +92,7 @@ internal static class Commentary
         return failures == 0 ? 0 : 1;
     }
 
-    private static ListenerMode ParseMode(string mode) => mode.ToLowerInvariant() switch
+    internal static ListenerMode ParseMode(string mode) => mode.ToLowerInvariant() switch
     {
         "ad" or "audiodescription" => ListenerMode.AudioDescription,
         "commentary" => ListenerMode.Commentary,

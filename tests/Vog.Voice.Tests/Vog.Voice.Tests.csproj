@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Vog.Voice\Vog.Voice.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -7,6 +7,7 @@
     <Project Path="src/Vog.Pipeline/Vog.Pipeline.csproj" />
     <Project Path="src/Vog.Simulator/Vog.Simulator.csproj" />
     <Project Path="src/Vog.Stats/Vog.Stats.csproj" />
+    <Project Path="src/Vog.Voice/Vog.Voice.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Vog.Booth.Tests/Vog.Booth.Tests.csproj" />
@@ -14,6 +15,7 @@
     <Project Path="tests/Vog.GoldenMatch.Tests/Vog.GoldenMatch.Tests.csproj" />
     <Project Path="tests/Vog.Simulator.Tests/Vog.Simulator.Tests.csproj" />
     <Project Path="tests/Vog.Stats.Tests/Vog.Stats.Tests.csproj" />
+    <Project Path="tests/Vog.Voice.Tests/Vog.Voice.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/Vog.Replay/Vog.Replay.csproj" />

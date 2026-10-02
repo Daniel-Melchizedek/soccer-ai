@@ -15,7 +15,7 @@ phrases:
   pbp.pass.short:
     - "{player} para {receiver}, {zone}."
     - "{player} encuentra a {receiver}, {zone}."
-    - "Toca {player}, recibe {receiver}, {zone}."
+    - "{player} con {receiver}, {zone}."
   pbp.pass.long:
     - "Balón largo de {player}, controla {receiver} {zone}."
     - "{player} busca en largo a {receiver}, {zone}."
@@ -94,9 +94,9 @@ phrases:
     - "¡Final del partido! {score}."
 
   loc.ball:
-    - "Balón para {team}, {player}, {zone}."
-    - "La tiene {player}, de {team}, {zone}."
-    - "Posesión de {team}, {player}, {zone}."
+    - "{team}: {player}, {zone}."
+    - "La tiene {player}, {zone}."
+    - "Posesión {team}, {player}, {zone}."
   loc.ball.loose:
     - "Balón para {team}, {zone}."
     - "La llevan {team}, {zone}."

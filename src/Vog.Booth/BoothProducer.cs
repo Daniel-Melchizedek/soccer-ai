@@ -83,7 +83,8 @@ public sealed class BoothProducer
 
     public void Enqueue(UtteranceIntent intent, long nowMs)
     {
-        if (intent.Kind == IntentKind.GraphicReadout && !_policy.ReadGraphics)
+        if ((intent.Kind == IntentKind.GraphicReadout && !_policy.ReadGraphics)
+            || (intent.Kind is IntentKind.PbpPass or IntentKind.PbpCarry && !_policy.PassByPass))
         {
             return;
         }

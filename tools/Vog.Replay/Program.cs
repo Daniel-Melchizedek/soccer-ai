@@ -11,6 +11,9 @@ switch (command)
     case "commentary":
         return Commentary.Run(options);
 
+    case "speak":
+        return await Speak.RunAsync(options);
+
     default:
         Console.WriteLine("vog-replay: offline tools for the Voice of the Game pipeline");
         Console.WriteLine();
@@ -18,6 +21,8 @@ switch (command)
         Console.WriteLine("  commentary [--seed N] [--lang en-GB|es-ES] [--mode ad|commentary|calm|analyst|casual|kids]");
         Console.WriteLine("             [--from MIN] [--to MIN] [--minutes MIN] [--verbose] [--quiet]");
         Console.WriteLine("                                                    play a match as commentary + coverage report");
+        Console.WriteLine("  speak      [--lang en-GB] [--mode ad] [--from MIN] [--minutes 2] [--out out/audio]");
+        Console.WriteLine("                                                    render a window with Azure neural TTS: WAV + WebVTT");
         return command == "help" ? 0 : 1;
 }
 
