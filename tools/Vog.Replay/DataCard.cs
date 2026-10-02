@@ -1,3 +1,4 @@
+using Vog.Pipeline;
 using Vog.Simulator;
 using Vog.Stats;
 

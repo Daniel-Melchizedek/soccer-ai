@@ -1,0 +1,212 @@
+# Audio-description phrase bank: Spanish (Spain), describer persona.
+# STATUS: DRAFT. Transcreated from the en-GB master; must be reviewed by a native-speaking
+# football describer before it is used on air (BUILD_PLAN.md §8.3, Transcreation Studio).
+# Team names are plural ("los Rojos"), so verbs that follow {team} are plural.
+lang: es-ES
+persona: describer
+status: draft
+decimal_separator: ","
+
+phrases:
+  pbp.kickoff:
+    - "Arranca el partido. {team}, de {team.kit}, atacan hacia la portería de tu {side}."
+  pbp.second_half:
+    - "Comienza la segunda parte. {team}, de {team.kit}, atacan ahora hacia la portería de tu {side}."
+  pbp.pass.short:
+    - "{player} para {receiver}, {zone}."
+    - "{player} encuentra a {receiver}, {zone}."
+    - "Toca {player}, recibe {receiver}, {zone}."
+  pbp.pass.long:
+    - "Balón largo de {player}, controla {receiver} {zone}."
+    - "{player} busca en largo a {receiver}, {zone}."
+    - "Pelotazo adelante, la recoge {receiver} {zone}."
+  pbp.cross:
+    - "Centro de {player}, la recibe {receiver}, {zone}."
+    - "Pone el balón {player}, llega {receiver}, {zone}."
+  pbp.carry:
+    - "{player} conduce hacia delante, {zone}."
+    - "{player} avanza con el balón, {zone}."
+    - "{player} en carrera, {zone}."
+  pbp.intercepted:
+    - "Interceptado. Recuperan {team}, {player}, {zone}."
+    - "Corta {player}, balón para {team}, {zone}."
+  pbp.tackle:
+    - "¡Entrada! {player} se la roba a {victim}, {zone}."
+    - "{player} le quita el balón a {victim}, {zone}."
+  pbp.possession:
+    - "Balón suelto, lo recoge {player} para {team}, {zone}."
+    - "Recogen el rechace {team}, {player}, {zone}."
+  pbp.clearance:
+    - "Despeja {player}."
+    - "{player} la manda lejos."
+    - "Despeje de {player}."
+  pbp.shot:
+    - "¡Dispara {player} desde {distance}!"
+    - "¡{player} lo intenta desde {distance}!"
+  pbp.header:
+    - "¡Remate de cabeza de {player}!"
+    - "¡Cabezazo de {player}!"
+  pbp.goal:
+    - "¡GOL! ¡Marca {player} para {team}! {score}."
+    - "¡Dentro! ¡{player}! {score}."
+  pbp.saved:
+    - "¡Para {keeper}!"
+    - "¡Paradón de {keeper}!"
+  pbp.wide:
+    - "Se va fuera."
+    - "Desviado, fuera por poco."
+    - "No encuentra portería."
+  pbp.blocked:
+    - "¡Bloqueado!"
+    - "¡Lo tapa la defensa!"
+  pbp.foul:
+    - "Falta de {player} sobre {victim}. Tiro libre para {team}, {zone}."
+    - "Derriban a {victim}, falta de {player}. Tiro libre para {team}."
+  pbp.card.yellow:
+    - "Tarjeta amarilla para {player}."
+    - "Amonestado {player}."
+  pbp.card.second_yellow:
+    - "Segunda amarilla para {player}, expulsado. {team} se quedan con diez."
+  pbp.card.red:
+    - "¡Roja directa para {player}! {team} se quedan con diez."
+  pbp.offside:
+    - "Bandera arriba, fuera de juego de {player}. Tiro libre para {team}."
+  pbp.out.throw_in:
+    - "Fuera de banda, saque para {team}."
+    - "Saque de banda para {team}."
+  pbp.out.corner:
+    - "Córner para {team}."
+    - "Se va por la línea de fondo, córner para {team}."
+  pbp.out.goal_kick:
+    - "Saque de puerta para {team}."
+    - "Fuera, saque de puerta, {team}."
+  pbp.corner.taken:
+    - "{player} bota el córner."
+    - "{player} pone el córner al área."
+  pbp.free_kick.taken:
+    - "{player} saca la falta."
+  pbp.sub:
+    - "Cambio en {team}: entra {player} por {replaced}."
+    - "Cambio para {team}, se va {replaced}, entra {player}."
+  pbp.halftime:
+    - "Descanso. {score}."
+  pbp.fulltime:
+    - "¡Final del partido! {score}."
+
+  loc.ball:
+    - "Balón para {team}, {player}, {zone}."
+    - "La tiene {player}, de {team}, {zone}."
+    - "Posesión de {team}, {player}, {zone}."
+  loc.ball.loose:
+    - "Balón para {team}, {zone}."
+    - "La llevan {team}, {zone}."
+
+  rem.score_time:
+    - "{clock}. {score}."
+    - "{score}. {clock}."
+  rem.direction:
+    - "{team} atacan hacia la portería de tu {side}."
+
+  graphic.top_speed:
+    - "En pantalla: {player}, velocidad máxima del partido, {speed}."
+  graphic.sprint:
+    - "En pantalla: sprint de {player}, {speed}."
+  graphic.distance:
+    - "En pantalla: {player} ha recorrido {distance}."
+  graphic.shot_speed:
+    - "En pantalla: velocidad del disparo, {speed}."
+
+  scene.kit:
+    - "{team} visten de {team.kit}."
+  scene.weather.clear_evening:
+    - "Tarde despejada para este partido."
+  scene.weather.light_rain:
+    - "Cae una lluvia fina sobre el césped."
+  scene.weather.bright_sunshine:
+    - "Sol radiante, con sombra sobre medio campo."
+  scene.weather.floodlit_night:
+    - "Partido bajo los focos esta noche."
+  scene.weather.breezy:
+    - "Sopla el viento, las banderas ondean sobre las gradas."
+  scene.celebration.knee_slide:
+    - "{player} se desliza de rodillas hacia la afición."
+  scene.celebration.corner_flag_dance:
+    - "{player} baila junto al banderín de córner."
+  scene.celebration.team_huddle:
+    - "Sus compañeros se lanzan sobre {player}."
+  scene.celebration.arms_wide:
+    - "{player} corre con los brazos abiertos."
+  scene.celebration.cupped_ear:
+    - "{player} se lleva la mano a la oreja, mirando a la grada."
+  scene.celebration.jump_and_punch:
+    - "{player} salta y golpea el aire."
+  scene.body.hands_on_head:
+    - "{player}, con las dos manos en la cabeza."
+  scene.crowd.roar:
+    - "El estadio estalla."
+  scene.crowd.gasp:
+    - "Un murmullo recorre la grada."
+  scene.var.check_complete:
+    - "Revisión del VAR, y el gol sube al marcador."
+
+zones:
+  # Kept short on purpose: audio description needs clipped bursts (reviewer may refine wording).
+  defensive.left: "atrás por la izquierda"
+  defensive.centre: "atrás por el centro"
+  defensive.right: "atrás por la derecha"
+  middle.left: "izquierda de la medular"
+  middle.centre: "en la medular"
+  middle.right: "derecha de la medular"
+  attacking.left: "arriba por la izquierda"
+  attacking.centre: "arriba por el centro"
+  attacking.right: "arriba por la derecha"
+
+spots:
+  own_box: "en su propia área"
+  centre_circle: "en el círculo central"
+  edge_of_box: "en la frontal del área"
+  box: "dentro del área"
+  six_yard_box: "en el área pequeña"
+  corner_flag: "junto al banderín de córner"
+
+sides:
+  left: "izquierda"
+  right: "derecha"
+
+kits:
+  red: "rojo"
+  blue: "azul"
+  white: "blanco"
+  yellow: "amarillo"
+  green: "verde"
+  claret: "granate"
+  sky_blue: "celeste"
+  orange: "naranja"
+  black: "negro"
+  purple: "morado"
+
+# On-air team names by kit colour, where the language needs its own form.
+teams:
+  red: "los Rojos"
+  blue: "los Azules"
+  white: "los Blancos"
+  yellow: "los Amarillos"
+  green: "los Verdes"
+  claret: "los Granates"
+  sky_blue: "los Celestes"
+  orange: "los Naranjas"
+  black: "los Negros"
+  purple: "los Morados"
+
+units:
+  kmh: "{value} kilómetros por hora"
+  m: "{value} metros"
+  km: "{value} kilómetros"
+
+clock:
+  regular: "Minuto {minute}"
+  first_minute: "Primer minuto de juego"
+  added: "Minuto {minute} más {added}"
+
+score:
+  format: "{home} {homeGoals}, {away} {awayGoals}"

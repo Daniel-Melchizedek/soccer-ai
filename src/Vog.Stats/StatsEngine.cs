@@ -13,6 +13,9 @@ public sealed class StatsEngine
 {
     public const int SpeedSampleFrames = 3;
 
+    /// <summary>About 160 km/h: faster than any recorded shot, so anything above is a reset, not a kick.</summary>
+    public const double MaxBallSpeedMs = 45;
+
     /// <summary>League-average passing skill: difficulty describes the pass, not the passer.</summary>
     private const double AveragePasserSkill = 0.75;
 
@@ -283,6 +286,13 @@ public sealed class StatsEngine
         {
             if (IsComplete || frame.MatchClockMs <= e.MatchClockMs)
             {
+                return;
+            }
+
+            // A jump no football can make (the ball reset to the spot for a restart) ends the sample.
+            if (frame.Period != e.Period || _lastBall.DistanceTo(frame.Ball.Position) / 0.1 > MaxBallSpeedMs)
+            {
+                _stopped = true;
                 return;
             }
 

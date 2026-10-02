@@ -221,6 +221,7 @@ soccer-ai/
 │  ├─ Vog.Companion/                # Voice Live relay (voice and text Q&A)
 │  ├─ Vog.Gateway/                  # Event Hubs consumer, SignalR CommentaryHub, playout, REST, as-run log
 │  ├─ Vog.Web/ + Vog.Web.Client/    # Blazor: Studio (server) · Listener + Overlay (WASM); wwwroot/js/vog-audio.js
+│  ├─ Vog.Pipeline/                 # composes the HOT path (simulator → stats → describe → booth per channel); golden match
 │  └─ Vog.Evals/                    # MEAI evaluators, Foundry cloud-eval runner, Accessibility Auditor
 ├─ foundry/
 │  ├─ agents/*.agent.yaml           # prompt-agent definitions read by tools/Vog.FoundrySetup
@@ -231,8 +232,9 @@ soccer-ai/
 │  ├─ items/                        # Git-integration folders: Vog.Eventhouse, Vog.KQLDatabase, Vog.Eventstream, Vog.KQLDashboard, Vog.KQLQueryset
 │  ├─ kql/                          # .create-merge tables, update policies, materialized views, functions
 │  └─ deploy.yml                    # `fab deploy` configuration
-├─ tools/  Vog.FoundrySetup · Vog.PhraseBankStudio · Vog.Train · Vog.SeasonGen · Vog.SeedMiner
-├─ tests/  Vog.Stats.Tests · Vog.Booth.Tests · Vog.Describe.Tests · Vog.Contracts.Tests · Vog.Agents.Tests
+├─ tools/  Vog.Replay (commentary playback, coverage report, data card) · Vog.FoundrySetup · Vog.PhraseBankStudio
+│          Vog.Train · Vog.SeasonGen · Vog.SeedMiner
+├─ tests/  Vog.Simulator.Tests · Vog.Stats.Tests · Vog.Booth.Tests · Vog.Describe.Tests · Vog.Contracts.Tests · Vog.Agents.Tests
 │          Vog.GoldenMatch.Tests · Vog.A11y.Tests · Vog.Load
 ├─ infra/  main.bicep + modules/    # ported from certflow-ai + new modules
 ├─ data/   league/ · golden/ · glossaries/      # synthetic only

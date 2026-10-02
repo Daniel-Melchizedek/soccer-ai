@@ -92,7 +92,7 @@ public sealed class PlayerMotionTracker
         m.Sprints++;
         var peakKmh = Math.Round(m.SprintPeakMs * 3.6, 1);
         tags.Add(new PlayerTag(PlayerTagKind.Sprint, m.PlayerId, m.TeamId, clockMs, peakKmh));
-        if (m.SprintPeakMs > _matchTopSpeedMs && peakKmh >= 30)
+        if (m.SprintPeakMs > _matchTopSpeedMs + 0.14 && peakKmh >= 32)
         {
             _matchTopSpeedMs = m.SprintPeakMs;
             tags.Add(new PlayerTag(PlayerTagKind.TopSpeed, m.PlayerId, m.TeamId, clockMs, peakKmh));

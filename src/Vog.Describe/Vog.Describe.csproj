@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Vog.Describe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vog.Contracts\Vog.Contracts.csproj" />
+    <ProjectReference Include="..\Vog.Domain\Vog.Domain.csproj" />
+    <ProjectReference Include="..\Vog.Stats\Vog.Stats.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\Vog.PhraseBanks\**\*.yaml" LogicalName="PhraseBanks/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+</Project>

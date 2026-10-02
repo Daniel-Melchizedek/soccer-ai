@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>Vog.Pipeline</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vog.Contracts\Vog.Contracts.csproj" />
+    <ProjectReference Include="..\Vog.Domain\Vog.Domain.csproj" />
+    <ProjectReference Include="..\Vog.Simulator\Vog.Simulator.csproj" />
+    <ProjectReference Include="..\Vog.Stats\Vog.Stats.csproj" />
+    <ProjectReference Include="..\Vog.Describe\Vog.Describe.csproj" />
+    <ProjectReference Include="..\Vog.Booth\Vog.Booth.csproj" />
+  </ItemGroup>
+
+</Project>

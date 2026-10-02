@@ -246,7 +246,7 @@ public sealed partial class MatchEngine
         {
             result = ShotResult.Blocked;
         }
-        else if (_rng.Chance(xg * (0.7 + 0.35 * finishing)))
+        else if (_rng.Chance(xg * (0.75 + 0.4 * finishing)))
         {
             result = ShotResult.Goal;
         }

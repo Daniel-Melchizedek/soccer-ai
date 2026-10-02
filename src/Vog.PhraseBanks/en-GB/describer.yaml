@@ -1,0 +1,199 @@
+# Audio-description phrase bank: English (UK), describer persona.
+# Rules (from describer practice): describe action, not stats; short, clipped bursts;
+# say where the ball is; never invent detail that isn't in the slots.
+# Placeholders: {player} {receiver} {victim} {keeper} {replaced} {team} {team.kit}
+#               {zone} {side} {distance} {speed} {score} {clock}
+lang: en-GB
+persona: describer
+status: reviewed
+decimal_separator: "."
+
+phrases:
+  pbp.kickoff:
+    - "Kick-off. {team}, in {team.kit}, attack the goal on your {side}."
+  pbp.second_half:
+    - "Second half under way. {team}, in {team.kit}, now attack the goal on your {side}."
+  pbp.pass.short:
+    - "{player} to {receiver}, {zone}."
+    - "{player} finds {receiver}, {zone}."
+    - "{receiver} receives from {player}, {zone}."
+  pbp.pass.long:
+    - "Long ball from {player}, {receiver} collects {zone}."
+    - "{player} goes long to {receiver}, {zone}."
+    - "Big ball forward, {receiver} picks it up {zone}."
+  pbp.cross:
+    - "{player} crosses, {receiver} meets it, {zone}."
+    - "Ball in from {player}, {receiver} on the end of it, {zone}."
+  pbp.carry:
+    - "{player} drives forward, {zone}."
+    - "{player} carries it on, {zone}."
+    - "{player} on the move, {zone}."
+  pbp.intercepted:
+    - "Cut out. {team} win it back, {player}, {zone}."
+    - "Intercepted by {player}, {team} ball, {zone}."
+  pbp.tackle:
+    - "Tackle! {player} wins it from {victim}, {zone}."
+    - "{player} steps in, takes it off {victim}, {zone}."
+  pbp.possession:
+    - "Loose ball, {player} gathers for the {team}, {zone}."
+    - "{team} pick up the loose ball, {player}, {zone}."
+  pbp.clearance:
+    - "{player} clears it."
+    - "Cleared away by {player}."
+    - "{player} hoofs it clear."
+  pbp.shot:
+    - "{player} shoots from {distance}!"
+    - "{player} has a go from {distance}!"
+  pbp.header:
+    - "{player} heads at goal!"
+    - "Header from {player}!"
+  pbp.goal:
+    - "GOAL! {player} scores for the {team}! {score}."
+    - "It's in! {player}! {score}."
+  pbp.saved:
+    - "Saved by {keeper}!"
+    - "{keeper} gets down and saves it!"
+  pbp.wide:
+    - "Off target, wide of the goal."
+    - "Just wide."
+    - "It's off target."
+  pbp.blocked:
+    - "Blocked!"
+    - "Charged down by the defence!"
+  pbp.foul:
+    - "Foul by {player} on {victim}. Free kick to the {team}, {zone}."
+    - "{victim} is brought down by {player}. Free kick, {team}."
+  pbp.card.yellow:
+    - "Yellow card for {player}."
+    - "{player} is booked."
+  pbp.card.second_yellow:
+    - "A second yellow, so {player} is sent off. {team} down to ten."
+  pbp.card.red:
+    - "Straight red card for {player}! {team} are down to ten."
+  pbp.offside:
+    - "Flag up, {player} is offside. Free kick to the {team}."
+  pbp.out.throw_in:
+    - "Out for a throw-in, {team}."
+    - "Throw-in to the {team}."
+  pbp.out.corner:
+    - "Corner to the {team}."
+    - "It's behind, corner for the {team}."
+  pbp.out.goal_kick:
+    - "Goal kick for the {team}."
+    - "Out for a goal kick, {team}."
+  pbp.corner.taken:
+    - "{player} swings the corner in."
+    - "{player} whips it in from the corner."
+  pbp.free_kick.taken:
+    - "{player} takes the free kick."
+  pbp.sub:
+    - "Substitution for the {team}: {player} comes on for {replaced}."
+    - "Change for the {team}, {replaced} off, {player} on."
+  pbp.halftime:
+    - "Half-time. {score}."
+  pbp.fulltime:
+    - "Full-time! {score}."
+
+  loc.ball:
+    - "{team} ball, {player}, {zone}."
+    - "{player} has it for the {team}, {zone}."
+    - "{team} in possession, {player}, {zone}."
+  loc.ball.loose:
+    - "{team} ball, {zone}."
+    - "{team} with it, {zone}."
+
+  rem.score_time:
+    - "{clock}. {score}."
+    - "{score}, {clock}."
+  rem.direction:
+    - "{team} attacking the goal on your {side}."
+
+  graphic.top_speed:
+    - "On screen: {player}, top speed of the match, {speed}."
+  graphic.sprint:
+    - "On screen: {player} sprint, {speed}."
+  graphic.distance:
+    - "On screen: {player} has covered {distance}."
+  graphic.shot_speed:
+    - "On screen: shot speed, {speed}."
+
+  scene.kit:
+    - "{team} in {team.kit}."
+  scene.weather.clear_evening:
+    - "A clear evening for this one."
+  scene.weather.light_rain:
+    - "Light rain falling over the pitch."
+  scene.weather.bright_sunshine:
+    - "Bright sunshine, shadows across half the pitch."
+  scene.weather.floodlit_night:
+    - "Under the floodlights tonight."
+  scene.weather.breezy:
+    - "A breezy day, flags snapping above the stands."
+  scene.celebration.knee_slide:
+    - "{player} slides on the knees towards the fans."
+  scene.celebration.corner_flag_dance:
+    - "{player} dances by the corner flag."
+  scene.celebration.team_huddle:
+    - "Team-mates pile on {player}."
+  scene.celebration.arms_wide:
+    - "{player} wheels away, arms wide."
+  scene.celebration.cupped_ear:
+    - "{player} cups an ear to the crowd."
+  scene.celebration.jump_and_punch:
+    - "{player} leaps and punches the air."
+  scene.body.hands_on_head:
+    - "{player}, both hands on head."
+  scene.crowd.roar:
+    - "The crowd erupts."
+  scene.crowd.gasp:
+    - "A gasp around the ground."
+  scene.var.check_complete:
+    - "A VAR check, and the goal stands."
+
+zones:
+  defensive.left: "deep on the left"
+  defensive.centre: "deep in their own half"
+  defensive.right: "deep on the right"
+  middle.left: "on the left in midfield"
+  middle.centre: "in central midfield"
+  middle.right: "on the right in midfield"
+  attacking.left: "on the left in the final third"
+  attacking.centre: "central, in the final third"
+  attacking.right: "on the right in the final third"
+
+spots:
+  own_box: "in their own box"
+  centre_circle: "in the centre circle"
+  edge_of_box: "on the edge of the box"
+  box: "in the box"
+  six_yard_box: "in the six-yard box"
+  corner_flag: "out by the corner flag"
+
+sides:
+  left: "left"
+  right: "right"
+
+kits:
+  red: "red"
+  blue: "blue"
+  white: "white"
+  yellow: "yellow"
+  green: "green"
+  claret: "claret"
+  sky_blue: "sky blue"
+  orange: "orange"
+  black: "black"
+  purple: "purple"
+
+units:
+  kmh: "{value} kilometres an hour"
+  m: "{value} metres"
+  km: "{value} kilometres"
+
+clock:
+  regular: "{minute} minutes gone"
+  first_minute: "Inside the first minute"
+  added: "{minute} plus {added}"
+
+score:
+  format: "{home} {homeGoals}, {away} {awayGoals}"

@@ -20,4 +20,13 @@ public sealed record TrackingFrame(
     int Period,
     long MatchClockMs,
     BallFrame Ball,
-    IReadOnlyList<PlayerFrame> Players);
+    IReadOnlyList<PlayerFrame> Players)
+{
+    public const int IntervalMs = 100;
+
+    /// <summary>
+    /// Presentation timestamp: monotonic across the whole broadcast (the match clock restarts at
+    /// 45:00 for the second half, this doesn't). Audio, captions and overlays are scheduled on it.
+    /// </summary>
+    public long PtsMs => FrameId * IntervalMs;
+}

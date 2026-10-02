@@ -118,7 +118,8 @@ public sealed partial class MatchEngine
             }
         }
 
-        SetDeadBall(MatchEventType.KickOff, kickingTeam, Pitch.Centre, delayMs: 3000);
+        // The first kick-off leaves time for the pre-match description (kits, weather).
+        SetDeadBall(MatchEventType.KickOff, kickingTeam, Pitch.Centre, delayMs: period == 1 ? 12000 : 4000);
 
         if (period == 1)
         {

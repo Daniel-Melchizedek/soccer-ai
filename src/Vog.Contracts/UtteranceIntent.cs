@@ -20,6 +20,7 @@ public enum IntentKind
     DirectionOfPlay,
     Scene,
     PeriodChange,
+    GraphicReadout,
 }
 
 /// <summary>P0 interrupts anything; P3/P4 only air during dead balls.</summary>
@@ -58,7 +59,7 @@ public sealed record NumberSlot(double Value, string Unit) : Slot;
 
 public sealed record ClockSlot(int Minute, int AddedMinute) : Slot;
 
-public sealed record ScoreSlot(string HomeNickname, int Home, string AwayNickname, int Away) : Slot;
+public sealed record ScoreSlot(TeamSlot Home, int HomeGoals, TeamSlot Away, int AwayGoals) : Slot;
 
 /// <summary>A side of the pitch from the listener's seat in the main stand.</summary>
 public sealed record SideSlot(bool Left) : Slot;
@@ -72,7 +73,8 @@ public enum IntentSource
 
 /// <summary>
 /// What should be said, produced once per moment and rendered per channel (language × mode).
-/// The Booth Producer schedules intents; it never invents facts.
+/// The Booth Producer schedules intents; it never invents facts. <see cref="ValidUntilMs"/> is the
+/// latest presentation time at which the utterance may start.
 /// </summary>
 public sealed record UtteranceIntent(
     string IntentId,

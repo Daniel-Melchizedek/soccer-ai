@@ -1,9 +1,19 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Vog.Booth/Vog.Booth.csproj" />
     <Project Path="src/Vog.Contracts/Vog.Contracts.csproj" />
+    <Project Path="src/Vog.Describe/Vog.Describe.csproj" />
     <Project Path="src/Vog.Domain/Vog.Domain.csproj" />
+    <Project Path="src/Vog.Pipeline/Vog.Pipeline.csproj" />
     <Project Path="src/Vog.Simulator/Vog.Simulator.csproj" />
     <Project Path="src/Vog.Stats/Vog.Stats.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Vog.Booth.Tests/Vog.Booth.Tests.csproj" />
+    <Project Path="tests/Vog.Describe.Tests/Vog.Describe.Tests.csproj" />
+    <Project Path="tests/Vog.GoldenMatch.Tests/Vog.GoldenMatch.Tests.csproj" />
+    <Project Path="tests/Vog.Simulator.Tests/Vog.Simulator.Tests.csproj" />
+    <Project Path="tests/Vog.Stats.Tests/Vog.Stats.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/Vog.Replay/Vog.Replay.csproj" />

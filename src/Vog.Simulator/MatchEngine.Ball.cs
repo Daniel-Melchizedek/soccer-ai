@@ -206,8 +206,10 @@ public sealed partial class MatchEngine
 
                 if (_rng.Chance(0.4))
                 {
+                    // Parried behind: the keeper's touch puts it out, so it's a corner.
                     var rightEnd = _ball.To.X > Pitch.Length / 2;
                     var corner = new PitchPoint(rightEnd ? Pitch.Length : 0, _rng.Chance(0.5) ? 0 : Pitch.Width);
+                    Emit(MatchEventType.BallOut, defending, keeper, new PitchPoint(corner.X, Pitch.Width / 2 + (corner.Y > 0 ? 6 : -6)));
                     SetDeadBall(MatchEventType.Corner, attacking, corner, (long)_rng.Uniform(26000, 38000));
                 }
                 else
