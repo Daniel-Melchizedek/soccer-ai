@@ -5,7 +5,7 @@ using Vog.Stats;
 namespace Vog.Describe;
 
 /// <summary>Builds typed slots from match metadata, so describers never format text themselves.</summary>
-internal sealed class SlotFactory(MatchInfo info)
+public sealed class SlotFactory(MatchInfo info)
 {
     public MatchInfo Info => info;
 

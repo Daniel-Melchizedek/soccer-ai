@@ -31,6 +31,9 @@ public sealed class ChannelDirectory(IOptions<BroadcastOptions> options)
     public string? Leave(string connectionId) =>
         _channelByConnection.TryRemove(connectionId, out var channelId) ? channelId : null;
 
+    public ChannelSpec? ChannelOf(string connectionId) =>
+        _channelByConnection.TryGetValue(connectionId, out var channelId) ? Available.FirstOrDefault(c => c.Id == channelId) : null;
+
     public bool HasListeners(string channelId) => _channelByConnection.Values.Contains(channelId);
 
     public IReadOnlyDictionary<string, int> ListenerCounts() =>

@@ -39,7 +39,7 @@
 | Live speech | Standard neural voices (full SSML) | HD and Omni voices lack `<prosody>` and `<break>` |
 | Fabric | F1–F4 on the free trial; F5–F7 optional | Telemetry, operations, grounding and compliance; never on the live path (§10) |
 | Deploy | azd + Bicep (ported from certflow-ai) + `azd ai agent`; Aspire for local dev only | Replaces certflow's 526-line imperative script |
-| Region | Sweden Central, with East US 2 as fallback | EU accessibility story; confirm model, voice and hosted-agent availability first |
+| Region | Sweden Central (gpt-5.6-terra, neural voices and Voice Live confirmed there) | EU accessibility story; confirm model, voice and hosted-agent availability first |
 | Secrets | Managed identity everywhere, Key Vault, `dotnet user-secrets`; `.gitignore` first; gitleaks + push protection | "Never commit sensitive info" (§12) |
 
 ---
@@ -169,7 +169,7 @@
 | `Microsoft.Agents.AI.Workflows.Declarative` | Stable 1.x (C#) | YAML workflows via `DeclarativeWorkflowBuilder` + `AzureAgentProvider`. **No parallel action**, so fan-out stays code-first. |
 | Declarative actions (C#) | `InvokeAzureAgent` (Foundry agent **by name**), `InvokeFunctionTool`, `InvokeMcpTool`, `HttpRequestAction`, `If`, `ConditionGroup`, `Foreach`, `Question`, `RequestExternalInput`, `SetVariable`, `SendActivity`, `EndWorkflow`… | In **hosted** scenarios, `InvokeMcpTool` `connection.name` is "not fully supported yet", so recap data access uses `InvokeFunctionTool` |
 | Foundry **Hosted Agents** | **GA** service. Protocols: Responses, Invocations, A2A. Portal shows playground, traces, versions and sessions. Idle timeout is configurable. | All three workflows run in Foundry |
-| `Microsoft.Agents.AI.Foundry.Hosting` | **Prerelease**. `AgentHost.CreateBuilder` → `AddFoundryResponses(agent)` → `RegisterProtocol("responses", e => e.MapFoundryResponses())`; `azd ai agent init/run/invoke/deploy` | Isolate it in the three `*.Host` projects; keep an in-process fallback (§8.6) |
+| `Microsoft.Agents.AI.Foundry.Hosting` | **Prerelease**. `AgentHost.CreateBuilder` → `AddFoundryResponses(agent)` → `RegisterProtocol("responses", e => e.MapFoundryResponses())`; `azd ai agent init/run/invoke/deploy` | Isolate it in the three `*.Host` projects; the workflows run only as Foundry hosted agents (§8.6) |
 | Foundry portal **Workflows** (visual designer) | **Preview; retires 1 Dec 2026**; doesn't support hosted agents | Not used |
 | `Azure.AI.Projects` | 2.0.1 stable; certflow-ai uses `AgentAdministrationClient.CreateAgentVersionAsync` + `DeclarativeAgentDefinition` + `GetProjectResponsesClientForAgent` | Proven way to create versioned prompt agents |
 | Fabric data agent tool (`MicrosoftFabricPreviewTool`, C#) | Preview; **paid F2+**; **user identity (on-behalf-of) only** | Optional F6 only |
@@ -766,9 +766,13 @@ AIAgent recapAgent = recap.AsAgent(name: "vog-match-recap");      // verify
 - **Output:** phrase-bank YAML with `status: reviewed`.
 - **Trigger:** the `tools/Vog.PhraseBankStudio` CLI or the `phrasebank.yml` GitHub Action, which opens a PR via `gh`.
 
-### 8.4 Q&A Companion (Voice Live relay)
-- **Sessions:** one Voice Live session per active asker. Push-to-talk by default; multilingual semantic VAD; a distinct "assistant" voice.
-- **Tools** (in-process `Vog.MatchQuery`): `score_time`, `where_is_ball`, `who_has_ball`, `recent_events`, `lineup_subs`, `player_info`, `stat`, `repeat_last`, `set_preference`, and `explain_moment`, which calls `vog-insight-desk`.
+### 8.4 Q&A Companion (Voice Live agent mode → Foundry agent)
+- **Built (Oct 3):** the companion is a Foundry prompt agent per language, `vog-match-companion-<lang>` (gpt-5.6-terra, reasoning `none`, `VogAgentGuardrail`), defined in `foundry/agents/vog-match-companion.agent.yaml` and registered by `tools/Vog.FoundrySetup`. The gateway relays each fan's question to Voice Live in **agent mode** (`AgentSessionConfig`), so Voice Live hears and speaks while the Foundry agent answers.
+- **Tools run in Foundry, not the app:** in agent mode Foundry Agent Service runs the agent's tools, so the match tools are an **MCP server on the gateway** (`/mcp/<lang>`, read-only, API key). Each language has its own project connection (`RemoteTool`, key in Key Vault and the connection): Agent Service sends MCP requests to the connection's target, not the tool's own URL.
+- **Push-to-talk works in agent mode** with `NoTurnDetection` and `mai-transcribe` transcription (`azure-speech` requires semantic VAD; the SDK's `mai-transcribe-1` is retired).
+- **Measured:** question → first answer audio p50 6.1 s, p95 8.7 s on Azure, above the ≤2 s target: the next work for the companion.
+- **Sessions:** one Voice Live session per active asker. Push-to-talk by default; a distinct "assistant" voice.
+- **Tools** (planned in full; the first five are built as `MatchTools`): `score_time`, `where_is_ball`, `who_has_ball`, `recent_events`, `lineup_subs`, `player_info`, `stat`, `repeat_last`, `set_preference`, and `explain_moment`, which calls `vog-insight-desk`.
 - **On speech start:** the listener's channel bus is ducked. **When the answer ends:** a Booth catch-up utterance plays.
 - **Text-chat twin:** the same tools for Deaf and speech-impaired users.
 - **Safety:**
@@ -778,7 +782,7 @@ AIAgent recapAgent = recap.AsAgent(name: "vog-match-recap");      // verify
 
 ### 8.5 What stays outside Foundry, on purpose
 - **The HOT describers and the Booth Producer:** deterministic and sub-second.
-- **The Voice Live relay:** real-time audio.
+- **The Voice Live relay:** real-time audio. (The companion's answers themselves come from a Foundry agent: see §8.4.)
 
 The README explains *why not everything is an agent*. Judges reward knowing when not to use an LLM.
 
@@ -788,8 +792,8 @@ The README explains *why not everything is an agent*. Judges reward knowing when
   - Warm-up ping at kick-off; hosted idle timeout set to 60 min.
   - One session per match.
   - Dedupe per `momentId`, following certflow's claim-before-work pattern.
-- **Timeout:** 6 s client-side, after which the Booth falls back to template-only audio.
-- **Feature flag `InsightDesk:Mode = Hosted | InProcess`:** the same workflow assembly runs inside the Gateway if the hosted hop misbehaves.
+- **Timeout:** 6 s client-side. The Booth never waits for agents: a late explanation is stale and is dropped, and play-by-play (the primary content) carries on as normal.
+- **No in-process mode:** the workflow runs only as a Foundry hosted agent. If it is unavailable, the Studio shows the Insight Desk as down; nothing substitutes for it.
 - **Demo moment:** the Foundry portal lists the 3 hosted agents and 8 versioned prompt agents, then shows **a trace of one Insight Desk run**: three parallel agent spans → fact-check → localize.
 
 ---
@@ -826,7 +830,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 
 ### 9.3 Studio console (Interactive Server, Entra sign-in, `RequireAuthorization`)
 - **Per-channel monitor:** listeners, current text, queue depth, event→speech p50/p95, drops by reason, preemptions, cache hits, dead air %. Includes **listen-in**.
-- **Kill switches** per channel or global. The fallback keeps template AD + earcons + score and drops LLM content. There's also a "facts-only" switch.
+- **Kill switches** per channel or global: the producer takes agent content off air (for example, a bad explanation) while the play-by-play carries on. There's also a "facts-only" switch.
 - **Recap approvals** (the `RequestExternalInput` round-trip), a Fact-Checker rejection log, links to App Insights / Foundry traces, a cost meter, and an **event injector** for demos.
 - **"Assist a human describer" prompter view:** a pitch sheet plus live stat prompts. This is the enterprise answer to the shortage of describers.
 
@@ -870,12 +874,12 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 | **F4** | **Accessibility compliance report** | KQL queryset + a dashboard page (Power BI optional). Per match and language: key-event coverage, ball-location interval, caption drift, reading rate, rejections, SLO attainment. | EAA / EN 301 549 evidence: **Best Enterprise** | Should | Trial |
 | F5 | Cosmos DB mirroring → OneLake | Mirror `cues` (as-run log) and `moments` only | Joins without pipelines | Could | Verify on trial |
 | F6 | Producer "Ask the data" | Fabric **data agent** over Eventhouse, attached to `vog-producer-analyst` via `MicrosoftFabricPreviewTool` (C#) | On-behalf-of the signed-in producer (certflow's delegated-token pattern) | Stretch | **Paid F2+**; preview; user identity only |
-| F7 | Operations Agent | Playbook over the Access Ops tables | Human-approved actions with an audit record (e.g. "switch ES channel to fallback") | Stretch | **Paid**; admin toggle; region limits |
+| F7 | Operations Agent | Playbook over the Access Ops tables | Human-approved actions with an audit record (e.g. "take agent content off air on the ES channel") | Stretch | **Paid**; admin toggle; region limits |
 
 ### 10.4 Capacity, privacy and the repo
 - **Trial:** start the Fabric trial **now**. It lasts 60 days at F64-equivalent with 1 TB of OneLake, so it runs to about 1 Dec, covering the build, judging and winners.
 - **Paid capacity:** F6/F7 need an **F2 pay-as-you-go** capacity, about **$0.36/hour** (US West 2), roughly $263/month if left running. **Pause it when idle**, and create it only if F6 or F7 is attempted.
-- **Feature flag `Fabric:Enabled`:** the app runs without Fabric, falling back to an App Insights workbook.
+- **Fabric is part of the deployment:** no feature flag and no substitute dashboard.
 - **Data minimization:** match and system telemetry only. No listener profiles, no microphone audio, no Q&A text. Tracking is down-sampled to 2 Hz.
 - **Repo:**
   - `fabric/kql/*.kql` (`.create-merge`) and `fabric/items/` (Git-integration folders), deployed by `fab deploy` from GitHub Actions with OIDC.
@@ -893,7 +897,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 |---|---|---|
 | gpt-4o (2024-11-20) | $2.50 / $10 | certflow-ai's model; reference point |
 | **gpt-5.6-terra** | **$2.50 / $15** at launch (26 Jun 2026); one tracker reports **$2 / $12** after 30 Jul 2026 | **Default.** Same-or-lower input and 1.2–1.5× output vs gpt-4o: "a little above" |
-| gpt-5.4 | $2.50 / $15 | Fallback if terra lacks regional quota |
+| gpt-5.4 | $2.50 / $15 | Not used: terra is deployed in Sweden Central (quota 1,000K TPM) |
 | gpt-5.6-sol, gpt-5.5, GPT-6 | $5 / $30 and up | **Not used** |
 
 > Confirm prices in the Azure pricing calculator on deployment day. The official Azure OpenAI pricing page showed placeholders when checked.
@@ -905,7 +909,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
   - Output is capped per agent (≤200 tokens for the explainer).
   - Static instructions come first, for prompt caching.
   - Translations run only for active languages.
-  - A per-match token budget makes the Booth fall back to templates once it's spent.
+  - A per-match token budget: once it's spent, agents stop bidding and the Studio raises an alert, so a runaway can't run up cost.
   - Response caching makes golden-match replays cost about $0.
   - The Batch API (−50%) is used for offline transcreation and nightly evals.
 - **Ballpark (estimate):** 40 explained moments × 3 agents × (~2.5k input + 150 output tokens) ≈ 0.30M input + 0.02M output, about **$1 per match** at launch prices. Each recap language adds roughly $0.10–0.20.
@@ -975,7 +979,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
   - Aspire AppHost with emulators: Event Hubs, Cosmos vNext with vector search, and Azure SignalR (serverless only, so verify the hub works or use in-process SignalR locally).
   - In-process channels as an Event Hubs alternative.
 - **Scaling for the demo:** `minReplicas = 1` for Gateway, Web and Companion; hosted-agent idle timeout 60 min; warm-up pings.
-- **Region:** Sweden Central (fallback East US 2). Confirm hosted agents, `gpt-5.6-terra` quota, neural/HD voices and Voice Live there on day 1.
+- **Region:** Sweden Central. Confirm hosted agents, `gpt-5.6-terra` quota, neural/HD voices and Voice Live there on day 1.
 
 ---
 
@@ -988,7 +992,7 @@ Source: [github.com/daniel-melchizedek/certflow-ai](https://github.com/daniel-me
 |---|---|
 | `src/CertFlow.Agent/AgentOrchestrator.cs` `RegisterAgentAsync` (L353–371): `DeclarativeAgentDefinition` + `AgentAdministrationClient.CreateAgentVersionAsync` + `ContentFilterConfiguration(RaiPolicyArmId)`, warning if missing | `tools/Vog.FoundrySetup`. The RAI policy needs the **full ARM id**; a bare name silently filters nothing. |
 | `AgentOrchestrator.BuildMcpTool` (L260–279): Foundry-hosted MCP tool, per-agent allow-list, `NeverRequireApproval`, key held in a project connection | Least-privilege MCP access for each `vog-*` agent (read-only tools; only the Fact-Checker path can call `verify_claims`) |
-| `AgentOrchestrator.RunAgentAsync` (L516–567): `ProjectOpenAIClient.GetProjectResponsesClientForAgent(name)` | The base of the Responses client used to call hosted agents; a direct-call fallback |
+| `AgentOrchestrator.RunAgentAsync` (L516–567): `ProjectOpenAIClient.GetProjectResponsesClientForAgent(name)` | The base of the Responses client used to call Foundry agents and hosted agents, with function tools run server-side |
 | `src/CertFlow.McpServer/Program.cs` (L50–89), `McpTelemetry.cs`, `Tools/*.cs` (self-correcting errors, `AppointmentTools.cs` L42–80) | `Vog.Mcp`: HTTP transport, API-key middleware with a fixed-time comparison that refuses to start without a key, a span per tool, errors the model can act on |
 | `src/CertFlow.Application/Services/PolicyEngine.cs` + `PolicyRules/` | The Fact-Checker rule chain and the Booth mode policies |
 | `src/CertFlow.Worker/Consumers/EmailReplyConsumer.cs` (L262–348): rebuild the user-facing result from data, not from the agent's account | The Cue Publisher numbers check: every spoken or displayed figure is re-derived from MatchState |
@@ -1009,7 +1013,7 @@ Source: [github.com/daniel-melchizedek/certflow-ai](https://github.com/daniel-me
 | 3 | Hardcoded model name and inline prompts; flat environment variables | `foundry/agents/*.agent.yaml` + prompt files; options classes with `ValidateOnStart` |
 | 4 | Placeholder tests only | Booth property tests, golden-match snapshots, fake chat client for workflow topology, accessibility and E2E tests in CI |
 | 5 | Public admin and debug endpoints with no authorization | `RequireAuthorization` everywhere in the Studio and admin; Key Vault actually used; no fallback secrets |
-| 6 | No resilience handlers | `AddStandardResilienceHandler` + timeouts + fallbacks |
+| 6 | No resilience handlers | `AddStandardResilienceHandler` + timeouts and retries; no fallback paths |
 | 7 | Template leftovers, version drift | Clean solution; `Directory.Packages.props` + `global.json` |
 | 8 | 526-line imperative `deploy.ps1`; Foundry connections outside IaC | azd + Bicep + `azd ai agent` + `fab deploy`, from GitHub Actions with OIDC |
 | 9 | Docs that didn't match the code | README claims checked against the code before submission |
@@ -1045,7 +1049,7 @@ Roles (adapt to the team size):
 
 | Dates | Deliverables |
 |---|---|
-| **Oct 1–2** | **Confirm in the Official Rules whether building may start before Oct 6** (work must be new after registration opened on Sep 29). Port certflow's Bicep into an azd layout. Create `Vog.FoundrySetup`. **Spike:** one prompt agent + a "hello" code-first workflow as a hosted agent (`azd ai agent init/run/deploy`), visible in the portal with traces. Choose Sweden Central (fallback East US 2) and request quotas. **Start the Fabric trial.** **Contact co-design partners** (local blind football club, RNIB Connect, CAFE, Level Playing Field, an internal disability network). Check your employer's policy on external hackathons, IP and branding. |
+| **Oct 1–2** | **Confirm in the Official Rules whether building may start before Oct 6** (work must be new after registration opened on Sep 29). Port certflow's Bicep into an azd layout. Create `Vog.FoundrySetup`. **Spike:** one prompt agent + a "hello" code-first workflow as a hosted agent (`azd ai agent init/run/deploy`), visible in the portal with traces. Choose Sweden Central and request quotas. **Start the Fabric trial.** **Contact co-design partners** (local blind football club, RNIB Connect, CAFE, Level Playing Field, an internal disability network). Check your employer's policy on external hackathons, IP and branding. |
 | **Oct 2–4** (go/no-go spikes) | S1: neural TTS streaming + word boundaries (measure time to first byte). S2: SignalR PCM → AudioWorklet + panner + earcon, end to end. S3: Voice Live .NET relay with push-to-talk and one tool. S4: SceneEvents in the simulator. |
 | **Oct 5** | End-to-end "hello commentary": simulator → template → Booth → TTS → browser |
 | **Oct 6–10** (window opens; livestream Oct 7) | Full English live path; Booth v1 (priority, preemption, stale-drop, reminders, gap-fill); captions; earcons + stereo; overlay with `altText`; `vog-insight-desk` v1 hosted; **F1** Eventstream → Eventhouse |
@@ -1063,7 +1067,7 @@ Roles (adapt to the team size):
   6. two-voice booth
   7. third language
   8. hands-free AEC
-  9. multi-voice recap (fall back to single voice)
+  9. multi-voice recap (cut to a single voice)
   10. F4 → F3
   11. player focus
   12. partisan tone
@@ -1132,8 +1136,8 @@ Roles (adapt to the team size):
 
 | Risk | Mitigation |
 |---|---|
-| Preview features (MAI voices, WebRTC, TTS text streaming, the Foundry .NET hosting package, realtime 2.1) | The default path is GA wherever possible; previews are A/B options. The hosting package is isolated in three `*.Host` projects, with an `InProcess` fallback. |
-| LLM latency spikes | HOT cue first, WARM upgrade later; 6 s timeout falls back to templates; the Director/Booth drops stale items |
+| Preview features (MAI voices, WebRTC, TTS text streaming, the Foundry .NET hosting package, realtime 2.1) | The default path is GA wherever possible; previews are A/B options. The hosting package is isolated in three `*.Host` projects. |
+| LLM latency spikes | HOT cue first, WARM upgrade later; the Booth never waits on agents and drops stale items |
 | Hallucinated descriptions | The live path is template-only; scene lock; typed claims + code Fact-Checker; numbers check; groundedness gate in CI |
 | Fan-in barrier stalls / step blocking | One workflow run per moment; every fan-out target always returns (possibly `Skipped`); unit-tested |
 | Echo during Q&A | Push-to-talk + headphones; Live-Reference AEC as a stretch goal |
@@ -1142,9 +1146,9 @@ Roles (adapt to the team size):
 | Our TTS collides with the user's screen reader | Separate output modes; minimal live regions; screen-reader tests |
 | Listener overload | Verbosity control, Calm mode, earcon tutorial, co-design |
 | Template morphology in es/fr/pt/hi | Typed slot features, per-language Realizers; MVP limited to EN + ES |
-| Quota or region gaps | Request on day 1; deployment name in config; fallback to gpt-5.4 and standard neural voices; East US 2 fallback |
-| Fabric trial limits | Keep Fabric off the live path behind `Fabric:Enabled`; 2 Hz tracking; screenshot dashboards early |
-| Demo-day failure | Deterministic golden match + recorded audio replay + local Aspire mode + backup video |
+| Quota or region gaps | Request on day 1; deployment name in config; gpt-5.6-terra deployed with 50K TPM (1,000K available); standard neural voices confirmed |
+| Fabric trial limits | Keep Fabric off the live path; 2 Hz tracking; screenshot dashboards early |
+| Demo-day failure | Deterministic golden match; the backup video is recorded by Oct 14 |
 | IP and trademarks | Fictional names with a deny-list, generated crests, procedural audio, no cloned voices, AI-voice disclosure |
 | Employer policy | Confirm your employer's policy on external hackathons, IP and branding before submitting |
 | Scope creep | MVP freeze on Oct 14; cut order in §16 |

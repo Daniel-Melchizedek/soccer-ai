@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Vog.FoundrySetup</RootNamespace>
+    <AssemblyName>vog-foundry-setup</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Vog.Companion\Vog.Companion.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.Projects" />
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Vog.Replay\DotEnv.cs" Link="DotEnv.cs" />
+  </ItemGroup>
+
+</Project>

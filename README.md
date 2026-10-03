@@ -21,9 +21,10 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | (d) Schedule | `Vog.Booth` | The **Booth Producer**: decides what is spoken when on a serial audio channel, using priorities, preemption, staleness rules, location obligations and dead-ball colour |
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices signed in with Microsoft Entra ID (the resource has no keys), 24 kHz PCM streamed as it arrives, captions timed to the spoken words (WebVTT, at most 2 lines of 37 characters), and cuts at word boundaries when the booth interrupts |
-| (e) Render, live | `Vog.Gateway` | Plays the golden match in real time and broadcasts every channel that has listeners over SignalR: each line as the booth starts it, its audio streamed as it is synthesized, then word-timed captions. The listener page plays the audio through an AudioWorklet, with procedural earcons panned to where the action is. |
+| (e) Render, live | `Vog.Gateway` | Plays the golden match in real time, on a wall-clock schedule every gateway shares, and broadcasts every channel that has listeners over SignalR: each line as the booth starts it, its audio streamed as it is synthesized, then word-timed captions. The listener page plays the audio through an AudioWorklet, with procedural earcons panned to where the action is. |
+| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Hold-to-ask or typed questions through Azure Voice Live in agent mode. The answering agent is a versioned Foundry prompt agent (gpt-5.6-terra, agent guardrail) whose MCP tools read the live match from the gateway, so every fact comes from match data. Answers come back in their own voice, with the commentary turned down. |
 
-Still to come, per the milestones: voice Q&A (Voice Live), the Blazor listener app and overlay, the Foundry hosted-agent workflows, and Fabric.
+Still to come, per the milestones: the Foundry agent workflows (Insight Desk, match recap, transcreation), the Blazor listener app and overlay, and Fabric.
 
 ### Sample: audio-description channel, golden match
 
@@ -61,7 +62,7 @@ The simulator passes its **synthetic data card** over 20 seeds. Means: 2.5 goals
 Prerequisite: the [.NET 10 SDK](https://dotnet.microsoft.com/download) (pinned in `global.json`).
 
 ```bash
-dotnet test                                   # 66 tests: determinism, physics, models, phrase banks, booth properties, golden match, captions, credentials
+dotnet test                                   # 88 tests: determinism, physics, models, phrase banks, booth, golden match, schedule, captions, match tools
 
 dotnet run --project tools/Vog.Replay -- commentary                    # full match, English audio description
 dotnet run --project tools/Vog.Replay -- commentary --lang es-ES       # Spanish (draft phrase bank)
@@ -77,15 +78,20 @@ Modes: `ad` (audio description), `commentary`, `calm`, `analyst`, `casual`, `kid
 Prerequisites: the [Azure CLI](https://aka.ms/installazurecli) and PowerShell 7, signed in with `az login`.
 
 ```powershell
-./infra/provision.ps1        # rg-vog-dev in Sweden Central: Foundry (AI Services) account + project, keys disabled,
-                             # your Speech / Cognitive Services / Foundry User roles; writes .env.local (git-ignored)
+./infra/provision.ps1        # everything in rg-vog-dev (Sweden Central), then builds and deploys the gateway:
+                             #   Foundry resource + project (keys disabled), gpt-5.6-terra, agent guardrail;
+                             #   Key Vault, container registry, Container Apps, Log Analytics + App Insights;
+                             #   registers the Foundry agents; writes .env.local (git-ignored, no secrets)
+./infra/provision.ps1 -SkipBuild                                       # infrastructure only
 
 dotnet run --project tools/Vog.Replay -- speak --from 78 --minutes 2   # out/audio/*.wav + word-timed *.vtt
+dotnet run --project tools/Vog.FoundrySetup                            # re-register agents after editing foundry/agents/*.yaml
+dotnet run --project tools/Vog.FoundrySetup -- --ask en-GB "Who scored?"   # ask a Foundry agent directly
 
-./infra/teardown.ps1         # deletes the resource group and purges the soft-deleted AI account
+./infra/teardown.ps1         # deletes the resource group and purges the soft-deleted AI account and key vault
 ```
 
-The AI resource is pay-per-use, with no idle cost. `.env.local` holds endpoints only: there are no keys to hold.
+Model use is pay-per-token. The gateway runs one always-on replica (about 0.5 vCPU), because the live match and listener connections are in memory and Foundry must be able to reach its MCP endpoint whenever a fan asks a question.
 
 ### Live: listen in a browser
 
@@ -94,7 +100,7 @@ dotnet run --project src/Vog.Gateway                                  # http://l
 dotnet run --project tools/Vog.Replay -- listen --seconds 30          # smoke test: joins a channel like a browser
 ```
 
-Open http://localhost:5080, pick a language and mode, and select **Start listening**. Headphones help: earcons are panned to where the action is, as seen from the main stand. Without `.env.local` the gateway still runs, with captions only. Speech is synthesized only for channels that have listeners, so cost scales with channels in use, not with listeners.
+Open http://localhost:5080, pick a language and mode, and select **Start listening**. Headphones help: earcons are panned to where the action is, as seen from the main stand. The gateway needs the settings in `.env.local` (or the same names in its environment) and won't start without them. Speech is synthesized only for channels that have listeners, so cost scales with channels in use, not with listeners.
 
 Measured on a developer network, from a cold start, English audio description:
 
@@ -105,6 +111,25 @@ Measured on a developer network, from a cold start, English audio description:
 
 A line that could only start well behind the booth's schedule is skipped, so a hold-up doesn't leave the channel permanently behind: after 1.5 s for most lines, after 4 s for urgent ones, and never for goals and red cards. Skips are counted at `/stats`. The next step is to synthesize lines while they wait in the booth's queue rather than when they start, which S1 measured at a median of 36 ms added.
 
+### Ask about the match (Foundry agents)
+
+On the listener page, hold **Hold to ask** (or hold Space or Enter on it) and ask; or type the question. The gateway relays it to Azure Voice Live in agent mode, connected to the Foundry agent for the channel's language (`vog-match-companion-en-gb`, `vog-match-companion-es-es`). The agent's MCP tools read the gateway's live match, so answers come from match data, and it declines anything that isn't about the match.
+
+```powershell
+dotnet run --project tools/Vog.Replay -- companion --say "Who has the ball?"          # straight to the agent over Voice Live
+dotnet run --project tools/Vog.Replay -- ask --url $env:VOG_GATEWAY_URL               # through a gateway, typed and spoken
+```
+
+Measured on the Azure deployment (Sweden Central):
+
+| Measure | p50 | p95 |
+|---|---|---|
+| Booth start → first speech chunk sent (commentary) | 0.09 s | 0.79 s |
+| Question finished → first answer audio (agent and tool call) | 6.1 s | 8.7 s |
+
+The answer latency is the agent's: the model calls an MCP tool and then answers, and Voice Live speaks the result. Bringing it down is the next piece of work for the companion.
+
+Matches run on a fixed wall-clock schedule from 1 October 2026, so every gateway, local or in Azure, is at the same moment of the same match. That is also why a local gateway's questions, answered from the deployed gateway's match, stay consistent with what you hear.
 ## Repository layout
 
 ```
@@ -118,9 +143,12 @@ src/
   Vog.Booth          Booth Producer and coverage metrics
   Vog.Pipeline       offline composition and the golden match
   Vog.Voice          Azure neural TTS, captions, WAV, word-boundary cuts
-  Vog.Gateway        live broadcast over SignalR + listener page (AudioWorklet player, earcons)
-tools/Vog.Replay     CLI: commentary playback, coverage report, data card, speech rendering, gateway smoke test
-infra/               Bicep + Azure CLI provisioning (provision.ps1, teardown.ps1)
+  Vog.Companion      match tools (read-only, grounded in the live match) and the Voice Live agent-mode session
+  Vog.Gateway        live broadcast over SignalR, listener page, companion relay, MCP endpoint for the agents
+foundry/agents/      Foundry agent definitions (instructions, tools, reasoning effort), reviewed like code
+tools/Vog.Replay     CLI: commentary playback, coverage report, data card, speech rendering, gateway smoke tests
+tools/Vog.FoundrySetup  registers foundry/agents/*.agent.yaml as new Foundry agent versions
+infra/               Bicep + Azure CLI provisioning and deployment (provision.ps1, teardown.ps1)
 tests/               xUnit v3 test projects
 ```
 
@@ -129,4 +157,5 @@ tests/               xUnit v3 test projects
 Nothing sensitive belongs in this repository (BUILD_PLAN.md §12):
 - The `.gitignore` excludes azd state, env files (including `.env.local`), local settings, keys, workflow checkpoints, generated audio and co-design data.
 - The AI resource has key authentication disabled. Locally, apps use your Azure CLI sign-in; in Azure, a managed identity.
+- The only secret is the key Foundry presents to the gateway's MCP endpoint. It is generated once and kept in Key Vault (the gateway reads it at startup) and in the Foundry project connection, so it never appears in an agent definition, a setting or the repository.
 - CI runs a gitleaks secret scan. Locally, install [gitleaks](https://github.com/gitleaks/gitleaks) and run `gitleaks git` before pushing.

@@ -13,8 +13,13 @@ public sealed class LatencyStats
 
     private readonly ConcurrentQueue<double> _serverFirstChunkMs = new();
     private readonly ConcurrentQueue<double> _clientPlayMs = new();
+    private readonly ConcurrentQueue<double> _companionFirstAudioMs = new();
     private long _serverSkipped;
     private long _clientSkipped;
+    private long _answers;
+    private long _inputTokens;
+    private long _outputTokens;
+    private long _toolCalls;
 
     public void RecordServerFirstChunk(double ms) => Add(_serverFirstChunkMs, ms);
 
@@ -24,18 +29,40 @@ public sealed class LatencyStats
 
     public void RecordClientSkip() => Interlocked.Increment(ref _clientSkipped);
 
+    /// <summary>Question finished (button released, or text sent) → first answer audio sent.</summary>
+    public void RecordCompanionFirstAudio(double ms) => Add(_companionFirstAudioMs, ms);
+
+    public void RecordCompanionAnswer(int inputTokens, int outputTokens)
+    {
+        Interlocked.Increment(ref _answers);
+        Interlocked.Add(ref _inputTokens, inputTokens);
+        Interlocked.Add(ref _outputTokens, outputTokens);
+    }
+
+    /// <summary>A Foundry agent called one of the match tools over MCP.</summary>
+    public void RecordToolCall() => Interlocked.Increment(ref _toolCalls);
+
     public object Snapshot() => new
     {
         serverFirstChunk = Summary(_serverFirstChunkMs),
         clientReceiveToPlay = Summary(_clientPlayMs),
         skippedStale = new { server = Interlocked.Read(ref _serverSkipped), client = Interlocked.Read(ref _clientSkipped) },
+        companion = new
+        {
+            questionToFirstAudio = Summary(_companionFirstAudioMs),
+            answers = Interlocked.Read(ref _answers),
+            inputTokens = Interlocked.Read(ref _inputTokens),
+            outputTokens = Interlocked.Read(ref _outputTokens),
+            toolCalls = Interlocked.Read(ref _toolCalls),
+        },
     };
 
     private static void Add(ConcurrentQueue<double> queue, double value)
     {
         queue.Enqueue(value);
-        while (queue.Count > Window && queue.TryDequeue(out _))
+        while (queue.Count > Window)
         {
+            queue.TryDequeue(out _);
         }
     }
 

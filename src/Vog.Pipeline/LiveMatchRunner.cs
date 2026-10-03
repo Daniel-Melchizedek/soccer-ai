@@ -11,21 +11,41 @@ public sealed class LiveMatchRunner(MatchSetup setup, IReadOnlyList<ChannelSpec>
 {
     public MatchPipeline Pipeline { get; } = new(setup, channels);
 
-    public async Task RunAsync(Func<ChannelBoothEvent, ValueTask> onBoothEvent, CancellationToken cancellationToken)
+    /// <param name="catchUpTo">
+    /// Match time to join at, read again as the catch-up runs: ticks before it are stepped at full
+    /// speed and their booth events dropped, so the runner lands in step with the schedule rather than
+    /// behind it by however long catching up took. Null starts from kick-off.
+    /// </param>
+    public async Task RunAsync(Func<ChannelBoothEvent, ValueTask> onBoothEvent, CancellationToken cancellationToken, Func<long>? catchUpTo = null)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(TrackingFrame.IntervalMs / Math.Max(0.1, speed)));
-        foreach (var tick in Pipeline.Ticks)
+        PeriodicTimer? timer = null;
+        try
         {
-            await timer.WaitForNextTickAsync(cancellationToken);
-            foreach (var e in Pipeline.Step(tick))
+            foreach (var tick in Pipeline.Ticks)
+            {
+                if (timer is null && catchUpTo is not null && tick.Frame.PtsMs < catchUpTo())
+                {
+                    Pipeline.Step(tick);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    continue;
+                }
+
+                timer ??= new PeriodicTimer(TimeSpan.FromMilliseconds(TrackingFrame.IntervalMs / Math.Max(0.1, speed)));
+                await timer.WaitForNextTickAsync(cancellationToken);
+                foreach (var e in Pipeline.Step(tick))
+                {
+                    await onBoothEvent(e);
+                }
+            }
+
+            foreach (var e in Pipeline.Drain())
             {
                 await onBoothEvent(e);
             }
         }
-
-        foreach (var e in Pipeline.Drain())
+        finally
         {
-            await onBoothEvent(e);
+            timer?.Dispose();
         }
     }
 }

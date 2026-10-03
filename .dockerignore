@@ -1,0 +1,27 @@
+# The build context is the repository root and is uploaded to Azure by `az acr build`:
+# send only what the image needs, and never local settings or generated output.
+# az acr build ignores "**/bin/"; these forms work with it and with docker build.
+**/bin
+**/obj
+src/*/bin
+src/*/obj
+**/.vs
+.git/
+.github/
+.vscode/
+.azure/
+.env
+.env.*
+**/appsettings.*.local.json
+**/appsettings.Local.json
+**/secrets.json
+**/*.secrets.json
+out
+tests/
+tools/
+infra/
+foundry/
+fabric/
+data/
+docs/
+*.md

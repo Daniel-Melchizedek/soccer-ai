@@ -19,34 +19,42 @@ public sealed class LiveBroadcastService(
     ChannelDirectory directory,
     LatencyStats stats,
     IOptions<BroadcastOptions> options,
-    IConfiguration configuration,
+    IOptions<AzureAiOptions> azure,
     ILogger<LiveBroadcastService> log) : BackgroundService
 {
+    /// <summary>Between matches; listeners stay connected and hear the next kick-off.</summary>
+    private static readonly TimeSpan MatchBreak = TimeSpan.FromMinutes(2);
+
     private readonly ConcurrentDictionary<string, Lazy<SpeechWorker>> _workers = new();
-    private readonly Uri? _endpoint = configuration["VOG_AI_ENDPOINT"] is { Length: > 0 } e ? new Uri(e) : null;
+    private readonly Uri _endpoint = azure.Value.SpeechEndpoint!;
     private MatchPipeline? _pipeline;
 
     public MatchInfo? Info => _pipeline?.Info;
 
-    public bool SpeechEnabled => _endpoint is not null;
+    /// <summary>The live match as of the latest tick, for the companion's tools.</summary>
+    public MatchSnapshot? Snapshot => _pipeline?.Snapshot;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (_endpoint is null)
-        {
-            log.LogWarning("VOG_AI_ENDPOINT is not set: captions only, no speech. Run infra/provision.ps1 to create .env.local.");
-        }
-
         var state = BroadcastStateAsync(stoppingToken);
+        var seed = options.Value.Seed;
+        var schedule = new MatchSchedule(MatchSchedule.LengthOf(GoldenMatch.Setup(seed)), MatchBreak, options.Value.Speed);
         while (!stoppingToken.IsCancellationRequested)
         {
-            var runner = new LiveMatchRunner(GoldenMatch.Setup(options.Value.Seed), directory.Available, options.Value.Speed);
-            _pipeline = runner.Pipeline;
-            log.LogInformation("Kick-off: {Home} v {Away} (seed {Seed}, speed {Speed}x)", Info!.Home.Name, Info.Away.Name, options.Value.Seed, options.Value.Speed);
             try
             {
-                await runner.RunAsync(OnBoothEventAsync, stoppingToken);
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                var (matchMs, untilKickOff) = schedule.At(DateTimeOffset.UtcNow);
+                if (matchMs is null)
+                {
+                    log.LogInformation("Break: next kick-off in {Seconds:0} s", untilKickOff.TotalSeconds);
+                    await Task.Delay(untilKickOff, stoppingToken);
+                    continue;
+                }
+
+                var runner = new LiveMatchRunner(GoldenMatch.Setup(seed), directory.Available, options.Value.Speed);
+                _pipeline = runner.Pipeline;
+                log.LogInformation("Joining {Home} v {Away} (seed {Seed}) {Minutes:0.0} minutes in, on the schedule every gateway shares", Info!.Home.Name, Info.Away.Name, seed, matchMs.Value / 60_000.0);
+                await runner.RunAsync(OnBoothEventAsync, stoppingToken, () => schedule.At(DateTimeOffset.UtcNow).MatchMs ?? long.MaxValue);
             }
             catch (OperationCanceledException)
             {

@@ -35,4 +35,4 @@ public sealed record CaptionCueMessage(long StartMs, long EndMs, IReadOnlyList<s
 
 public sealed record StateMessage(string Clock, int Period, int HomeScore, int AwayScore, bool BallInPlay);
 
-public sealed record JoinResult(string ChannelId, string Home, string HomeKit, string Away, string AwayKit, bool Speech);
+public sealed record JoinResult(string ChannelId, string Home, string HomeKit, string Away, string AwayKit);

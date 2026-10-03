@@ -18,6 +18,16 @@ public static class VoiceCatalog
         ["es-ES"] = "es-ES-AlvaroNeural",
     };
 
+    /// <summary>The voice Q&amp;A companion answers in a different voice, so a listener always knows who is speaking.</summary>
+    private static readonly IReadOnlyDictionary<string, string> Companions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["en-GB"] = "en-GB-SoniaNeural",
+        ["es-ES"] = "es-ES-ElviraNeural",
+    };
+
+    public static string Companion(string lang) =>
+        Companions.TryGetValue(lang, out var voice) ? voice : throw new KeyNotFoundException($"No companion voice configured for {lang}.");
+
     public static VoiceProfile For(string lang, ListenerMode mode)
     {
         if (!Describers.TryGetValue(lang, out var voice))

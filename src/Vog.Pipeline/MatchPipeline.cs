@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using Vog.Booth;
 using Vog.Contracts;
 using Vog.Describe;
@@ -64,9 +65,16 @@ public sealed class MatchPipeline
 
     public MatchStats Totals => _stats.Totals;
 
+    /// <summary>The match as of the latest tick, for readers on other threads; null before the first tick.</summary>
+    public MatchSnapshot? Snapshot => Volatile.Read(ref _snapshot);
+
+    private MatchSnapshot? _snapshot;
+    private ImmutableList<MatchEvent> _keyEvents = [];
+
     public IReadOnlyList<ChannelBoothEvent> Step(MatchTick tick)
     {
         var update = _stats.Process(tick);
+        _keyEvents = _keyEvents.AddRange(tick.Events.Where(e => MatchSnapshot.IsKey(e.Type)));
         var now = update.Frame.PtsMs;
         var intents = _describer.Describe(update);
         var events = new List<ChannelBoothEvent>();
@@ -88,6 +96,12 @@ public sealed class MatchPipeline
 
         Frame = update.Frame;
         Ball = update.Ball;
+        var totals = _stats.Totals;
+        Volatile.Write(ref _snapshot, new MatchSnapshot(
+            Info, update.Frame, update.Ball,
+            TeamTotals.From(totals.Home, totals.PossessionShare(totals.HomeId)),
+            TeamTotals.From(totals.Away, totals.PossessionShare(totals.AwayId)),
+            _keyEvents));
         return events;
     }
 

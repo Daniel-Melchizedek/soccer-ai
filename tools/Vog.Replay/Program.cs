@@ -17,6 +17,12 @@ switch (command)
     case "listen":
         return await Listen.RunAsync(options);
 
+    case "ask":
+        return await Ask.RunAsync(options);
+
+    case "companion":
+        return await CompanionCheck.RunAsync(options);
+
     default:
         Console.WriteLine("vog-replay: offline tools for the Voice of the Game pipeline");
         Console.WriteLine();
@@ -28,6 +34,10 @@ switch (command)
         Console.WriteLine("                                                    render a window with Azure neural TTS: WAV + WebVTT");
         Console.WriteLine("  listen     [--url http://localhost:5080] [--lang en-GB] [--mode AudioDescription] [--seconds 30]");
         Console.WriteLine("                                                    smoke-test a running gateway as a browser listener would");
+        Console.WriteLine("  ask        [--url http://localhost:5080] [--lang en-GB] [--text \"What's the score?\"] [--say \"Who has the ball?\"]");
+        Console.WriteLine("                                                    ask the voice companion, typed and spoken (push-to-talk)");
+        Console.WriteLine("  companion  [--lang en-GB] [--text \"What's the score?\" | --say \"Who has the ball?\"]");
+        Console.WriteLine("                                                    talk to the Foundry companion agent directly over Voice Live");
         return command == "help" ? 0 : 1;
 }
 

@@ -84,6 +84,36 @@ button {
   white-space: pre-line;
 }
 
+.ask form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.ask input {
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+  flex: 1 1 16rem;
+}
+
+#talk[aria-pressed="true"] {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+
+.answer {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+button:disabled,
+input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .history {
   max-height: 16rem;
   overflow-y: auto;

@@ -44,6 +44,20 @@
       <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off"></ol>
     </section>
 
+    <section aria-labelledby="ask-heading" class="ask">
+      <h2 id="ask-heading">Ask about the match</h2>
+      <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished. Headphones stop the commentary reaching your microphone.</p>
+      <button id="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>Hold to ask</button>
+      <form id="ask-form">
+        <label for="question">Or type a question</label>
+        <input id="question" type="text" maxlength="300" autocomplete="off" disabled>
+        <button id="ask-send" type="submit" disabled>Ask</button>
+      </form>
+      <p id="heard" class="note"></p>
+      <!-- Spoken answers are heard already; typed questions turn this into a polite live region. -->
+      <p id="answer" class="answer" aria-live="off"></p>
+    </section>
+
     <details>
       <summary>Latency</summary>
       <p id="latency">No audio yet.</p>

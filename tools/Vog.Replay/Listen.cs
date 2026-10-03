@@ -12,7 +12,7 @@ namespace Vog.Replay;
 /// </summary>
 internal static class Listen
 {
-    private sealed record JoinReply(string ChannelId, string Home, string HomeKit, string Away, string AwayKit, bool Speech);
+    private sealed record JoinReply(string ChannelId, string Home, string HomeKit, string Away, string AwayKit);
 
     private sealed record UtteranceReply(string Id, string Text, string Kind, string Priority, string? Earcon, double? Pan, string Clock, long ScheduledMs);
 
@@ -87,7 +87,7 @@ internal static class Listen
 
         await connection.StartAsync();
         var join = await connection.InvokeAsync<JoinReply>("Join", lang, mode);
-        Console.WriteLine($"Joined {join.ChannelId}: {join.Home} ({join.HomeKit}) v {join.Away} ({join.AwayKit}) · speech {(join.Speech ? "on" : "off, captions only")} · listening {seconds} s");
+        Console.WriteLine($"Joined {join.ChannelId}: {join.Home} ({join.HomeKit}) v {join.Away} ({join.AwayKit}) · listening {seconds} s");
 
         await Task.Delay(TimeSpan.FromSeconds(seconds));
 
@@ -106,16 +106,13 @@ internal static class Listen
             failures.Add("no utterances received");
         }
 
-        if (join.Speech)
-        {
-            var audioMs = settled.Sum(l => l.Bytes) / 48.0;
-            Console.WriteLine($"Audio {settled.Sum(l => l.Bytes) / 1024} KiB ({audioMs / 1000:0.0} s) · receive→first audio p50 {Percentile(firstAudio, 0.5):0} ms, p95 {Percentile(firstAudio, 0.95):0} ms");
-            Console.WriteLine($"First audio by line (ms): {string.Join(", ", all.Where(l => l.FirstAudioMs is not null).Select(l => $"{l.FirstAudioMs:0}"))}");
-            Check(settled.All(l => l.Bytes > 0), "an utterance ended without audio");
-            Check(settled.All(l => !l.OutOfOrder), "audio chunks arrived out of order");
-            Check(settled.All(l => l.SpokenMs == l.Bytes / 48), "audioEnd duration doesn't match the bytes sent");
-        }
-
+        // Every spoken line must have its audio, in order, with a matching end marker.
+        var audioMs = settled.Sum(l => l.Bytes) / 48.0;
+        Console.WriteLine($"Audio {settled.Sum(l => l.Bytes) / 1024} KiB ({audioMs / 1000:0.0} s) · receive→first audio p50 {Percentile(firstAudio, 0.5):0} ms, p95 {Percentile(firstAudio, 0.95):0} ms");
+        Console.WriteLine($"First audio by line (ms): {string.Join(", ", all.Where(l => l.FirstAudioMs is not null).Select(l => $"{l.FirstAudioMs:0}"))}");
+        Check(settled.All(l => l.Bytes > 0), "an utterance ended without audio");
+        Check(settled.All(l => !l.OutOfOrder), "audio chunks arrived out of order");
+        Check(settled.All(l => l.SpokenMs == l.Bytes / 48), "audioEnd duration doesn't match the bytes sent");
         Check(settled.All(l => l.Cues > 0), "an utterance had no captions");
         Check(settled.Count > 0, "no utterance finished");
 

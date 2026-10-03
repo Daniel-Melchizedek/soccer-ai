@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Vog.Booth/Vog.Booth.csproj" />
+    <Project Path="src/Vog.Companion/Vog.Companion.csproj" />
     <Project Path="src/Vog.Contracts/Vog.Contracts.csproj" />
     <Project Path="src/Vog.Describe/Vog.Describe.csproj" />
     <Project Path="src/Vog.Domain/Vog.Domain.csproj" />
@@ -12,6 +13,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Vog.Booth.Tests/Vog.Booth.Tests.csproj" />
+    <Project Path="tests/Vog.Companion.Tests/Vog.Companion.Tests.csproj" />
     <Project Path="tests/Vog.Describe.Tests/Vog.Describe.Tests.csproj" />
     <Project Path="tests/Vog.GoldenMatch.Tests/Vog.GoldenMatch.Tests.csproj" />
     <Project Path="tests/Vog.Simulator.Tests/Vog.Simulator.Tests.csproj" />
@@ -19,6 +21,7 @@
     <Project Path="tests/Vog.Voice.Tests/Vog.Voice.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
+    <Project Path="tools/Vog.FoundrySetup/Vog.FoundrySetup.csproj" />
     <Project Path="tools/Vog.Replay/Vog.Replay.csproj" />
   </Folder>
 </Solution>

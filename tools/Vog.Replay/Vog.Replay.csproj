@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Vog.Companion\Vog.Companion.csproj" />
     <ProjectReference Include="..\..\src\Vog.Pipeline\Vog.Pipeline.csproj" />
     <ProjectReference Include="..\..\src\Vog.Voice\Vog.Voice.csproj" />
   </ItemGroup>

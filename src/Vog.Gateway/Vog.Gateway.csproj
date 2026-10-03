@@ -5,8 +5,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Vog.Companion\Vog.Companion.csproj" />
     <ProjectReference Include="..\Vog.Pipeline\Vog.Pipeline.csproj" />
     <ProjectReference Include="..\Vog.Voice\Vog.Voice.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
   </ItemGroup>
 
 </Project>

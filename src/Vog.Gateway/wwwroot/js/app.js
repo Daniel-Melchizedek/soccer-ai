@@ -1,5 +1,6 @@
 // Listener page: joins a channel, plays its speech through an AudioWorklet, plays earcons, and shows
 // word-timed captions. Audio never passes through the main thread's timers: the worklet owns timing.
+import { startCompanion } from './ask.js';
 import { playEarcon } from './earcons.js';
 
 const SAMPLE_RATE = 24000;
@@ -16,7 +17,8 @@ const pending = new Map(); // utterance id -> message + { receivedAt, startedAt,
 let ctx = null;
 let player = null;
 let connection = null;
-let speech = false;
+let stopCompanion = null;
+let listeningStatus = '';
 let teams = null;
 let captionTimers = [];
 
@@ -33,7 +35,9 @@ async function start() {
     ctx = new AudioContext({ sampleRate: SAMPLE_RATE, latencyHint: 'interactive' });
     await ctx.audioWorklet.addModule('js/pcm-player.worklet.js');
     player = new AudioWorkletNode(ctx, 'pcm-player', { numberOfInputs: 0, outputChannelCount: [1] });
-    player.connect(ctx.destination);
+    // Commentary goes through a gain the companion turns down while a question is asked and answered.
+    const duck = new GainNode(ctx);
+    player.connect(duck).connect(ctx.destination);
     player.port.onmessage = (event) => onPlayer(event.data);
 
     connection = new signalR.HubConnectionBuilder()
@@ -56,6 +60,7 @@ async function start() {
 
     await connection.start();
     await join();
+    stopCompanion = await startCompanion({ ctx, connection, duck, setStatus, idleStatus: () => listeningStatus });
     el('start').textContent = 'Stop listening';
   } catch (err) {
     console.error(err);
@@ -67,6 +72,8 @@ async function start() {
 }
 
 async function stop() {
+  await stopCompanion?.();
+  stopCompanion = null;
   const c = connection;
   connection = null;
   await c?.stop();
@@ -83,10 +90,10 @@ async function join() {
   reset();
   player?.port.postMessage({ type: 'flush' });
   const result = await connection.invoke('join', el('lang').value, el('mode').value);
-  speech = result.speech;
   teams = result;
   const channel = `${el('lang').selectedOptions[0].text}, ${el('mode').selectedOptions[0].text}`;
-  setStatus(`Listening: ${channel}. ${result.home} in ${result.homeKit} v ${result.away} in ${result.awayKit}.${speech ? '' : ' Captions only: speech is not configured on the server.'}`);
+  listeningStatus = `Listening: ${channel}. ${result.home} in ${result.homeKit} v ${result.away} in ${result.awayKit}.`;
+  setStatus(listeningStatus);
 }
 
 async function rejoin() {
@@ -102,17 +109,7 @@ function reset() {
 }
 
 function onUtterance(u) {
-  const entry = { ...u, receivedAt: performance.now(), startedAt: null, cues: null };
-  if (!speech) {
-    // Captions only: show each line as the booth airs it.
-    entry.startedAt = entry.receivedAt;
-    playEarcon(ctx, u.earcon, u.pan);
-    showCaptions(entry);
-    addHistory(u);
-    return;
-  }
-
-  pending.set(u.id, entry);
+  pending.set(u.id, { ...u, receivedAt: performance.now(), startedAt: null, cues: null });
   player.port.postMessage({ type: 'begin', id: u.id, skipAfter: SKIP_AFTER_S[u.priority] ?? SKIP_AFTER_DEFAULT_S });
 }
 

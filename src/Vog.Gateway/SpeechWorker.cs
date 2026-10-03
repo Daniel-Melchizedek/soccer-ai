@@ -9,12 +9,14 @@ namespace Vog.Gateway;
 
 /// <summary>
 /// Speaks one channel's utterances, in order, and streams the audio to the channel's listeners as
-/// it is synthesized. Without a configured endpoint it sends captions only.
+/// it is synthesized.
 /// </summary>
 public sealed class SpeechWorker : IAsyncDisposable
 {
+    private static readonly TimeSpan WarmUpRetry = TimeSpan.FromSeconds(2);
+
     private readonly ChannelSpec _channel;
-    private readonly Uri? _endpoint;
+    private readonly Uri _endpoint;
     private readonly IHubContext<CommentaryHub> _hub;
     private readonly LatencyStats _stats;
     private readonly ILogger _log;
@@ -23,7 +25,7 @@ public sealed class SpeechWorker : IAsyncDisposable
     private readonly Task _loop;
     private NeuralSynthesizer? _tts;
 
-    public SpeechWorker(ChannelSpec channel, Uri? endpoint, IHubContext<CommentaryHub> hub, LatencyStats stats, ILogger log)
+    public SpeechWorker(ChannelSpec channel, Uri endpoint, IHubContext<CommentaryHub> hub, LatencyStats stats, ILogger log)
     {
         _channel = channel;
         _endpoint = endpoint;
@@ -38,11 +40,7 @@ public sealed class SpeechWorker : IAsyncDisposable
 
     private async Task RunAsync(CancellationToken ct)
     {
-        if (_endpoint is not null)
-        {
-            await WarmUpAsync(ct);
-        }
-
+        var tts = await WarmUpAsync(ct);
         var group = _hub.Clients.Group(_channel.Id);
         await foreach (var (u, startedAt) in _queue.Reader.ReadAllAsync(ct))
         {
@@ -54,21 +52,14 @@ public sealed class SpeechWorker : IAsyncDisposable
                 continue;
             }
 
-            if (_tts is null)
-            {
-                // No speech (not configured, or sign-in failed): captions, and an end so players move on.
-                await group.SendAsync("captions", u.UtteranceId, new[] { new CaptionCueMessage(0, u.DurationMs, [u.Text]) }, ct);
-                await group.SendAsync("audioEnd", u.UtteranceId, 0L, ct);
-                continue;
-            }
-
             try
             {
-                await SpeakAsync(group, u, startedAt, ct);
+                await SpeakAsync(tts, group, u, startedAt, ct);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _log.LogWarning(ex, "Speech failed on {Channel} for '{Text}'", _channel.Id, u.Text);
+                // The line is lost; ending it lets players move on to the next one.
+                _log.LogError(ex, "Speech failed on {Channel} for '{Text}'", _channel.Id, u.Text);
                 await group.SendAsync("audioEnd", u.UtteranceId, 0L, ct);
             }
         }
@@ -76,25 +67,32 @@ public sealed class SpeechWorker : IAsyncDisposable
 
     /// <summary>
     /// Connects and signs in before the first line airs (both take seconds), with a throwaway phrase
-    /// that listeners never hear. Lines queued meanwhile wait, and that wait is counted in the latency.
+    /// that listeners never hear. Retries until it succeeds; lines queued meanwhile go stale and are
+    /// skipped, so the channel starts on what's current.
     /// </summary>
-    private async Task WarmUpAsync(CancellationToken ct)
+    private async Task<NeuralSynthesizer> WarmUpAsync(CancellationToken ct)
     {
         var started = Stopwatch.GetTimestamp();
-        try
+        while (true)
         {
-            _tts = new NeuralSynthesizer(_endpoint!, AzureCredentials.Shared, VoiceCatalog.For(_channel.Lang, _channel.Mode));
-            await _tts.SpeakAsync(_channel.Lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? "Listo." : "Ready.", ct);
-            _log.LogInformation("Speech ready on {Channel} in {Ms:0} ms", _channel.Id, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Lines still fail one by one below (each logged) and listeners keep their captions.
-            _log.LogWarning(ex, "Speech warm-up failed on {Channel}", _channel.Id);
+            try
+            {
+                _tts = new NeuralSynthesizer(_endpoint, AzureCredentials.Shared, VoiceCatalog.For(_channel.Lang, _channel.Mode));
+                await _tts.SpeakAsync(_channel.Lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? "Listo." : "Ready.", ct);
+                _log.LogInformation("Speech ready on {Channel} in {Ms:0} ms", _channel.Id, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+                return _tts;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _log.LogError(ex, "Speech couldn't start on {Channel}; retrying in {Seconds} s", _channel.Id, WarmUpRetry.TotalSeconds);
+                _tts?.Dispose();
+                _tts = null;
+                await Task.Delay(WarmUpRetry, ct);
+            }
         }
     }
 
-    private async Task SpeakAsync(IClientProxy group, Utterance u, long startedAt, CancellationToken ct)
+    private async Task SpeakAsync(NeuralSynthesizer tts, IClientProxy group, Utterance u, long startedAt, CancellationToken ct)
     {
         // Chunks are forwarded in order by a single sender as they stream in from the service.
         var chunks = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions { SingleReader = true });
@@ -115,15 +113,15 @@ public sealed class SpeechWorker : IAsyncDisposable
         }, ct);
 
         void OnChunk(byte[] data) => chunks.Writer.TryWrite(data);
-        _tts!.AudioChunk += OnChunk;
+        tts.AudioChunk += OnChunk;
         SynthesisResult result;
         try
         {
-            result = await _tts.SpeakAsync(u.Text, ct);
+            result = await tts.SpeakAsync(u.Text, ct);
         }
         finally
         {
-            _tts.AudioChunk -= OnChunk;
+            tts.AudioChunk -= OnChunk;
             chunks.Writer.Complete();
             await sender;
         }
