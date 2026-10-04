@@ -3,7 +3,7 @@ using Vog.Pipeline;
 
 namespace Vog.GoldenMatch.Tests;
 
-/// <summary>Plays the golden match once, on four channels at once, and shares the result.</summary>
+/// <summary>Plays the golden match once, on five channels at once, and shares the result.</summary>
 public sealed class GoldenRun
 {
     public static readonly ChannelSpec[] Channels =
@@ -12,6 +12,7 @@ public sealed class GoldenRun
         new("es-ES", ListenerMode.AudioDescription),
         new("en-GB", ListenerMode.Commentary),
         new("en-GB", ListenerMode.Calm),
+        new("ta-IN", ListenerMode.AudioDescription),
     ];
 
     public OfflineMatchResult Result { get; } = OfflineMatchRun.Run(Pipeline.GoldenMatch.Setup(), Channels);
@@ -19,7 +20,7 @@ public sealed class GoldenRun
 
 public sealed class GoldenMatchTests(GoldenRun golden) : IClassFixture<GoldenRun>
 {
-    public static TheoryData<int> ChannelIndexes => [0, 1, 2, 3];
+    public static TheoryData<int> ChannelIndexes => [0, 1, 2, 3, 4];
 
     [Theory]
     [MemberData(nameof(ChannelIndexes))]

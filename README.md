@@ -17,7 +17,7 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 |---|---|---|
 | (a) Ingest | `Vog.Simulator` | A seeded, deterministic 4-3-3 match simulator: 10 Hz tracking, match events, and the scene details an audio describer needs (kits, weather, celebrations, crowd, VAR) |
 | (b) Interpret | `Vog.Stats` | Speed, distance and sprint tags from tracking; pass difficulty with its causes; xG; ball and shot speed; live ball state with restarts inferred from the laws of the game |
-| (c) Describe | `Vog.Describe` | Language-neutral utterance intents, realized through reviewed phrase banks (`en-GB` reviewed, `es-ES` **draft**: needs native-speaker review before use on air) |
+| (c) Describe | `Vog.Describe` | Language-neutral utterance intents, realized through reviewed phrase banks (`en-GB` reviewed; `es-ES` and `ta-IN` (Tamil) **draft**: they need native-speaker review before use on air) |
 | (d) Schedule | `Vog.Booth` | The **Booth Producer**: decides what is spoken when on a serial audio channel, using priorities, preemption, staleness rules, location obligations and dead-ball colour |
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices signed in with Microsoft Entra ID (the resource has no keys), 24 kHz PCM streamed as it arrives, captions timed to the spoken words (WebVTT, at most 2 lines of 37 characters), and cuts at word boundaries when the booth interrupts |
@@ -53,7 +53,7 @@ The golden match meets all the accessibility targets from BUILD_PLAN.md §17, on
 | Dead-ball calls (restarts, substitutions) → speech, p95 | 4.9 s | ≤ 8 s |
 | Overlapping utterances / urgent items lost | 0 / 0 | 0 / 0 |
 
-Speaking-time estimates are calibrated against the real Azure voices with `vog-replay speak`: spoken ÷ estimated duration is 1.01 at the median for English audio description. Synthesizing each line when it is *queued* rather than when it airs hides the service's first-byte latency: a median of 36 ms added, against about 600 ms on this development network.
+Speaking-time estimates are calibrated against the real Azure voices with `vog-replay speak`: spoken ÷ estimated duration is 1.01 at the median for English audio description, and 1.05 for Tamil, whose longer words get their own rate factor. Synthesizing each line when it is *queued* rather than when it airs hides the service's first-byte latency: a median of 36 ms added, against about 600 ms on this development network.
 
 The simulator passes its **synthetic data card** over 20 seeds. Means: 2.5 goals (2.6 xG), 25 shots, 81% pass completion, 61 minutes of ball in play, 10 km and 34 sprints per outfield player, plus realistic fouls, cards, corners, throw-ins and goal kicks.
 
@@ -62,7 +62,7 @@ The simulator passes its **synthetic data card** over 20 seeds. Means: 2.5 goals
 Prerequisite: the [.NET 10 SDK](https://dotnet.microsoft.com/download) (pinned in `global.json`).
 
 ```bash
-dotnet test                                   # 88 tests: determinism, physics, models, phrase banks, booth, golden match, schedule, captions, match tools
+dotnet test                                   # 92 tests: determinism, physics, models, phrase banks, booth, golden match, schedule, captions, match tools
 
 dotnet run --project tools/Vog.Replay -- commentary                    # full match, English audio description
 dotnet run --project tools/Vog.Replay -- commentary --lang es-ES       # Spanish (draft phrase bank)
@@ -113,7 +113,7 @@ A line that could only start well behind the booth's schedule is skipped, so a h
 
 ### Ask about the match (Foundry agents)
 
-On the listener page, hold **Hold to ask** (or hold Space or Enter on it) and ask; or type the question. The gateway relays it to Azure Voice Live in agent mode, connected to the Foundry agent for the channel's language (`vog-match-companion-en-gb`, `vog-match-companion-es-es`). The agent's MCP tools read the gateway's live match, so answers come from match data, and it declines anything that isn't about the match.
+On the listener page, hold **Hold to ask** (or hold Space or Enter on it) and ask; or type the question. The gateway relays it to Azure Voice Live in agent mode, connected to the Foundry agent for the channel's language (`vog-match-companion-en-gb`, `-es-es`, `-ta-in`): English, Spanish and Tamil, spoken or typed. The agent's MCP tools read the gateway's live match, so answers come from match data, and it declines anything that isn't about the match.
 
 ```powershell
 dotnet run --project tools/Vog.Replay -- companion --say "Who has the ball?"          # straight to the agent over Voice Live

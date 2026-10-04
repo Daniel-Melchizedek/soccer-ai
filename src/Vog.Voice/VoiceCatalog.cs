@@ -16,6 +16,7 @@ public static class VoiceCatalog
     {
         ["en-GB"] = "en-GB-RyanNeural",
         ["es-ES"] = "es-ES-AlvaroNeural",
+        ["ta-IN"] = "ta-IN-ValluvarNeural",
     };
 
     /// <summary>The voice Q&amp;A companion answers in a different voice, so a listener always knows who is speaking.</summary>
@@ -23,6 +24,7 @@ public static class VoiceCatalog
     {
         ["en-GB"] = "en-GB-SoniaNeural",
         ["es-ES"] = "es-ES-ElviraNeural",
+        ["ta-IN"] = "ta-IN-PallaviNeural",
     };
 
     public static string Companion(string lang) =>

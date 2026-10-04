@@ -124,7 +124,7 @@ internal static class Ask
         DotEnv.Load();
         var endpoint = Environment.GetEnvironmentVariable("VOG_AI_ENDPOINT")
             ?? throw new InvalidOperationException("VOG_AI_ENDPOINT is not set. Run infra/provision.ps1 first; it writes .env.local.");
-        var fan = lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? "es-ES-ElviraNeural" : "en-GB-LibbyNeural";
+        var fan = CompanionCheck.FanVoice(lang);
         using var tts = new NeuralSynthesizer(new Uri(endpoint), AzureCredentials.Shared, new VoiceProfile(lang, fan, "+0%"));
         var pcm = (await tts.SpeakAsync(text)).Pcm;
 

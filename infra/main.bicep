@@ -25,7 +25,7 @@ param mcpApiKey string
 param gatewayImage string = ''
 
 @description('Commentary languages with a companion agent; each gets its own MCP connection (see below).')
-param companionLanguages array = ['en-GB', 'es-ES']
+param companionLanguages array = ['en-GB', 'es-ES', 'ta-IN']
 
 var suffix = take(uniqueString(resourceGroup().id), 6)
 var name = 'vog-${environmentName}'

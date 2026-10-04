@@ -1,123 +1,393 @@
+/* Voice of the Game: deep purple with an orange headline, after the hackathon's look, built to stay
+   readable first. Text contrast is at least 7:1 on the page background (WCAG AAA for body text),
+   focus is a thick yellow ring, motion respects prefers-reduced-motion, and prefers-contrast and
+   forced-colors modes drop the gradients for plain black and white. */
+
 :root {
-  color-scheme: light dark;
-  --fg: #111;
-  --bg: #fff;
-  --muted: #555;
-  --accent: #0b5cad;
-  --caption-bg: #000;
-  --caption-fg: #fff;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+  --bg-deep: #0c0118;
+  --bg: #14032b;
+  --bg-raised: #221043;
+  --border: #4a2d7a;
+  --fg: #ffffff;
+  --muted: #d4c6f0;
+  --accent: #ff8a2a;
+  --accent-strong: #ffa04d;
+  --on-accent: #1a0533;
+  --teal: #2fe0d4;
+  --magenta: #e45cff;
+  --focus: #ffd84d;
+  --caption-bg: #000000;
+  --caption-fg: #ffffff;
+  --radius: 1rem;
+  font-family: system-ui, -apple-system, "Segoe UI", "Nirmala UI", "Noto Sans Tamil", "Latha", sans-serif;
   font-size: 1.125rem;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --fg: #f2f2f2;
-    --bg: #121212;
-    --muted: #bbb;
-    --accent: #7fb7ff;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg-deep);
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
   color: var(--fg);
-  background: var(--bg);
+  background:
+    radial-gradient(60rem 40rem at 75% -10%, #3d0f73 0%, transparent 60%),
+    radial-gradient(50rem 30rem at -10% 30%, #2a0a52 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  background-attachment: fixed;
 }
 
-main {
-  max-width: 48rem;
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  padding: 0.75rem 1rem;
+  background: var(--focus);
+  color: #000;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  z-index: 10;
+}
+
+.skip:focus {
+  top: 1rem;
+}
+
+/* ---- Hero ---- */
+
+.hero {
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 1.5rem;
-}
-
-.note,
-details {
-  color: var(--muted);
-}
-
-.options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  padding: 2.5rem 1.5rem 1rem;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
   align-items: center;
 }
 
+.kicker {
+  margin: 0;
+  color: var(--teal);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+h1 {
+  margin: 0.25rem 0 0;
+  color: var(--accent);
+  font-size: clamp(2.6rem, 6vw, 4.5rem);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 0.5rem 0 0;
+  font-size: clamp(1.3rem, 2.6vw, 1.9rem);
+  font-weight: 600;
+}
+
+.lead {
+  color: var(--muted);
+  max-width: 38rem;
+}
+
+.hero-art {
+  width: 100%;
+  height: auto;
+  max-width: 30rem;
+  justify-self: center;
+}
+
+/* ---- Layout ---- */
+
+main {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 2rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(48, 22, 92, 0.85), rgba(28, 10, 58, 0.85));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+}
+
+.card h2:not(:first-child) {
+  margin-top: 1.5rem;
+}
+
+.note {
+  color: var(--muted);
+  font-size: 0.98rem;
+}
+
+/* ---- Controls ---- */
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+label {
+  font-weight: 600;
+}
+
 select,
+input,
 button {
   font: inherit;
+}
+
+select,
+input {
+  min-height: 3rem;
   padding: 0.5rem 0.75rem;
+  color: var(--fg);
+  background: var(--bg-deep);
+  border: 2px solid var(--border);
+  border-radius: 0.6rem;
 }
 
 button {
   min-height: 3rem;
-  min-width: 12rem;
-  border: 2px solid var(--accent);
-  border-radius: 0.5rem;
-  background: var(--accent);
-  color: var(--bg);
+  padding: 0.5rem 1.4rem;
+  border-radius: 999px;
   cursor: pointer;
-}
-
-:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
-}
-
-.status {
-  display: block;
-  margin: 1rem 0;
-}
-
-.score {
-  font-size: 1.75rem;
   font-weight: 700;
 }
 
-.caption {
-  min-height: 3.4em;
-  padding: 0.5rem 0.75rem;
-  background: var(--caption-bg);
-  color: var(--caption-fg);
-  font-size: 1.5rem;
-  white-space: pre-line;
+.primary {
+  min-width: 13rem;
+  color: var(--on-accent);
+  background: var(--accent);
+  border: 2px solid var(--accent);
 }
 
-.ask form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.primary:hover {
+  background: var(--accent-strong);
+}
+
+.secondary {
+  color: var(--fg);
+  background: transparent;
+  border: 2px solid var(--accent);
+}
+
+.talk {
+  display: inline-flex;
   align-items: center;
-  margin-top: 1rem;
+  gap: 0.6rem;
+  min-width: 14rem;
+  min-height: 3.5rem;
+  color: var(--on-accent);
+  background: var(--teal);
+  border: 2px solid var(--teal);
 }
 
-.ask input {
-  font: inherit;
-  padding: 0.5rem 0.75rem;
-  flex: 1 1 16rem;
+.talk-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--on-accent);
 }
 
-#talk[aria-pressed="true"] {
-  background: var(--fg);
-  border-color: var(--fg);
+.talk[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
-.answer {
-  font-size: 1.25rem;
-  font-weight: 600;
+.talk[aria-pressed="true"] .talk-icon {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
 }
 
 button:disabled,
 input:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+.status {
+  display: block;
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+/* ---- Scoreboard ---- */
+
+.scoreboard {
+  text-align: center;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #ff3b5c;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.score {
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem 1.2rem;
+  font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+}
+
+.score .goals {
+  padding: 0.1rem 1rem;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 0.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.score .clock {
+  color: var(--teal);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8em;
+}
+
+.kit {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.4em;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  vertical-align: -0.05em;
+}
+
+/* ---- Captions and history ---- */
+
+.caption {
+  min-height: 4.2em;
+  padding: 0.75rem 1rem;
+  background: var(--caption-bg);
+  color: var(--caption-fg);
+  border-left: 6px solid var(--accent);
+  border-radius: 0.5rem;
+  font-size: 1.5rem;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
 .history {
-  max-height: 16rem;
+  max-height: 18rem;
   overflow-y: auto;
+  margin: 0;
   padding-left: 1.5rem;
+  color: var(--muted);
+}
+
+.history li {
+  padding: 0.2rem 0;
+}
+
+.history li:first-child {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ---- Ask ---- */
+
+.ask form {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ask-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ask-row input {
+  flex: 1 1 14rem;
+}
+
+.heard {
+  color: var(--muted);
+  min-height: 1.5em;
+}
+
+.answer {
+  margin: 0;
+  padding-left: 1rem;
+  border-left: 4px solid var(--teal);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.answer:empty {
+  border-left: 0;
+}
+
+/* ---- Footer and misc ---- */
+
+.details summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.footer {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 2.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .visually-hidden {
@@ -129,8 +399,63 @@ input:disabled {
   white-space: nowrap;
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (max-width: 52rem) {
+  .hero,
+  .columns {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-art {
+    max-width: 18rem;
+    order: -1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Fans who ask for more contrast get plain black and white with a yellow accent. */
+@media (prefers-contrast: more) {
+  :root {
+    --bg-deep: #000000;
+    --bg: #000000;
+    --border: #ffffff;
+    --muted: #ffffff;
+    --accent: #ffd400;
+    --accent-strong: #ffe766;
+    --on-accent: #000000;
+    --teal: #ffffff;
+  }
+
+  body,
+  .card {
+    background: #000000;
+  }
+}
+
+@media (forced-colors: active) {
+  .card,
+  .caption,
+  button,
+  select,
+  input {
+    border: 2px solid CanvasText;
+  }
+
+  .live-dot,
+  .kit,
+  .talk-icon {
+    forced-color-adjust: none;
   }
 }

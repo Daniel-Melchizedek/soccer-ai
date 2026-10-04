@@ -24,20 +24,24 @@ public sealed partial class PhraseBankTests
         ["clock"] = new ClockSlot(23, 0),
     };
 
-    public static TheoryData<string> Languages => ["en-GB", "es-ES"];
+    public static TheoryData<string> Languages => ["en-GB", "es-ES", "ta-IN"];
+
+    public static TheoryData<string> Transcreations => ["es-ES", "ta-IN"];
 
     [Fact]
     public void BanksLoadWithTheExpectedReviewStatus()
     {
         Assert.Equal(PhraseStatus.Reviewed, PhraseBankLoader.Get("en-GB").Status);
         Assert.Equal(PhraseStatus.Draft, PhraseBankLoader.Get("es-ES").Status);
+        Assert.Equal(PhraseStatus.Draft, PhraseBankLoader.Get("ta-IN").Status);
     }
 
-    [Fact]
-    public void SpanishCoversEveryEnglishKey()
+    [Theory]
+    [MemberData(nameof(Transcreations))]
+    public void TranscreationsCoverEveryEnglishKey(string lang)
     {
         var en = PhraseBankLoader.Get("en-GB");
-        var es = PhraseBankLoader.Get("es-ES");
+        var es = PhraseBankLoader.Get(lang);
 
         Assert.Empty(en.Phrases.Keys.Except(es.Phrases.Keys));
         Assert.Empty(en.Zones.Keys.Except(es.Zones.Keys));
@@ -97,6 +101,20 @@ public sealed partial class PhraseBankTests
     }
 
     [Fact]
+    public void TamilUsesItsOwnTeamNamesAndKeepsSuffixesOffPlayerNames()
+    {
+        var realizer = new Realizer(PhraseBankLoader.Get("ta-IN"));
+
+        Assert.Equal("ஆட்டம் தொடங்கியது. சிவப்பு உடையில் சிவப்பு அணி, உங்கள் இடது பக்க கோல் நோக்கித் தாக்குகிறது.", realizer.Realize(Intent("k", "pbp.kickoff")));
+        Assert.Contains("சிவப்பு அணிக்கு கார்னர்", realizer.Realize(Intent("c", "pbp.out.corner")) + realizer.Realize(Intent("c2", "pbp.out.corner")));
+
+        // A Tamil suffix glued to a Latin-script name ("Okaforக்கு") reads badly: names stand alone.
+        foreach (var (key, variants) in realizer.Bank.Phrases)
+        {
+            Assert.All(variants, v => Assert.DoesNotMatch(@"\{(player|receiver|victim|keeper|replaced)\}[\u0B80-\u0BFF]", v));
+        }
+    }
+    [Fact]
     public void ShotSpeedsReadAsWholeNumbers()
     {
         var realizer = new Realizer(PhraseBankLoader.Get("en-GB"));
@@ -120,7 +138,7 @@ public sealed partial class PhraseBankTests
             }
         }
 
-        foreach (var lang in new[] { "en-GB", "es-ES" })
+        foreach (var lang in new[] { "en-GB", "es-ES", "ta-IN" })
         {
             var bank = PhraseBankLoader.Get(lang);
             Assert.All(keys, k => Assert.True(bank.Phrases.ContainsKey(k), $"{lang} is missing '{k}'"));

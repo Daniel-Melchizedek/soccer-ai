@@ -133,7 +133,7 @@ public sealed class SsmlTests
     [Fact]
     public void EveryLanguageAndModeHasAVoice()
     {
-        foreach (var lang in new[] { "en-GB", "es-ES" })
+        foreach (var lang in new[] { "en-GB", "es-ES", "ta-IN" })
         {
             foreach (var mode in Enum.GetValues<ListenerMode>())
             {

@@ -28,7 +28,7 @@ internal static class CompanionCheck
         long asked;
         if (spoken)
         {
-            var fan = lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? "es-ES-ElviraNeural" : "en-GB-LibbyNeural";
+            var fan = FanVoice(lang);
             using var tts = new NeuralSynthesizer(new Uri(Required("VOG_AI_ENDPOINT")), AzureCredentials.Shared, new VoiceProfile(lang, fan, "+0%"));
             var pcm = (await tts.SpeakAsync(question)).Pcm;
             await session.BeginTurnAsync();
@@ -78,6 +78,14 @@ internal static class CompanionCheck
 
         return 1;
     }
+
+    /// <summary>A voice for the synthetic fan asking the question, distinct from the companion's.</summary>
+    internal static string FanVoice(string lang) => lang[..2].ToLowerInvariant() switch
+    {
+        "es" => "es-ES-AlvaroNeural",
+        "ta" => "ta-IN-ValluvarNeural",
+        _ => "en-GB-LibbyNeural",
+    };
 
     private static string Required(string name) =>
         Environment.GetEnvironmentVariable(name) is { Length: > 0 } value

@@ -10,6 +10,7 @@ description: Answers fans' spoken and typed questions about the live match, from
 languages:
   en-GB: British English
   es-ES: Spanish as spoken in Spain
+  ta-IN: Tamil
 # A fan is waiting mid-match: questions are look-ups, so the model shouldn't deliberate.
 reasoning_effort: none
 tools:

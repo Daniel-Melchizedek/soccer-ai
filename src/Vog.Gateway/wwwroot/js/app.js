@@ -91,6 +91,8 @@ async function join() {
   player?.port.postMessage({ type: 'flush' });
   const result = await connection.invoke('join', el('lang').value, el('mode').value);
   teams = result;
+  // Captions, the log and answers are in the channel's language: screen readers and fonts need to know.
+  document.querySelectorAll('[data-channel-lang]').forEach((e) => (e.lang = el('lang').value));
   const channel = `${el('lang').selectedOptions[0].text}, ${el('mode').selectedOptions[0].text}`;
   listeningStatus = `Listening: ${channel}. ${result.home} in ${result.homeKit} v ${result.away} in ${result.awayKit}.`;
   setStatus(listeningStatus);
@@ -173,8 +175,25 @@ function addHistory(u) {
   }
 }
 
+/** Kit colours for the scoreboard markers (decorative: team names carry the meaning). */
+const KIT_COLOURS = { red: '#e53935', blue: '#1e63ff', white: '#ffffff', yellow: '#ffd400', green: '#1faa59', claret: '#7b1e3a', sky_blue: '#64c8ff', orange: '#ff8a2a', black: '#111111', purple: '#7e3ff2' };
+
 function showState(s) {
-  el('score').textContent = teams ? `${teams.home} ${s.homeScore}, ${teams.away} ${s.awayScore}. ${s.clock}` : `${s.homeScore}–${s.awayScore}. ${s.clock}`;
+  const part = (text, className) => Object.assign(document.createElement('span'), { textContent: text, className });
+  const team = (name, kit) => {
+    const span = part(name ?? '', 'team');
+    const marker = part('', 'kit');
+    marker.setAttribute('aria-hidden', 'true');
+    marker.style.background = KIT_COLOURS[kit] ?? 'transparent';
+    span.prepend(marker);
+    return span;
+  };
+
+  el('score').replaceChildren(
+    team(teams?.home ?? 'Home', teams?.homeKit),
+    part(`${s.homeScore} – ${s.awayScore}`, 'goals'),
+    team(teams?.away ?? 'Away', teams?.awayKit),
+    part(s.clock, 'clock'));
 }
 
 function setStatus(text) {

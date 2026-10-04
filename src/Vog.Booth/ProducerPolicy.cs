@@ -38,7 +38,15 @@ public sealed record ProducerPolicy(
         return policy with { WordsPerSecond = policy.WordsPerSecond * LanguageRate(lang) };
     }
 
-    /// <summary>Words per second relative to English: Spanish words carry more syllables.</summary>
-    private static double LanguageRate(string lang) =>
-        lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? 0.92 : 1.0;
+    /// <summary>
+    /// Words per second relative to English, calibrated against the live voices with
+    /// <c>vog-replay speak</c>: Spanish words carry more syllables, and Tamil words, which take
+    /// their case endings as suffixes, are longer still (spoken ÷ estimated was 1.27 at 1.0).
+    /// </summary>
+    private static double LanguageRate(string lang) => lang[..2].ToLowerInvariant() switch
+    {
+        "es" => 0.92,
+        "ta" => 0.79,
+        _ => 1.0,
+    };
 }

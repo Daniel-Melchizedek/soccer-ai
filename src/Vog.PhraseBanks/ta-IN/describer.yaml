@@ -1,0 +1,214 @@
+# Audio-description phrase bank: Tamil (India), describer persona.
+# STATUS: DRAFT. Transcreated from the en-GB master; must be reviewed by a native-speaking
+# football describer before it is used on air (BUILD_PLAN.md §8.3, Transcreation Studio).
+# Player names stay in their original script and stand alone as subjects: Tamil case suffixes go on
+# Tamil words only ("{team}க்கு" gives "சிவப்பு அணிக்கு"), never glued onto a Latin-script name.
+# Football terms follow common Tamil broadcast usage (கோல், பாஸ், ஷாட், கார்னர், ஃப்ரீ கிக்).
+lang: ta-IN
+persona: describer
+status: draft
+decimal_separator: "."
+
+phrases:
+  pbp.kickoff:
+    - "ஆட்டம் தொடங்கியது. {team.kit} உடையில் {team}, உங்கள் {side} பக்க கோல் நோக்கித் தாக்குகிறது."
+  pbp.second_half:
+    - "இரண்டாம் பாதி தொடங்கியது. {team.kit} உடையில் {team}, இப்போது உங்கள் {side} பக்க கோல் நோக்கித் தாக்குகிறது."
+  pbp.pass.short:
+    - "{player} பாஸ், {receiver} பெறுகிறார், {zone}."
+    - "{player} சிறிய பாஸ், {receiver}, {zone}."
+    - "{player} கொடுக்கிறார், {receiver} வாங்குகிறார், {zone}."
+  pbp.pass.long:
+    - "{player} நீண்ட பாஸ், {receiver} கட்டுப்படுத்துகிறார், {zone}."
+    - "நீளமான பந்து, {receiver} பெறுகிறார், {zone}."
+    - "{player} நீண்ட தூரம் அனுப்புகிறார், {receiver}, {zone}."
+  pbp.cross:
+    - "{player} கிராஸ், {receiver} பெறுகிறார், {zone}."
+    - "{player} பந்தை உள்ளே அனுப்புகிறார், {receiver}, {zone}."
+  pbp.carry:
+    - "{player} பந்துடன் முன்னேறுகிறார், {zone}."
+    - "{player} பந்தை எடுத்துச் செல்கிறார், {zone}."
+    - "{player} ஓடுகிறார், {zone}."
+  pbp.intercepted:
+    - "இடைமறிப்பு. பந்து {team} வசம், {player}, {zone}."
+    - "{player} இடைமறிக்கிறார், பந்து {team} வசம், {zone}."
+  pbp.tackle:
+    - "டாக்கிள்! {player} பந்தைப் பறிக்கிறார், {victim} இழக்கிறார், {zone}."
+    - "{player} டாக்கிள், {victim} பந்தை இழக்கிறார், {zone}."
+  pbp.possession:
+    - "தளர்ந்த பந்து, {team} சார்பில் {player} எடுக்கிறார், {zone}."
+    - "{team} பந்தை மீட்கிறது, {player}, {zone}."
+  pbp.clearance:
+    - "{player} பந்தை அகற்றுகிறார்."
+    - "{player} பந்தை தூரமாக அனுப்புகிறார்."
+    - "கிளியரன்ஸ், {player}."
+  pbp.shot:
+    - "{distance} தூரத்திலிருந்து {player} ஷாட்!"
+    - "{player} அடிக்கிறார், {distance} தூரத்திலிருந்து!"
+  pbp.header:
+    - "{player} ஹெடர்!"
+    - "{player} தலையால் முட்டுகிறார்!"
+  pbp.goal:
+    - "கோல்! {player} கோல் அடித்தார்! {score}."
+    - "உள்ளே! {player}! {score}."
+  pbp.saved:
+    - "{keeper} தடுக்கிறார்!"
+    - "{keeper} அற்புதமாகத் தடுக்கிறார்!"
+  pbp.wide:
+    - "வெளியே செல்கிறது."
+    - "கோலுக்கு வெளியே."
+    - "இலக்கைத் தவறவிட்டது."
+  pbp.blocked:
+    - "தடுக்கப்பட்டது!"
+    - "தடுப்பாட்டக்காரர்கள் தடுக்கிறார்கள்!"
+  pbp.foul:
+    - "{player} ஃபவுல், {victim} கீழே விழுகிறார். {team}க்கு ஃப்ரீ கிக், {zone}."
+    - "ஃபவுல், {player}. {victim} கீழே. {team}க்கு ஃப்ரீ கிக்."
+  pbp.card.yellow:
+    - "மஞ்சள் அட்டை, {player}."
+    - "{player} எச்சரிக்கப்படுகிறார், மஞ்சள் அட்டை."
+  pbp.card.second_yellow:
+    - "இரண்டாவது மஞ்சள் அட்டை, {player} வெளியேற்றப்படுகிறார். {team} இப்போது பத்து வீரர்களுடன்."
+  pbp.card.red:
+    - "நேரடி சிவப்பு அட்டை, {player}! {team} இப்போது பத்து வீரர்களுடன்."
+  pbp.offside:
+    - "ஆஃப்சைடு கொடி உயர்கிறது, {player}. {team}க்கு ஃப்ரீ கிக்."
+  pbp.out.throw_in:
+    - "பந்து வெளியே, {team}க்கு த்ரோ-இன்."
+    - "த்ரோ-இன், {team}."
+  pbp.out.corner:
+    - "{team}க்கு கார்னர்."
+    - "கோல் கோட்டைத் தாண்டியது, {team}க்கு கார்னர்."
+  pbp.out.goal_kick:
+    - "{team}க்கு கோல் கிக்."
+    - "வெளியே, கோல் கிக், {team}."
+  pbp.corner.taken:
+    - "{player} கார்னர் அடிக்கிறார்."
+    - "{player} கார்னரை பெனால்டி பகுதிக்குள் அனுப்புகிறார்."
+  pbp.free_kick.taken:
+    - "{player} ஃப்ரீ கிக் அடிக்கிறார்."
+  pbp.sub:
+    - "{team} மாற்றம்: {replaced} வெளியே, {player} உள்ளே."
+    - "வீரர் மாற்றம், {team}: {player} உள்ளே, {replaced} வெளியே."
+  pbp.halftime:
+    - "இடைவேளை. {score}."
+  pbp.fulltime:
+    - "ஆட்டம் முடிந்தது! {score}."
+
+  loc.ball:
+    - "{team}: {player}, {zone}."
+    - "பந்து {player} வசம், {zone}."
+    - "{team} வசம், {player}, {zone}."
+  loc.ball.loose:
+    - "பந்து {team} வசம், {zone}."
+    - "{team} பந்தை வைத்திருக்கிறது, {zone}."
+
+  rem.score_time:
+    - "{clock}. {score}."
+    - "{score}. {clock}."
+  rem.direction:
+    - "{team}, உங்கள் {side} பக்க கோல் நோக்கித் தாக்குகிறது."
+
+  graphic.top_speed:
+    - "திரையில்: {player}, ஆட்டத்தின் அதிகபட்ச வேகம், {speed}."
+  graphic.sprint:
+    - "திரையில்: {player} ஓட்டம், {speed}."
+  graphic.distance:
+    - "திரையில்: {player} ஓடிய தூரம், {distance}."
+  graphic.shot_speed:
+    - "திரையில்: ஷாட் வேகம், {speed}."
+
+  scene.kit:
+    - "{team}, {team.kit} உடையில்."
+  scene.weather.clear_evening:
+    - "தெளிவான மாலை நேரம்."
+  scene.weather.light_rain:
+    - "மைதானத்தில் லேசான மழை பெய்கிறது."
+  scene.weather.bright_sunshine:
+    - "பிரகாசமான வெயில், மைதானத்தின் பாதியில் நிழல்."
+  scene.weather.floodlit_night:
+    - "இன்றிரவு மின்விளக்குகளின் கீழ் ஆட்டம்."
+  scene.weather.breezy:
+    - "காற்று வீசுகிறது, அரங்கின் மேல் கொடிகள் அசைகின்றன."
+  scene.celebration.knee_slide:
+    - "{player} ரசிகர்களை நோக்கி முழங்காலில் சறுக்குகிறார்."
+  scene.celebration.corner_flag_dance:
+    - "{player} கார்னர் கொடி அருகே நடனமாடுகிறார்."
+  scene.celebration.team_huddle:
+    - "சக வீரர்கள் ஓடிவந்து {player} மீது குவிகிறார்கள்."
+  scene.celebration.arms_wide:
+    - "{player} கைகளை விரித்தபடி ஓடுகிறார்."
+  scene.celebration.cupped_ear:
+    - "{player} காதில் கை வைத்து ரசிகர்களைப் பார்க்கிறார்."
+  scene.celebration.jump_and_punch:
+    - "{player} துள்ளிக் குதித்து காற்றில் குத்துகிறார்."
+  scene.body.hands_on_head:
+    - "{player}, இரு கைகளையும் தலையில் வைத்தபடி."
+  scene.crowd.roar:
+    - "அரங்கம் ஆர்ப்பரிக்கிறது."
+  scene.crowd.gasp:
+    - "ரசிகர்களிடையே ஒரு பெருமூச்சு."
+  scene.var.check_complete:
+    - "VAR சோதனை, கோல் உறுதியானது."
+
+zones:
+  # Kept short on purpose: audio description needs clipped bursts (reviewer may refine wording).
+  defensive.left: "பின்னால் இடது பக்கம்"
+  defensive.centre: "பின்னால் மையத்தில்"
+  defensive.right: "பின்னால் வலது பக்கம்"
+  middle.left: "நடுக்களம் இடது பக்கம்"
+  middle.centre: "நடுக்களத்தில்"
+  middle.right: "நடுக்களம் வலது பக்கம்"
+  attacking.left: "முன்னால் இடது பக்கம்"
+  attacking.centre: "முன்னால் மையத்தில்"
+  attacking.right: "முன்னால் வலது பக்கம்"
+
+spots:
+  own_box: "தங்கள் பெனால்டி பகுதியில்"
+  centre_circle: "மைய வட்டத்தில்"
+  edge_of_box: "பெனால்டி பகுதியின் விளிம்பில்"
+  box: "பெனால்டி பகுதிக்குள்"
+  six_yard_box: "ஆறு கெஜ பகுதியில்"
+  corner_flag: "கார்னர் கொடி அருகே"
+
+sides:
+  left: "இடது"
+  right: "வலது"
+
+kits:
+  red: "சிவப்பு"
+  blue: "நீல"
+  white: "வெள்ளை"
+  yellow: "மஞ்சள்"
+  green: "பச்சை"
+  claret: "அடர் சிவப்பு"
+  sky_blue: "வான நீல"
+  orange: "ஆரஞ்சு"
+  black: "கருப்பு"
+  purple: "ஊதா"
+
+# On-air team names by kit colour ("the Red team").
+teams:
+  red: "சிவப்பு அணி"
+  blue: "நீல அணி"
+  white: "வெள்ளை அணி"
+  yellow: "மஞ்சள் அணி"
+  green: "பச்சை அணி"
+  claret: "அடர் சிவப்பு அணி"
+  sky_blue: "வான நீல அணி"
+  orange: "ஆரஞ்சு அணி"
+  black: "கருப்பு அணி"
+  purple: "ஊதா அணி"
+
+units:
+  kmh: "மணிக்கு {value} கிலோமீட்டர்"
+  m: "{value} மீட்டர்"
+  km: "{value} கிலோமீட்டர்"
+
+clock:
+  regular: "{minute} நிமிடங்கள் முடிந்தன"
+  first_minute: "முதல் நிமிடம்"
+  added: "{minute} நிமிடங்கள், கூடுதல் நேரம் {added}"
+
+score:
+  format: "{home} {homeGoals}, {away} {awayGoals}"

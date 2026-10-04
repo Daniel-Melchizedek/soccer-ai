@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 380" role="img" aria-hidden="true">
+  <!-- Original artwork for Voice of the Game: a match ball on a rock, sending out sound waves.
+       Decorative only; no league, club or sponsor marks. -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="46%" r="50%">
+      <stop offset="0" stop-color="#b03cff" stop-opacity="0.55"/>
+      <stop offset="0.55" stop-color="#5b0fa8" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#1a0533" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ball" cx="38%" cy="32%" r="72%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.65" stop-color="#ece8f5"/>
+      <stop offset="1" stop-color="#b9b0cf"/>
+    </radialGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a5368"/>
+      <stop offset="0.45" stop-color="#2c2638"/>
+      <stop offset="1" stop-color="#0b0712"/>
+    </linearGradient>
+    <linearGradient id="swoosh-magenta" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff4fd8"/>
+      <stop offset="1" stop-color="#8a2be2"/>
+    </linearGradient>
+    <linearGradient id="swoosh-teal" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#14c8c0"/>
+      <stop offset="1" stop-color="#5fe3ff"/>
+    </linearGradient>
+    <clipPath id="ball-clip">
+      <circle cx="240" cy="190" r="112"/>
+    </clipPath>
+  </defs>
+
+  <circle cx="240" cy="185" r="185" fill="url(#glow)"/>
+
+  <!-- Sound waves: the commentary leaving the ball -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M118 120 a150 150 0 0 0 0 140" stroke="#ff8a2a" stroke-width="7" opacity="0.95"/>
+    <path d="M86 98 a190 190 0 0 0 0 184" stroke="#ff8a2a" stroke-width="6" opacity="0.6"/>
+    <path d="M56 78 a230 230 0 0 0 0 224" stroke="#ff8a2a" stroke-width="5" opacity="0.3"/>
+    <path d="M362 120 a150 150 0 0 1 0 140" stroke="#14c8c0" stroke-width="7" opacity="0.95"/>
+    <path d="M394 98 a190 190 0 0 1 0 184" stroke="#14c8c0" stroke-width="6" opacity="0.6"/>
+    <path d="M424 78 a230 230 0 0 1 0 224" stroke="#14c8c0" stroke-width="5" opacity="0.3"/>
+  </g>
+
+  <!-- Rock -->
+  <path d="M96 352 L132 300 L170 288 L204 296 L240 284 L282 294 L318 286 L352 300 L388 352 Z" fill="url(#rock)"/>
+  <path d="M150 300 L176 292 L196 312 Z M290 296 L320 290 L332 314 Z" fill="#7a7290" opacity="0.35"/>
+
+  <!-- Ball -->
+  <ellipse cx="240" cy="300" rx="92" ry="10" fill="#000" opacity="0.45"/>
+  <circle cx="240" cy="190" r="112" fill="url(#ball)"/>
+  <g clip-path="url(#ball-clip)">
+    <path d="M128 150 C 180 110, 240 120, 268 170 C 236 168, 196 186, 168 230 C 146 214, 132 186, 128 150 Z" fill="url(#swoosh-magenta)"/>
+    <path d="M300 92 C 344 120, 362 170, 346 220 C 322 196, 292 188, 268 170 C 284 140, 292 116, 300 92 Z" fill="#3b0a6b"/>
+    <path d="M196 262 C 236 232, 290 226, 340 238 C 322 280, 284 304, 238 304 C 218 290, 204 278, 196 262 Z" fill="url(#swoosh-teal)"/>
+    <path d="M168 230 C 196 186, 236 168, 268 170 C 292 188, 322 196, 346 220" fill="none" stroke="#2a0750" stroke-width="5" opacity="0.6"/>
+    <path d="M128 150 C 180 110, 240 120, 268 170" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.7"/>
+    <circle cx="210" cy="140" r="34" fill="#ffffff" opacity="0.18"/>
+  </g>
+  <circle cx="240" cy="190" r="112" fill="none" stroke="#2a0750" stroke-width="3" opacity="0.5"/>
+</svg>

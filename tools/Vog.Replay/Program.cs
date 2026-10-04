@@ -1,5 +1,8 @@
 using Vog.Replay;
 
+// Spanish and Tamil commentary print as-is, whatever the console's code page.
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 var command = args.Length > 0 ? args[0] : "help";
 var options = Options.Parse(args.Skip(1).ToArray());
 

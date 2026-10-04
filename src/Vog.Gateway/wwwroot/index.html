@@ -3,66 +3,95 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Voice of the Game: listener</title>
-  <link rel="icon" href="data:,">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#14032b">
+  <title>Voice of the Game: live, accessible match commentary</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/site.css">
 </head>
 <body>
-  <main>
-    <h1>Voice of the Game</h1>
-    <p class="note">Live AI commentary of a synthetic match in a fictional league.</p>
+  <a class="skip" href="#controls">Skip to the listening controls</a>
 
-    <section aria-labelledby="options-heading" class="options">
-      <h2 id="options-heading" class="visually-hidden">Listening options</h2>
-      <label for="lang">Language</label>
-      <select id="lang">
-        <option value="en-GB">English (UK)</option>
-        <option value="es-ES">Español (draft)</option>
-      </select>
-      <label for="mode">Mode</label>
-      <select id="mode">
-        <option value="AudioDescription">Audio description</option>
-        <option value="Commentary">Commentary</option>
-        <option value="Calm">Calm</option>
-      </select>
-      <button id="start" type="button">Start listening</button>
+  <header class="hero">
+    <div class="hero-text">
+      <p class="kicker">Inside the Game · developer hackathon entry</p>
+      <h1>Voice of the Game</h1>
+      <p class="tagline">Live, accessible match commentary for every fan</p>
+      <p class="lead">Audio description for blind and partially sighted fans, captions for Deaf and hard-of-hearing fans, a calm mode, and a companion you can ask about the match, in English, Spanish and Tamil.</p>
+    </div>
+    <img class="hero-art" src="img/hero.svg" alt="" width="480" height="380">
+  </header>
+
+  <main>
+    <section id="controls" class="card controls" aria-labelledby="options-heading">
+      <h2 id="options-heading">Listen</h2>
+      <div class="fields">
+        <div class="field">
+          <label for="lang">Language</label>
+          <select id="lang">
+            <option value="en-GB" lang="en">English (UK)</option>
+            <option value="es-ES" lang="es">Español (borrador)</option>
+            <option value="ta-IN" lang="ta">தமிழ் (வரைவு)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="AudioDescription">Audio description</option>
+            <option value="Commentary">Commentary</option>
+            <option value="Calm">Calm</option>
+          </select>
+        </div>
+        <button id="start" class="primary" type="button">Start listening</button>
+      </div>
+      <p class="note">Headphones recommended: the short sounds before each line are panned to where the ball is, as heard from the main stand. Spanish and Tamil are drafts awaiting native-speaker review.</p>
+      <!-- UI status only: commentary itself is spoken by the app, so it isn't pushed to screen readers. -->
+      <output id="status" class="status" aria-live="polite">Not listening.</output>
     </section>
 
-    <!-- UI status only: commentary itself is spoken by the app, so it isn't pushed to screen readers. -->
-    <output id="status" class="status" aria-live="polite">Not listening.</output>
-
-    <section aria-labelledby="match-heading">
+    <section class="card scoreboard" aria-labelledby="match-heading">
       <h2 id="match-heading" class="visually-hidden">Match</h2>
+      <p class="live-badge"><span class="live-dot" aria-hidden="true"></span>Live · synthetic match, fictional league</p>
       <p id="score" class="score">Not started</p>
     </section>
 
-    <section aria-labelledby="captions-heading">
-      <h2 id="captions-heading">Captions</h2>
-      <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
-      <div id="caption" class="caption" aria-hidden="true"></div>
-      <h2 id="history-heading">Recent commentary</h2>
-      <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off"></ol>
-    </section>
+    <div class="columns">
+      <section class="card" aria-labelledby="captions-heading">
+        <h2 id="captions-heading">Captions</h2>
+        <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
+        <div id="caption" class="caption" aria-hidden="true" data-channel-lang></div>
+        <h2 id="history-heading">Recent commentary</h2>
+        <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off" data-channel-lang></ol>
+      </section>
 
-    <section aria-labelledby="ask-heading" class="ask">
-      <h2 id="ask-heading">Ask about the match</h2>
-      <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished. Headphones stop the commentary reaching your microphone.</p>
-      <button id="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>Hold to ask</button>
-      <form id="ask-form">
-        <label for="question">Or type a question</label>
-        <input id="question" type="text" maxlength="300" autocomplete="off" disabled>
-        <button id="ask-send" type="submit" disabled>Ask</button>
-      </form>
-      <p id="heard" class="note"></p>
-      <!-- Spoken answers are heard already; typed questions turn this into a polite live region. -->
-      <p id="answer" class="answer" aria-live="off"></p>
-    </section>
+      <section class="card ask" aria-labelledby="ask-heading">
+        <h2 id="ask-heading">Ask about the match</h2>
+        <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished.</p>
+        <button id="talk" class="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>
+          <span class="talk-icon" aria-hidden="true"></span>Hold to ask
+        </button>
+        <form id="ask-form">
+          <label for="question">Or type a question</label>
+          <div class="ask-row">
+            <input id="question" type="text" maxlength="300" autocomplete="off" disabled>
+            <button id="ask-send" class="secondary" type="submit" disabled>Ask</button>
+          </div>
+        </form>
+        <p id="heard" class="heard" data-channel-lang></p>
+        <!-- Spoken answers are heard already; typed questions turn this into a polite live region. -->
+        <p id="answer" class="answer" aria-live="off" data-channel-lang></p>
+      </section>
+    </div>
 
-    <details>
+    <details class="card details">
       <summary>Latency</summary>
       <p id="latency">No audio yet.</p>
     </details>
   </main>
+
+  <footer class="footer">
+    <p>Synthetic data only: the league, clubs and players are fictional. Built with Microsoft Foundry agents, Azure Voice Live and Azure AI Speech.</p>
+  </footer>
 
   <script src="lib/signalr/signalr.min.js"></script>
   <script type="module" src="js/app.js"></script>
