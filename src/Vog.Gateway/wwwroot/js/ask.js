@@ -1,39 +1,75 @@
-// The match companion: hold-to-ask (push-to-talk) and typed questions, answered by the Foundry agent
-// through the gateway. Commentary is muted while the fan speaks, so it can't reach the microphone, and
-// turned down while the answer plays (BUILD_PLAN.md D4: push-to-talk, because browsers don't cancel
-// the page's own audio from the microphone).
+// The match companion: spoken questions (tap to start and stop, or hold to talk) and typed questions,
+// answered by the Foundry agent through the gateway. Holding a button is a barrier for many motor-
+// impaired fans and impossible with eye-gaze dwell, so tapping is the default: tap, speak, and it stops
+// by itself when you finish (or tap again). Commentary is silent while the fan speaks, so it can't
+// reach the microphone, and turned down while the answer plays.
+import { endCompanion, showCompanion } from './captions.js';
+import { loadPrefs } from './prefs.js';
 
 const DUCKED = 0.2;
 const RAMP_S = 0.15;
+const MAX_QUESTION_MS = 20_000;
+const THINKING_TICK_MS = 700;
+const THINKING_LIMIT_MS = 30_000;
 
 const el = (id) => document.getElementById(id);
 
+const LABELS = {
+  tap: { idle: 'Tap to ask', recording: 'Stop asking', help: 'Tap the button (or press Space or Enter on it), ask, for example: "What\'s the score?", "Where\'s the ball?", "Who scored?". It stops by itself when you finish speaking, or tap again.' },
+  hold: { idle: 'Hold to ask', recording: 'Listening… let go to finish', help: 'Hold the button (or hold Space or Enter on it) and ask, for example: "What\'s the score?", "Where\'s the ball?", "Who scored?". Let go when you\'ve finished.' },
+};
+
+let started = false;
+
+function labelTalk(mode, recording) {
+  const labels = LABELS[mode] ?? LABELS.tap;
+  el('talk').querySelector('.talk-label').textContent = recording ? labels.recording : labels.idle;
+  el('ask-help').textContent = labels.help;
+}
+
+// The button and its help match the chosen talk mode even before listening starts.
+labelTalk(loadPrefs().talkMode, false);
+window.addEventListener('vog:prefs', (event) => {
+  if (!started) {
+    labelTalk(event.detail.talkMode, false);
+  }
+});
+
 /**
  * Wires the companion controls to a joined connection.
- * @param {{ ctx: AudioContext, connection: any, duck: GainNode, setStatus: (text: string) => void, idleStatus: () => string }} deps
+ * @param {{ ctx: AudioContext, connection: any, mix: ReturnType<import('./mix.js').createMix>, setStatus: (text: string) => void, idleStatus: () => string }} deps
  * @returns {() => Promise<void>} a function that releases the microphone and controls
  */
-export async function startCompanion({ ctx, connection, duck, setStatus, idleStatus }) {
+export async function startCompanion({ ctx, connection, mix, setStatus, idleStatus }) {
   // The player worklet module is already loaded into ctx by app.js.
   const answers = new AudioWorkletNode(ctx, 'pcm-player', { numberOfInputs: 0, outputChannelCount: [1] });
-  answers.connect(ctx.destination);
+  answers.connect(mix.answers);
 
-  let mic = null; // { ctx, stream, node } once the fan has first pressed the button
+  let mode = loadPrefs().talkMode;
+  let mic = null; // { ctx, stream, node } once the fan has first asked by voice
   let recording = false;
+  let maxTimer = null;
   let typed = false;
   let current = null;
+  const thinking = createThinkingSound(ctx, mix.answers);
+  const talk = el('talk');
 
-  const setDuck = (level) => duck.gain.setTargetAtTime(level, ctx.currentTime, RAMP_S / 3);
+  const setDuck = (level) => mix.duck.gain.setTargetAtTime(level, ctx.currentTime, RAMP_S / 3);
+
+  const renderLabels = () => labelTalk(mode, recording);
+  started = true;
 
   answers.port.onmessage = ({ data }) => {
     if (data.type === 'ended' && data.id === current && !recording) {
       setDuck(1);
+      endCompanion();
       setStatus(idleStatus());
     }
   };
 
   connection.on('heard', (text) => (el('heard').textContent = `You asked: ${text}`));
   connection.on('answerStart', (id) => {
+    thinking.stop();
     current = id;
     el('answer').textContent = '';
     el('answer').setAttribute('aria-live', typed ? 'polite' : 'off');
@@ -41,10 +77,14 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
     setDuck(DUCKED);
     setStatus('Answering…');
   });
-  connection.on('answerText', (_id, delta) => (el('answer').textContent += delta));
+  connection.on('answerText', (_id, delta) => {
+    el('answer').textContent += delta;
+    showCompanion(el('answer').textContent);
+  });
   connection.on('answerAudio', (id, _seq, data) => answers.port.postMessage({ type: 'chunk', id, samples: toFloat32(data) }));
   connection.on('answerEnd', (id) => answers.port.postMessage({ type: 'end', id }));
   connection.on('answerError', (message) => {
+    thinking.stop();
     el('answer').setAttribute('aria-live', 'polite');
     el('answer').textContent = message;
     setDuck(1);
@@ -58,17 +98,21 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
 
     recording = true;
     typed = false;
-    el('talk').setAttribute('aria-pressed', 'true');
+    thinking.stop();
+    talk.setAttribute('aria-pressed', 'true');
+    renderLabels();
     answers.port.postMessage({ type: 'flush' });
     setDuck(0);
     try {
       mic ??= await openMicrophone();
       await connection.send('askBegin');
       mic.node.port.postMessage({ type: 'start' });
+      maxTimer = setTimeout(end, MAX_QUESTION_MS);
       setStatus('Listening to your question…');
     } catch (err) {
       recording = false;
-      el('talk').setAttribute('aria-pressed', 'false');
+      talk.setAttribute('aria-pressed', 'false');
+      renderLabels();
       setDuck(1);
       setStatus(`Microphone unavailable: ${err.message ?? err}. You can type your question instead.`);
     }
@@ -80,11 +124,16 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
     }
 
     recording = false;
-    el('talk').setAttribute('aria-pressed', 'false');
+    clearTimeout(maxTimer);
+    talk.setAttribute('aria-pressed', 'false');
+    renderLabels();
     mic?.node.port.postMessage({ type: 'stop' });
     setDuck(DUCKED);
     setStatus('Thinking…');
+    thinking.start();
   }
+
+  const toggle = () => (recording ? end() : void begin());
 
   async function openMicrophone() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
@@ -95,6 +144,8 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
     node.port.onmessage = ({ data }) => {
       if (data.type === 'chunk') {
         connection.send('askAudio', toBase64(data.samples)).catch(() => {});
+      } else if (data.type === 'silence' && mode === 'tap') {
+        end(); // the fan has finished speaking
       } else if (data.type === 'stopped') {
         connection.send('askEnd').catch(() => {});
       }
@@ -102,22 +153,42 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
     return { ctx: micCtx, stream, node };
   }
 
-  const talk = el('talk');
+  // Tap mode: a normal button (click covers mouse, touch, Space, Enter, switches and dwell clicks).
+  const onClick = () => {
+    if (mode === 'tap') {
+      toggle();
+    }
+  };
+  // Hold mode: press to start, release to finish.
+  const onPointerDown = (e) => {
+    if (mode === 'hold') {
+      talk.setPointerCapture(e.pointerId);
+      void begin();
+    }
+  };
+  const onPointerUp = () => {
+    if (mode === 'hold') {
+      end();
+    }
+  };
   const onKeyDown = (e) => {
-    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
+    if (mode === 'hold' && (e.key === ' ' || e.key === 'Enter') && !e.repeat) {
       e.preventDefault();
       void begin();
     }
   };
   const onKeyUp = (e) => {
-    if (e.key === ' ' || e.key === 'Enter') {
+    if (mode === 'hold' && (e.key === ' ' || e.key === 'Enter')) {
       e.preventDefault();
       end();
     }
   };
-  const onPointerDown = (e) => {
-    talk.setPointerCapture(e.pointerId);
-    void begin();
+  // Alt+Shift+A from anywhere: start or stop asking, whatever the mode.
+  const onShortcut = (e) => {
+    if (e.altKey && e.shiftKey && e.code === 'KeyA' && !e.repeat) {
+      e.preventDefault();
+      toggle();
+    }
   };
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -131,15 +202,30 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
     el('heard').textContent = `You asked: ${question}`;
     el('question').value = '';
     setStatus('Thinking…');
+    thinking.start();
     await connection.send('askText', question);
   };
+  const onPrefs = (event) => {
+    if (event.detail.talkMode !== mode) {
+      end();
+      mode = event.detail.talkMode;
+      renderLabels();
+    }
 
+    thinking.setGentle(event.detail.gentle);
+  };
+
+  talk.addEventListener('click', onClick);
+  talk.addEventListener('pointerdown', onPointerDown);
+  talk.addEventListener('pointerup', onPointerUp);
+  talk.addEventListener('pointercancel', onPointerUp);
   talk.addEventListener('keydown', onKeyDown);
   talk.addEventListener('keyup', onKeyUp);
-  talk.addEventListener('pointerdown', onPointerDown);
-  talk.addEventListener('pointerup', end);
-  talk.addEventListener('pointercancel', end);
+  document.addEventListener('keydown', onShortcut);
+  window.addEventListener('vog:prefs', onPrefs);
   el('ask-form').addEventListener('submit', onSubmit);
+  thinking.setGentle(loadPrefs().gentle);
+  renderLabels();
   for (const id of ['talk', 'question', 'ask-send']) {
     el(id).disabled = false;
   }
@@ -149,14 +235,61 @@ export async function startCompanion({ ctx, connection, duck, setStatus, idleSta
       el(id).disabled = true;
     }
 
+    end();
+    thinking.stop();
+    talk.removeEventListener('click', onClick);
+    talk.removeEventListener('pointerdown', onPointerDown);
+    talk.removeEventListener('pointerup', onPointerUp);
+    talk.removeEventListener('pointercancel', onPointerUp);
     talk.removeEventListener('keydown', onKeyDown);
     talk.removeEventListener('keyup', onKeyUp);
-    talk.removeEventListener('pointerdown', onPointerDown);
-    talk.removeEventListener('pointerup', end);
-    talk.removeEventListener('pointercancel', end);
+    document.removeEventListener('keydown', onShortcut);
+    window.removeEventListener('vog:prefs', onPrefs);
     el('ask-form').removeEventListener('submit', onSubmit);
+    started = false;
     mic?.stream.getTracks().forEach((t) => t.stop());
     await mic?.ctx.close();
+  };
+}
+
+/**
+ * A soft tick while the companion works, so a fan who can't see the screen isn't left in silence
+ * wondering whether the question was heard. Stops when the answer starts, or after 30 s.
+ */
+function createThinkingSound(ctx, bus) {
+  let interval = null;
+  let limit = null;
+  let level = 0.08;
+
+  const tick = () => {
+    const now = ctx.currentTime;
+    const osc = new OscillatorNode(ctx, { type: 'sine', frequency: 880 });
+    const gain = new GainNode(ctx, { gain: 0 });
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(level, now + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+    osc.connect(gain).connect(bus);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  };
+
+  const stop = () => {
+    clearInterval(interval);
+    clearTimeout(limit);
+    interval = null;
+  };
+
+  return {
+    start() {
+      stop();
+      tick();
+      interval = setInterval(tick, THINKING_TICK_MS);
+      limit = setTimeout(stop, THINKING_LIMIT_MS);
+    },
+    stop,
+    setGentle(gentle) {
+      level = gentle ? 0.04 : 0.08;
+    },
   };
 }
 

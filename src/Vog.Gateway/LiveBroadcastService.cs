@@ -25,6 +25,9 @@ public sealed class LiveBroadcastService(
     /// <summary>Between matches; listeners stay connected and hear the next kick-off.</summary>
     private static readonly TimeSpan MatchBreak = TimeSpan.FromMinutes(2);
 
+    /// <summary>Five pitch updates a second: smooth enough to follow by ear once the browser interpolates.</summary>
+    private static readonly TimeSpan PitchInterval = TimeSpan.FromMilliseconds(200);
+
     private readonly ConcurrentDictionary<string, Lazy<SpeechWorker>> _workers = new();
     private readonly Uri _endpoint = azure.Value.SpeechEndpoint!;
     private MatchPipeline? _pipeline;
@@ -37,6 +40,7 @@ public sealed class LiveBroadcastService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var state = BroadcastStateAsync(stoppingToken);
+        var pitch = BroadcastPitchAsync(stoppingToken);
         var seed = options.Value.Seed;
         var schedule = new MatchSchedule(MatchSchedule.LengthOf(GoldenMatch.Setup(seed)), MatchBreak, options.Value.Speed);
         while (!stoppingToken.IsCancellationRequested)
@@ -62,7 +66,7 @@ public sealed class LiveBroadcastService(
             }
         }
 
-        await state;
+        await Task.WhenAll(state, pitch);
     }
 
     private async ValueTask OnBoothEventAsync(ChannelBoothEvent e)
@@ -106,6 +110,27 @@ public sealed class LiveBroadcastService(
                 {
                     var message = new StateMessage(MatchClock.Display(frame.Period, frame.MatchClockMs), frame.Period, ball.HomeScore, ball.AwayScore, ball.Status == BallStatus.InPlay);
                     await hub.Clients.All.SendAsync("state", message, ct);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    /// <summary>The ball and players five times a second; nothing is sent between matches.</summary>
+    private async Task BroadcastPitchAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(PitchInterval);
+        long lastFrame = -1;
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+            {
+                if (Snapshot is { } snapshot && snapshot.Frame.FrameId != lastFrame)
+                {
+                    lastFrame = snapshot.Frame.FrameId;
+                    await hub.Clients.All.SendAsync("pitch", PitchMessage.From(snapshot), ct);
                 }
             }
         }

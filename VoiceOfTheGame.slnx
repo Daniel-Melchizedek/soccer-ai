@@ -15,6 +15,7 @@
     <Project Path="tests/Vog.Booth.Tests/Vog.Booth.Tests.csproj" />
     <Project Path="tests/Vog.Companion.Tests/Vog.Companion.Tests.csproj" />
     <Project Path="tests/Vog.Describe.Tests/Vog.Describe.Tests.csproj" />
+    <Project Path="tests/Vog.Gateway.Tests/Vog.Gateway.Tests.csproj" />
     <Project Path="tests/Vog.GoldenMatch.Tests/Vog.GoldenMatch.Tests.csproj" />
     <Project Path="tests/Vog.Simulator.Tests/Vog.Simulator.Tests.csproj" />
     <Project Path="tests/Vog.Stats.Tests/Vog.Stats.Tests.csproj" />

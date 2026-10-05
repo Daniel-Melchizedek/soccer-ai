@@ -20,6 +20,8 @@ internal static class Listen
 
     private sealed record StateReply(string Clock, int Period, int HomeScore, int AwayScore, bool BallInPlay);
 
+    private sealed record PitchReply(long T, int P, double[] B, string? O, bool Hr, double[][] H, double[][] A);
+
     private sealed class Line(UtteranceReply utterance, long receivedAt)
     {
         public UtteranceReply Utterance { get; } = utterance;
@@ -73,6 +75,14 @@ internal static class Listen
         connection.On<string, long>("cut", (id, afterMs) => Update(id, line => line.CutAfterMs = afterMs));
         connection.On<string>("skipped", id => Update(id, line => line.Skipped = true));
         connection.On<StateReply>("state", s => lastState = s);
+        var pitches = new List<(long ReceivedAt, PitchReply Pitch)>();
+        connection.On<PitchReply>("pitch", p =>
+        {
+            lock (gate)
+            {
+                pitches.Add((Stopwatch.GetTimestamp(), p));
+            }
+        });
 
         void Update(string id, Action<Line> change)
         {
@@ -112,9 +122,29 @@ internal static class Listen
         Console.WriteLine($"First audio by line (ms): {string.Join(", ", all.Where(l => l.FirstAudioMs is not null).Select(l => $"{l.FirstAudioMs:0}"))}");
         Check(settled.All(l => l.Bytes > 0), "an utterance ended without audio");
         Check(settled.All(l => !l.OutOfOrder), "audio chunks arrived out of order");
+        foreach (var l in settled.Where(l => l.SpokenMs != l.Bytes / 48))
+        {
+            Console.WriteLine($"  mismatch: '{l.Utterance.Text}' audioEnd {l.SpokenMs?.ToString() ?? "missing"} ms, bytes {l.Bytes} ({l.Bytes / 48} ms), captions {l.Cues}, cut {l.CutAfterMs?.ToString() ?? "no"}");
+        }
+
         Check(settled.All(l => l.SpokenMs == l.Bytes / 48), "audioEnd duration doesn't match the bytes sent");
         Check(settled.All(l => l.Cues > 0), "an utterance had no captions");
         Check(settled.Count > 0, "no utterance finished");
+
+        // The pitch stream: about five a second, with the ball and both teams.
+        if (pitches.Count > 1)
+        {
+            var span = Stopwatch.GetElapsedTime(pitches[0].ReceivedAt, pitches[^1].ReceivedAt).TotalSeconds;
+            var rate = (pitches.Count - 1) / span;
+            var last = pitches[^1].Pitch;
+            Console.WriteLine($"Pitch {pitches.Count} updates · {rate:0.0} a second · ball ({last.B[0]}, {last.B[1]}) · {last.H.Length} v {last.A.Length} players · possession {last.O ?? "none"}");
+            Check(rate is > 4 and < 6, $"pitch updates came {rate:0.0} a second, not about 5");
+            Check(last.H.Length >= 7 && last.A.Length >= 7, "a pitch update is missing players");
+        }
+        else
+        {
+            Check(false, "no pitch updates arrived");
+        }
 
         using var http = new HttpClient();
         var stats = await http.GetFromJsonAsync<JsonElement>($"{url}/stats");

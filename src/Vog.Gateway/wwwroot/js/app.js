@@ -1,11 +1,14 @@
 // Listener page: joins a channel, plays its speech through an AudioWorklet, plays earcons, and shows
 // word-timed captions. Audio never passes through the main thread's timers: the worklet owns timing.
 import { startCompanion } from './ask.js';
+import { resetCaptions, showCommentary } from './captions.js';
 import { playEarcon } from './earcons.js';
+import { createMix } from './mix.js';
+import { loadPrefs } from './prefs.js';
+import './settings.js';
 
 const SAMPLE_RATE = 24000;
 const MAX_HISTORY = 50;
-const CAPTION_HOLD_MS = 3000; // a caption stays this long after its words, then clears
 
 /** Seconds behind the booth before a line is skipped; the same limits as the server's Staleness.cs. */
 const SKIP_AFTER_S = { P0: Infinity, P1: 4 };
@@ -15,16 +18,17 @@ const el = (id) => document.getElementById(id);
 const pending = new Map(); // utterance id -> message + { receivedAt, startedAt, cues }
 
 let ctx = null;
+let mix = null;
 let player = null;
 let connection = null;
 let stopCompanion = null;
 let listeningStatus = '';
 let teams = null;
-let captionTimers = [];
 
 el('start').addEventListener('click', () => (connection ? stop() : start()));
 el('lang').addEventListener('change', rejoin);
 el('mode').addEventListener('change', rejoin);
+window.addEventListener('vog:prefs', (event) => mix?.apply(event.detail));
 
 async function start() {
   el('start').disabled = true;
@@ -34,10 +38,10 @@ async function start() {
     // Created on the click: browsers only allow audio after a user gesture.
     ctx = new AudioContext({ sampleRate: SAMPLE_RATE, latencyHint: 'interactive' });
     await ctx.audioWorklet.addModule('js/pcm-player.worklet.js');
+    mix = createMix(ctx);
+    mix.apply(loadPrefs());
     player = new AudioWorkletNode(ctx, 'pcm-player', { numberOfInputs: 0, outputChannelCount: [1] });
-    // Commentary goes through a gain the companion turns down while a question is asked and answered.
-    const duck = new GainNode(ctx);
-    player.connect(duck).connect(ctx.destination);
+    player.connect(mix.duck);
     player.port.onmessage = (event) => onPlayer(event.data);
 
     connection = new signalR.HubConnectionBuilder()
@@ -60,7 +64,7 @@ async function start() {
 
     await connection.start();
     await join();
-    stopCompanion = await startCompanion({ ctx, connection, duck, setStatus, idleStatus: () => listeningStatus });
+    stopCompanion = await startCompanion({ ctx, connection, mix, setStatus, idleStatus: () => listeningStatus });
     el('start').textContent = 'Stop listening';
   } catch (err) {
     console.error(err);
@@ -79,6 +83,7 @@ async function stop() {
   await c?.stop();
   await ctx?.close();
   ctx = null;
+  mix = null;
   player = null;
   reset();
   el('start').textContent = 'Start listening';
@@ -106,8 +111,7 @@ async function rejoin() {
 
 function reset() {
   pending.clear();
-  captionTimers.forEach(clearTimeout);
-  captionTimers = [];
+  resetCaptions();
 }
 
 function onUtterance(u) {
@@ -126,7 +130,7 @@ function onPlayer(message) {
     const delay = u.startedAt - u.receivedAt;
     connection?.invoke('played', message.id, delay).catch(() => {});
     el('latency').textContent = `Last line started ${Math.round(delay)} ms after the server sent it.`;
-    playEarcon(ctx, u.earcon, u.pan);
+    playEarcon(ctx, u.earcon, u.pan, mix.earcons);
     showCaptions(u);
     addHistory(u);
   } else if (message.type === 'ended') {
@@ -148,21 +152,9 @@ function onCaptions(id, cues) {
   }
 }
 
-/** Shows the cue for the current point in the line, then schedules the rest. */
 function showCaptions(u) {
-  captionTimers.forEach(clearTimeout);
-  captionTimers = [];
   const cues = u.cues?.length ? u.cues : [{ startMs: 0, endMs: u.scheduledMs, lines: [u.text] }];
-  const elapsed = performance.now() - u.startedAt;
-  const current = cues.findLast((cue) => cue.startMs <= elapsed) ?? cues[0];
-  const show = (text) => (el('caption').textContent = text);
-  show(current.lines.join('\n'));
-  for (const cue of cues.filter((c) => c.startMs > elapsed)) {
-    captionTimers.push(setTimeout(() => show(cue.lines.join('\n')), cue.startMs - elapsed));
-  }
-
-  const endMs = Math.max(...cues.map((c) => c.endMs ?? 0));
-  captionTimers.push(setTimeout(() => show(''), Math.max(0, endMs - elapsed) + CAPTION_HOLD_MS));
+  showCommentary(cues, u.startedAt);
 }
 
 function addHistory(u) {

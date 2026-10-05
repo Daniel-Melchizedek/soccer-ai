@@ -17,14 +17,14 @@ const EARCONS = {
   out_of_play: { type: 'sine', notes: [[1200, 0, 0.015]] },
 };
 
-export function playEarcon(ctx, id, pan) {
+export function playEarcon(ctx, id, pan, bus = ctx?.destination) {
   const spec = EARCONS[id];
   if (!ctx || !spec) {
     return;
   }
 
   const panner = new StereoPannerNode(ctx, { pan: Math.max(-1, Math.min(1, pan ?? 0)) });
-  panner.connect(ctx.destination);
+  panner.connect(bus);
   const now = ctx.currentTime;
   const level = spec.gain ?? EARCON_GAIN;
 

@@ -49,6 +49,87 @@
       <output id="status" class="status" aria-live="polite">Not listening.</output>
     </section>
 
+    <details id="settings" class="card settings">
+      <summary>Sound, captions and controls</summary>
+      <p class="note">Changes apply straight away and are remembered on this device only.</p>
+      <div class="settings-grid">
+        <fieldset>
+          <legend>Volume</legend>
+          <div class="range">
+            <label for="vol-commentary">Commentary</label>
+            <input id="vol-commentary" type="range" min="0" max="100" step="5" data-pref="volumes.commentary">
+            <output for="vol-commentary"></output>
+          </div>
+          <div class="range">
+            <label for="vol-answers">Companion answers</label>
+            <input id="vol-answers" type="range" min="0" max="100" step="5" data-pref="volumes.answers">
+            <output for="vol-answers"></output>
+          </div>
+          <div class="range">
+            <label for="vol-earcons">Event sounds</label>
+            <input id="vol-earcons" type="range" min="0" max="100" step="5" data-pref="volumes.earcons">
+            <output for="vol-earcons"></output>
+          </div>
+          <div class="check">
+            <input id="clear-speech" type="checkbox" data-pref="clearSpeech">
+            <label for="clear-speech">Clear speech <span class="hint">steadier, louder voices over quieter extras; helps with hearing aids</span></label>
+          </div>
+          <div class="check">
+            <input id="gentle" type="checkbox" data-pref="gentle">
+            <label for="gentle">Gentle sounds <span class="hint">softer event sounds, for fans who find them overwhelming</span></label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Captions</legend>
+          <fieldset class="inline">
+            <legend>Text size</legend>
+            <label><input type="radio" name="caption-size" value="S" data-pref="caption.size"> Small</label>
+            <label><input type="radio" name="caption-size" value="M" data-pref="caption.size"> Medium</label>
+            <label><input type="radio" name="caption-size" value="L" data-pref="caption.size"> Large</label>
+            <label><input type="radio" name="caption-size" value="XL" data-pref="caption.size"> Extra large</label>
+          </fieldset>
+          <div class="field">
+            <label for="caption-colours">Colours</label>
+            <select id="caption-colours" data-pref="caption.colours">
+              <option value="white-black">White on black</option>
+              <option value="yellow-black">Yellow on black</option>
+              <option value="cyan-black">Cyan on black</option>
+              <option value="black-white">Black on white</option>
+            </select>
+          </div>
+          <div class="range">
+            <label for="caption-background">Box opacity</label>
+            <input id="caption-background" type="range" min="40" max="100" step="5" data-pref="caption.background">
+            <output for="caption-background"></output>
+          </div>
+          <div class="field">
+            <label for="caption-font">Font</label>
+            <select id="caption-font" data-pref="caption.font">
+              <option value="system">Standard</option>
+              <option value="hyperlegible">Atkinson Hyperlegible (designed for low vision)</option>
+            </select>
+          </div>
+          <fieldset class="inline">
+            <legend>Where captions appear</legend>
+            <label><input type="radio" name="caption-position" value="panel" data-pref="caption.position"> In the captions panel</label>
+            <label><input type="radio" name="caption-position" value="bottom" data-pref="caption.position"> Pinned to the bottom of the screen</label>
+          </fieldset>
+          <p class="note" id="preview-label">Preview</p>
+          <div class="caption preview">Zandor shoots from 14 metres!
+<span class="companion">Companion: It's still 0–0, 79 minutes gone.</span></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Asking the companion</legend>
+          <label class="choice"><input type="radio" name="talk-mode" value="tap" data-pref="talkMode"> <span>Tap to start, tap to stop <span class="hint">it also stops by itself when you finish speaking</span></span></label>
+          <label class="choice"><input type="radio" name="talk-mode" value="hold" data-pref="talkMode"> Hold to talk</label>
+          <p class="note">Keyboard: Alt+Shift+A starts and stops asking from anywhere on the page.</p>
+        </fieldset>
+      </div>
+      <button id="reset-settings" class="secondary" type="button">Reset to defaults</button>
+    </details>
+
     <section class="card scoreboard" aria-labelledby="match-heading">
       <h2 id="match-heading" class="visually-hidden">Match</h2>
       <p class="live-badge"><span class="live-dot" aria-hidden="true"></span>Live · synthetic match, fictional league</p>
@@ -68,7 +149,7 @@
         <h2 id="ask-heading">Ask about the match</h2>
         <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished.</p>
         <button id="talk" class="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>
-          <span class="talk-icon" aria-hidden="true"></span>Hold to ask
+          <span class="talk-icon" aria-hidden="true"></span><span class="talk-label">Tap to ask</span>
         </button>
         <form id="ask-form">
           <label for="question">Or type a question</label>
