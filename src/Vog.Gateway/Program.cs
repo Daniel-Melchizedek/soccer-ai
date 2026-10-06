@@ -22,6 +22,7 @@ builder.Services.AddSingleton<ChannelDirectory>();
 builder.Services.AddSingleton<LatencyStats>();
 builder.Services.AddSingleton<LiveBroadcastService>();
 builder.Services.AddSingleton<CompanionRelay>();
+builder.Services.AddSingleton<ReadoutService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<LiveBroadcastService>());
 builder.Services.AddSignalR();
 builder.Services.AddMatchMcp(builder.Configuration);

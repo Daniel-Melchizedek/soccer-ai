@@ -20,7 +20,7 @@ function show(text, speaker) {
 }
 
 /** Shows the cue for the current point in a commentary line, then schedules the rest. */
-export function showCommentary(cues, startedAt) {
+export function showCommentary(cues, startedAt, sound = null) {
   if (companionShowing) {
     return; // the fan is reading an answer; commentary captions resume afterwards
   }
@@ -28,9 +28,10 @@ export function showCommentary(cues, startedAt) {
   clearTimers();
   const elapsed = performance.now() - startedAt;
   const current = cues.findLast((cue) => cue.startMs <= elapsed) ?? cues[0];
-  show(current.lines.join('\n'), 'commentary');
+  const text = (cue) => [sound, cue.lines.join('\n')].filter(Boolean).join('\n');
+  show(text(current), 'commentary');
   for (const cue of cues.filter((c) => c.startMs > elapsed)) {
-    timers.push(setTimeout(() => show(cue.lines.join('\n'), 'commentary'), cue.startMs - elapsed));
+    timers.push(setTimeout(() => show(text(cue), 'commentary'), cue.startMs - elapsed));
   }
 
   const endMs = Math.max(...cues.map((c) => c.endMs ?? 0));

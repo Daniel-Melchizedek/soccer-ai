@@ -336,6 +336,39 @@ input:disabled {
   font-size: 0.8em;
 }
 
+.atmosphere-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) minmax(8rem, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  color: var(--muted);
+  text-align: left;
+}
+
+.atmosphere-meter {
+  height: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: #111;
+}
+
+.atmosphere-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--teal);
+  transition: width 350ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atmosphere-meter span {
+    transition: none;
+  }
+}
+
 .kit {
   display: inline-block;
   width: 0.8em;
@@ -344,6 +377,45 @@ input:disabled {
   border: 2px solid #fff;
   border-radius: 50%;
   vertical-align: -0.05em;
+}
+
+.pitch-header,
+.pitch-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pitch-header {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.pitch-header h2 {
+  margin: 0;
+}
+
+.pitch-controls button {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.35rem;
+}
+
+.pitch-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+}
+
+.pitch-canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 105 / 68;
+  max-height: 34rem;
+  margin-top: 0.75rem;
+  border: 2px solid #d9eee5;
+  border-radius: 0.35rem;
 }
 
 /* ---- Captions and history ---- */
@@ -357,6 +429,7 @@ input:disabled {
   border-radius: 0.5rem;
   font-family: var(--caption-font);
   font-size: var(--caption-size);
+  text-shadow: var(--caption-outline, none);
   line-height: 1.4;
   white-space: pre-line;
 }
@@ -471,6 +544,17 @@ fieldset.inline label,
 
 .check label {
   font-weight: 600;
+}
+
+.quick-asks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.quick-asks button {
+  min-height: 2.75rem;
 }
 
 input[type="checkbox"],

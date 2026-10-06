@@ -102,6 +102,10 @@ phrases:
   loc.ball.loose:
     - "பந்து {team} வசம், {zone}."
     - "{team} பந்தை வைத்திருக்கிறது, {zone}."
+  loc.ball.unclaimed:
+    - "பந்து யாரிடமும் இல்லை."
+  loc.ball.out:
+    - "பந்து ஆட்டத்திற்கு வெளியே உள்ளது."
 
   rem.score_time:
     - "{clock}. {score}."
@@ -212,3 +216,24 @@ clock:
 
 score:
   format: "{home} {homeGoals}, {away} {awayGoals}"
+
+sounds:
+  whistle: "[விசில்]"
+  crowd_roar: "[ரசிகர்கள் ஆர்ப்பரிக்கிறார்கள்]"
+  crowd_gasp: "[ரசிகர்கள் மூச்சை இழுக்கிறார்கள்]"
+  crowd_rises: "[உற்சாகம் அதிகரிக்கிறது]"
+
+brief:
+  goal: கோல்
+  shot: ஷாட்
+  card: அட்டை
+  sub: மாற்றம்
+  foul: ஃபவுல்
+  offside: ஆஃப்சைடு
+  set_piece: செட்
+  period: பாதி
+  score: ஸ்கோர்
+  ball: பந்து
+  possession: வசம்
+  team_red: சிவ
+  team_blue: நீல

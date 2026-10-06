@@ -73,7 +73,7 @@ public sealed class LiveBroadcastService(
     {
         // Only channels with listeners are spoken: cost scales with channels in use.
         var channelId = e.Channel.Id;
-        if (!directory.HasListeners(channelId))
+        if (!directory.HasAnyListeners(channelId))
         {
             return;
         }
@@ -82,11 +82,20 @@ public sealed class LiveBroadcastService(
         switch (e.Event.Kind)
         {
             case BoothEventKind.Started:
-                await hub.Clients.Group(channelId).SendAsync("utterance", UtteranceMessage.From(u, e.Frame));
-                Worker(e.Channel).Enqueue(u);
+                var message = UtteranceMessage.From(u, e.Frame, e.Channel.Lang);
+                if (directory.HasListeners(channelId))
+                {
+                    await hub.Clients.Group(channelId).SendAsync("utterance", message);
+                    Worker(e.Channel).Enqueue(u);
+                }
+
+                if (directory.HasTextListeners(channelId))
+                {
+                    await hub.Clients.Group($"{channelId}:text").SendAsync("utterance", message);
+                }
                 break;
 
-            case BoothEventKind.Finished when u.Status == UtteranceStatus.Preempted:
+            case BoothEventKind.Finished when u.Status == UtteranceStatus.Preempted && directory.HasListeners(channelId):
                 await hub.Clients.Group(channelId).SendAsync("cut", u.UtteranceId, u.DurationMs);
                 break;
         }

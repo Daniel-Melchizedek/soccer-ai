@@ -6,9 +6,11 @@ const KEY = 'vog.prefs.v1';
 
 export const DEFAULTS = Object.freeze({
   volumes: { commentary: 1, answers: 1, earcons: 0.8, ball: 0.6, crowd: 0.5 },
+  sonifyBall: false,
+  haptics: false,
   clearSpeech: false,
   gentle: false,
-  caption: { size: 'M', colours: 'white-black', background: 0.9, font: 'system', position: 'panel' },
+  caption: { size: 'M', colours: 'white-black', background: 0.9, outline: 'none', font: 'system', position: 'panel' },
   talkMode: 'tap',
 });
 
@@ -25,6 +27,12 @@ export const CAPTION_SIZES = Object.freeze({ S: '1.2rem', M: '1.5rem', L: '1.9re
 const FONTS = Object.freeze({
   system: 'inherit',
   hyperlegible: '"Atkinson Hyperlegible", system-ui, sans-serif',
+});
+
+const OUTLINES = Object.freeze({
+  none: 'none',
+  black: '1px 0 #000, -1px 0 #000, 0 1px #000, 0 -1px #000',
+  white: '1px 0 #fff, -1px 0 #fff, 0 1px #fff, 0 -1px #fff',
 });
 
 export function loadPrefs() {
@@ -56,5 +64,6 @@ export function applyCaptionStyle(prefs) {
   root.setProperty('--caption-companion', scheme.companion);
   root.setProperty('--caption-size', CAPTION_SIZES[c.size] ?? CAPTION_SIZES.M);
   root.setProperty('--caption-font', FONTS[c.font] ?? FONTS.system);
+  root.setProperty('--caption-outline', OUTLINES[c.outline] ?? OUTLINES.none);
   document.body.classList.toggle('captions-pinned', c.position === 'bottom');
 }

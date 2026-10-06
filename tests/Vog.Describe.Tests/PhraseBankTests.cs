@@ -37,6 +37,47 @@ public sealed partial class PhraseBankTests
     }
 
     [Theory]
+    [MemberData(nameof(Languages))]
+    public void EveryLanguageHasLocalizedSoundLabels(string lang)
+    {
+        var sounds = PhraseBankLoader.Get(lang).Sounds;
+        foreach (var key in new[] { "whistle", "crowd_roar", "crowd_gasp", "crowd_rises" })
+        {
+            Assert.True(sounds.TryGetValue(key, out var label) && !string.IsNullOrWhiteSpace(label), $"{lang} is missing sound label '{key}'");
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public void EveryLanguageHasKeyFirstBriefLabels(string lang)
+    {
+        var brief = PhraseBankLoader.Get(lang).Brief;
+        foreach (var key in new[] { "goal", "shot", "card", "sub", "foul", "offside", "set_piece", "period", "score", "ball", "possession", "team_red", "team_blue" })
+        {
+            Assert.True(brief.TryGetValue(key, out var label) && !string.IsNullOrWhiteSpace(label), $"{lang} is missing brief label '{key}'");
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public void GoalBriefIsKeyFirstAndAtMostFortyCharacters(string lang)
+    {
+        var slots = new Dictionary<string, Slot>(SampleSlots)
+        {
+            ["player"] = new PlayerSlot("p1", new string('Z', 60)),
+        };
+        var intent = new UtteranceIntent("goal", "m", IntentKind.Goal, "pbp.goal", slots, Priority.P0, 1, 8_000, 10_000);
+        var utterance = new Utterance("goal", intent, "en-GB.AudioDescription", "Goal", 8_000, 9_000, UtteranceStatus.Done);
+        var frame = new TrackingFrame("m", 800, 2, 79 * 60_000, new BallFrame(90, 34, 0, 0, 0, null), []);
+        var brief = BrailleBrief.Format(utterance, frame, new Realizer(PhraseBankLoader.Get(lang)));
+
+        Assert.NotNull(brief);
+        Assert.True(brief.Length <= BrailleBrief.MaxLength, $"{lang}: {brief}");
+        Assert.StartsWith("79'", brief, StringComparison.Ordinal);
+        Assert.Contains(PhraseBankLoader.Get(lang).Brief["goal"], brief, StringComparison.Ordinal);
+    }
+
+    [Theory]
     [MemberData(nameof(Transcreations))]
     public void TranscreationsCoverEveryEnglishKey(string lang)
     {

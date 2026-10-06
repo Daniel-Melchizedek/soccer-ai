@@ -43,6 +43,10 @@ public sealed class PhraseBank
     public required IReadOnlyDictionary<string, string> Clock { get; init; }
 
     public required IReadOnlyDictionary<string, string> Score { get; init; }
+
+    public required IReadOnlyDictionary<string, string> Sounds { get; init; }
+
+    public required IReadOnlyDictionary<string, string> Brief { get; init; }
 }
 
 public static class PhraseBankLoader
@@ -81,6 +85,8 @@ public static class PhraseBankLoader
             Units = dto.Units ?? [],
             Clock = dto.Clock ?? [],
             Score = dto.Score ?? [],
+            Sounds = dto.Sounds ?? [],
+            Brief = dto.Brief ?? [],
         };
     }
 
@@ -125,5 +131,9 @@ public static class PhraseBankLoader
         public Dictionary<string, string>? Clock { get; set; }
 
         public Dictionary<string, string>? Score { get; set; }
+
+        public Dictionary<string, string>? Sounds { get; set; }
+
+        public Dictionary<string, string>? Brief { get; set; }
     }
 }

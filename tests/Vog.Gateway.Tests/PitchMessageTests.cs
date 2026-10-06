@@ -45,6 +45,7 @@ public sealed class PitchMessageTests
 
         Assert.Equal(expected, message.O);
         Assert.Equal(snapshot.Info.AttacksRight(snapshot.Info.Home.TeamId, 2), message.Hr);
+        Assert.InRange(message.E, 0, 1);
     }
 
     [Fact]

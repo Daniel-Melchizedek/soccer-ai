@@ -100,6 +100,10 @@ phrases:
   loc.ball.loose:
     - "Balón para {team}, {zone}."
     - "La llevan {team}, {zone}."
+  loc.ball.unclaimed:
+    - "El balón está suelto."
+  loc.ball.out:
+    - "El balón está fuera de juego."
 
   rem.score_time:
     - "{clock}. {score}."
@@ -210,3 +214,24 @@ clock:
 
 score:
   format: "{home} {homeGoals}, {away} {awayGoals}"
+
+sounds:
+  whistle: "[SILBATO]"
+  crowd_roar: "[EL PÚBLICO RUGE]"
+  crowd_gasp: "[EL PÚBLICO CONTIENE EL ALIENTO]"
+  crowd_rises: "[CRECE EL AMBIENTE]"
+
+brief:
+  goal: GOL
+  shot: DISPARO
+  card: TARJ
+  sub: CAMBIO
+  foul: FALTA
+  offside: FUERA
+  set_piece: JUGADA
+  period: PARTE
+  score: MARCADOR
+  ball: BALÓN
+  possession: POSE
+  team_red: ROJ
+  team_blue: AZU

@@ -3,8 +3,12 @@
 import { startCompanion } from './ask.js';
 import { resetCaptions, showCommentary } from './captions.js';
 import { playEarcon } from './earcons.js';
+import { createHaptics } from './haptics.js';
+import { createCrowdBed } from './crowd.js';
 import { createMix } from './mix.js';
 import { loadPrefs } from './prefs.js';
+import { createPitchMap } from './pitch.js';
+import { createBallSonifier } from './sonify.js';
 import './settings.js';
 
 const SAMPLE_RATE = 24000;
@@ -16,9 +20,25 @@ const SKIP_AFTER_DEFAULT_S = 1.5;
 
 const el = (id) => document.getElementById(id);
 const pending = new Map(); // utterance id -> message + { receivedAt, startedAt, cues }
+const haptics = createHaptics();
+const pitchMap = createPitchMap({
+  canvas: el('pitch-map'),
+  description: el('pitch-description'),
+  zoomIn: el('pitch-zoom-in'),
+  zoomOut: el('pitch-zoom-out'),
+  follow: el('pitch-follow'),
+});
+const atmosphere = el('atmosphere-meter');
+const atmosphereText = el('atmosphere-text');
+if (haptics.available) {
+  el('haptics-setting').hidden = false;
+}
 
 let ctx = null;
 let mix = null;
+let sonifier = null;
+let crowdBed = null;
+let audioSetup = null;
 let player = null;
 let connection = null;
 let stopCompanion = null;
@@ -28,18 +48,41 @@ let teams = null;
 el('start').addEventListener('click', () => (connection ? stop() : start()));
 el('lang').addEventListener('change', rejoin);
 el('mode').addEventListener('change', rejoin);
-window.addEventListener('vog:prefs', (event) => mix?.apply(event.detail));
+document.querySelectorAll('[data-readout]').forEach((button) => {
+  button.addEventListener('click', () => {
+    connection?.invoke('readout', button.dataset.readout).catch((err) => setStatus(`Readout failed: ${err.message ?? err}`));
+  });
+});
+el('who-scored').addEventListener('click', () => {
+  const questions = {
+    'en-GB': 'Who scored?',
+    'es-ES': '¿Quién ha marcado?',
+    'ta-IN': 'யார் கோல் அடித்தார்?',
+  };
+  connection?.send('askText', questions[el('lang').value]).catch((err) => setStatus(`Question failed: ${err.message ?? err}`));
+});
+window.addEventListener('vog:prefs', (event) => {
+  mix?.apply(event.detail);
+  sonifier?.setEnabled(event.detail.sonifyBall);
+  haptics.configure(event.detail);
+});
+el('learn-sounds').addEventListener('click', async () => {
+  try {
+    await prepareAudio();
+    await ctx.resume();
+    sonifier.demo();
+  } catch (err) {
+    setStatus(`Could not play the sound demo: ${err.message ?? err}`);
+  }
+});
 
 async function start() {
   el('start').disabled = true;
   setStatus('Connecting…');
 
   try {
-    // Created on the click: browsers only allow audio after a user gesture.
-    ctx = new AudioContext({ sampleRate: SAMPLE_RATE, latencyHint: 'interactive' });
-    await ctx.audioWorklet.addModule('js/pcm-player.worklet.js');
-    mix = createMix(ctx);
-    mix.apply(loadPrefs());
+    await prepareAudio();
+    await ctx.resume();
     player = new AudioWorkletNode(ctx, 'pcm-player', { numberOfInputs: 0, outputChannelCount: [1] });
     player.connect(mix.duck);
     player.port.onmessage = (event) => onPlayer(event.data);
@@ -54,6 +97,12 @@ async function start() {
     connection.on('audioEnd', (id) => player?.port.postMessage({ type: 'end', id }));
     connection.on('cut', (id, afterMs) => player?.port.postMessage({ type: 'cut', id, afterSamples: Math.round((afterMs * SAMPLE_RATE) / 1000) }));
     connection.on('captions', onCaptions);
+    connection.on('pitch', (message) => {
+      sonifier?.update(message);
+      crowdBed?.update(message.e);
+      showAtmosphere(message.e);
+      pitchMap.update(message);
+    });
     connection.on('skipped', (id) => {
       pending.delete(id);
       player?.port.postMessage({ type: 'skip', id });
@@ -75,17 +124,55 @@ async function start() {
   }
 }
 
+async function prepareAudio() {
+  if (sonifier) {
+    return;
+  }
+
+  if (!audioSetup) {
+    audioSetup = (async () => {
+      ctx = new AudioContext({ sampleRate: SAMPLE_RATE, latencyHint: 'interactive' });
+      try {
+        await ctx.audioWorklet.addModule('js/pcm-player.worklet.js');
+        mix = createMix(ctx);
+        crowdBed = createCrowdBed(ctx, mix.crowd);
+        const prefs = loadPrefs();
+        mix.apply(prefs);
+        haptics.configure(prefs);
+        sonifier = createBallSonifier(ctx, mix.ball);
+        sonifier.setEnabled(prefs.sonifyBall);
+      } catch (error) {
+        await ctx.close();
+        ctx = null;
+        mix = null;
+        throw error;
+      }
+    })();
+  }
+
+  try {
+    await audioSetup;
+  } finally {
+    audioSetup = null;
+  }
+}
+
 async function stop() {
   await stopCompanion?.();
   stopCompanion = null;
   const c = connection;
   connection = null;
   await c?.stop();
+  sonifier?.dispose();
+  sonifier = null;
+  crowdBed?.dispose();
+  crowdBed = null;
   await ctx?.close();
   ctx = null;
   mix = null;
   player = null;
   reset();
+  document.querySelectorAll('[data-readout], #who-scored').forEach((button) => (button.disabled = true));
   el('start').textContent = 'Start listening';
   setStatus('Not listening.');
 }
@@ -94,8 +181,10 @@ async function join() {
   // Anything queued from the previous channel is no longer wanted.
   reset();
   player?.port.postMessage({ type: 'flush' });
-  const result = await connection.invoke('join', el('lang').value, el('mode').value);
+  const result = await connection.invoke('join', el('lang').value, el('mode').value, false);
   teams = result;
+  pitchMap.setTeams(result);
+  document.querySelectorAll('[data-readout], #who-scored').forEach((button) => (button.disabled = false));
   // Captions, the log and answers are in the channel's language: screen readers and fonts need to know.
   document.querySelectorAll('[data-channel-lang]').forEach((e) => (e.lang = el('lang').value));
   const channel = `${el('lang').selectedOptions[0].text}, ${el('mode').selectedOptions[0].text}`;
@@ -131,6 +220,10 @@ function onPlayer(message) {
     connection?.invoke('played', message.id, delay).catch(() => {});
     el('latency').textContent = `Last line started ${Math.round(delay)} ms after the server sent it.`;
     playEarcon(ctx, u.earcon, u.pan, mix.earcons);
+    haptics.play(u.earcon);
+    if (u.earcon === 'goal') {
+      crowdBed?.pulse();
+    }
     showCaptions(u);
     addHistory(u);
   } else if (message.type === 'ended') {
@@ -154,12 +247,12 @@ function onCaptions(id, cues) {
 
 function showCaptions(u) {
   const cues = u.cues?.length ? u.cues : [{ startMs: 0, endMs: u.scheduledMs, lines: [u.text] }];
-  showCommentary(cues, u.startedAt);
+  showCommentary(cues, u.startedAt, u.sound);
 }
 
 function addHistory(u) {
   const item = document.createElement('li');
-  item.textContent = `${u.clock} ${u.text}`;
+  item.textContent = [u.clock, u.sound, u.text].filter(Boolean).join(' ');
   const history = el('history');
   history.prepend(item);
   while (history.children.length > MAX_HISTORY) {
@@ -190,6 +283,18 @@ function showState(s) {
 
 function setStatus(text) {
   el('status').textContent = text;
+}
+
+function showAtmosphere(value) {
+  const energy = Math.max(0, Math.min(1, Number(value) || 0));
+  atmosphere.setAttribute('aria-valuenow', String(Math.round(energy * 100)));
+  atmosphere.firstElementChild.style.width = `${energy * 100}%`;
+  const bands = {
+    'en-GB': ['Quiet', 'Building', 'Roaring'],
+    'es-ES': ['En calma', 'En aumento', 'Ruge'],
+    'ta-IN': ['அமைதி', 'உற்சாகம் கூடுகிறது', 'ஆர்ப்பரிப்பு'],
+  }[el('lang').value];
+  atmosphereText.textContent = bands[energy >= 0.72 ? 2 : energy >= 0.35 ? 1 : 0];
 }
 
 /** SignalR's JSON protocol carries byte[] as base64: little-endian 16-bit PCM → floats. */

@@ -101,6 +101,10 @@ phrases:
   loc.ball.loose:
     - "{team} ball, {zone}."
     - "{team} with it, {zone}."
+  loc.ball.unclaimed:
+    - "The ball is loose."
+  loc.ball.out:
+    - "The ball is out of play."
 
   rem.score_time:
     - "{clock}. {score}."
@@ -197,3 +201,24 @@ clock:
 
 score:
   format: "{home} {homeGoals}, {away} {awayGoals}"
+
+sounds:
+  whistle: "[WHISTLE]"
+  crowd_roar: "[CROWD ROARS]"
+  crowd_gasp: "[CROWD GASPS]"
+  crowd_rises: "[CROWD RISING]"
+
+brief:
+  goal: GOAL
+  shot: SHOT
+  card: CARD
+  sub: SUB
+  foul: FOUL
+  offside: OFFSIDE
+  set_piece: SET
+  period: HALF
+  score: SCORE
+  ball: BALL
+  possession: POS
+  team_red: RED
+  team_blue: BLU

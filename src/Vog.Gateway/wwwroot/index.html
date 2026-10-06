@@ -70,6 +70,25 @@
             <input id="vol-earcons" type="range" min="0" max="100" step="5" data-pref="volumes.earcons">
             <output for="vol-earcons"></output>
           </div>
+          <div class="range">
+            <label for="vol-ball">Ball sound</label>
+            <input id="vol-ball" type="range" min="0" max="100" step="5" data-pref="volumes.ball">
+            <output for="vol-ball"></output>
+          </div>
+          <div class="range">
+            <label for="vol-crowd">Crowd sound</label>
+            <input id="vol-crowd" type="range" min="0" max="100" step="5" data-pref="volumes.crowd">
+            <output for="vol-crowd"></output>
+          </div>
+          <div class="check">
+            <input id="sonify-ball" type="checkbox" data-pref="sonifyBall">
+            <label for="sonify-ball">Hear the ball</label>
+          </div>
+          <div class="check" id="haptics-setting" hidden>
+            <input id="haptics" type="checkbox" data-pref="haptics">
+            <label for="haptics">Feel match moments</label>
+          </div>
+          <button id="learn-sounds" class="secondary" type="button">Learn the sounds</button>
           <div class="check">
             <input id="clear-speech" type="checkbox" data-pref="clearSpeech">
             <label for="clear-speech">Clear speech <span class="hint">steadier, louder voices over quieter extras; helps with hearing aids</span></label>
@@ -104,6 +123,14 @@
             <output for="caption-background"></output>
           </div>
           <div class="field">
+            <label for="caption-outline">Text outline</label>
+            <select id="caption-outline" data-pref="caption.outline">
+              <option value="none">None</option>
+              <option value="black">Black</option>
+              <option value="white">White</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="caption-font">Font</label>
             <select id="caption-font" data-pref="caption.font">
               <option value="system">Standard</option>
@@ -134,6 +161,25 @@
       <h2 id="match-heading" class="visually-hidden">Match</h2>
       <p class="live-badge"><span class="live-dot" aria-hidden="true"></span>Live · synthetic match, fictional league</p>
       <p id="score" class="score">Not started</p>
+      <div class="atmosphere-row">
+        <span id="atmosphere-text" data-channel-lang>Quiet</span>
+        <div id="atmosphere-meter" class="atmosphere-meter" role="progressbar" aria-label="Crowd atmosphere" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card pitch-panel" aria-labelledby="pitch-heading">
+      <div class="pitch-header">
+        <h2 id="pitch-heading">Live pitch map</h2>
+        <div class="pitch-controls" aria-label="Pitch map controls">
+          <button id="pitch-zoom-out" class="secondary" type="button" aria-label="Zoom out">−</button>
+          <button id="pitch-zoom-in" class="secondary" type="button" aria-label="Zoom in">+</button>
+          <label><input id="pitch-follow" type="checkbox"> Follow the ball</label>
+        </div>
+      </div>
+      <canvas id="pitch-map" class="pitch-canvas" aria-hidden="true"></canvas>
+      <p id="pitch-description" class="note" aria-live="off">Waiting for pitch data.</p>
     </section>
 
     <div class="columns">
@@ -147,6 +193,11 @@
 
       <section class="card ask" aria-labelledby="ask-heading">
         <h2 id="ask-heading">Ask about the match</h2>
+        <div class="quick-asks" role="group" aria-label="Quick match questions">
+          <button type="button" data-readout="score" disabled>Score</button>
+          <button type="button" data-readout="ball" disabled>Where's the ball?</button>
+          <button id="who-scored" type="button" disabled>Who scored?</button>
+        </div>
         <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished.</p>
         <button id="talk" class="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>
           <span class="talk-icon" aria-hidden="true"></span><span class="talk-label">Tap to ask</span>

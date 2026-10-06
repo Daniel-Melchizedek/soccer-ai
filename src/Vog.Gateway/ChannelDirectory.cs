@@ -10,32 +10,40 @@ namespace Vog.Gateway;
 /// </summary>
 public sealed class ChannelDirectory(IOptions<BroadcastOptions> options)
 {
-    private readonly ConcurrentDictionary<string, string> _channelByConnection = new();
+    private readonly ConcurrentDictionary<string, ListenerMembership> _listenerByConnection = new();
 
     public IReadOnlyList<ChannelSpec> Available { get; } = options.Value.ChannelSpecs();
 
     public ChannelSpec? Find(string lang, string mode) =>
         Available.FirstOrDefault(c => c.Lang.Equals(lang, StringComparison.OrdinalIgnoreCase) && c.Mode.ToString().Equals(mode, StringComparison.OrdinalIgnoreCase));
 
-    public string? Join(string connectionId, ChannelSpec channel)
+    public ListenerMembership? Join(string connectionId, ChannelSpec channel, bool textOnly)
     {
-        string? previous = null;
-        _channelByConnection.AddOrUpdate(connectionId, channel.Id, (_, old) =>
+        ListenerMembership? previous = null;
+        _listenerByConnection.AddOrUpdate(connectionId, new ListenerMembership(channel.Id, textOnly), (_, old) =>
         {
             previous = old;
-            return channel.Id;
+            return new ListenerMembership(channel.Id, textOnly);
         });
         return previous;
     }
 
-    public string? Leave(string connectionId) =>
-        _channelByConnection.TryRemove(connectionId, out var channelId) ? channelId : null;
+    public ListenerMembership? Leave(string connectionId) =>
+        _listenerByConnection.TryRemove(connectionId, out var membership) ? membership : null;
 
     public ChannelSpec? ChannelOf(string connectionId) =>
-        _channelByConnection.TryGetValue(connectionId, out var channelId) ? Available.FirstOrDefault(c => c.Id == channelId) : null;
+        _listenerByConnection.TryGetValue(connectionId, out var membership) ? Available.FirstOrDefault(c => c.Id == membership.ChannelId) : null;
 
-    public bool HasListeners(string channelId) => _channelByConnection.Values.Contains(channelId);
+    public bool HasListeners(string channelId) => _listenerByConnection.Values.Any(x => x.ChannelId == channelId && !x.TextOnly);
+
+    public bool HasTextListeners(string channelId) => _listenerByConnection.Values.Any(x => x.ChannelId == channelId && x.TextOnly);
+
+    public bool IsTextOnly(string connectionId) => _listenerByConnection.TryGetValue(connectionId, out var membership) && membership.TextOnly;
+
+    public bool HasAnyListeners(string channelId) => _listenerByConnection.Values.Any(x => x.ChannelId == channelId);
 
     public IReadOnlyDictionary<string, int> ListenerCounts() =>
-        _channelByConnection.Values.GroupBy(v => v).ToDictionary(g => g.Key, g => g.Count());
+        _listenerByConnection.Values.Where(x => !x.TextOnly).GroupBy(x => x.ChannelId).ToDictionary(g => g.Key, g => g.Count());
 }
+
+public sealed record ListenerMembership(string ChannelId, bool TextOnly);
