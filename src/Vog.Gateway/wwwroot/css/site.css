@@ -408,6 +408,50 @@ input:disabled {
   min-height: 2.75rem;
 }
 
+.pitch-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.pitch-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pitch-marker {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  border: 2px solid #fff;
+  background: repeating-linear-gradient(135deg, #d33 0 3px, #111 3px 5px);
+}
+
+.pitch-marker.home {
+  border-radius: 50%;
+}
+
+.pitch-marker.away {
+  background: repeating-linear-gradient(135deg, #286dff 0 3px, #fff 3px 5px);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.pitch-marker.keeper {
+  border-radius: 0;
+  background: repeating-linear-gradient(135deg, #ffd400 0 3px, #111 3px 5px);
+}
+
+.pitch-marker.ball {
+  border-radius: 50%;
+  border-color: #111;
+  background: #fff;
+}
+
 .pitch-canvas {
   display: block;
   width: 100%;
@@ -416,6 +460,10 @@ input:disabled {
   margin-top: 0.75rem;
   border: 2px solid #d9eee5;
   border-radius: 0.35rem;
+}
+
+.pitch-help {
+  margin: 0.5rem 0 0;
 }
 
 /* ---- Captions and history ---- */

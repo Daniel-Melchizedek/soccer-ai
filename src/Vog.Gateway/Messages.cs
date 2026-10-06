@@ -59,7 +59,7 @@ public sealed record StateMessage(string Clock, int Period, int HomeScore, int A
 /// The pitch five times a second, for the ball sound, vibration, crowd meter and pitch map. Compact
 /// on purpose (every listener gets it): the ball as [x, y, height] in metres, who has it ("h", "a" or
 /// null), whether the home team attacks towards increasing x, and each side's players as
-/// [x, y, shirt number]. Positions are rounded to 0.1 m.
+/// [x, y, shirt number, goalkeeper flag]. Positions are rounded to 0.1 m.
 /// </summary>
 public sealed record PitchMessage(long T, int P, double[] B, string? O, bool Hr, double E, double[][] H, double[][] A)
 {
@@ -87,7 +87,13 @@ public sealed record PitchMessage(long T, int P, double[] B, string? O, bool Hr,
         var energy = Math.Clamp(Math.Max(threat, recentPulse), 0, 1);
         double[][] Side(bool isHome) => frame.Players
             .Where(p => (p.TeamId == home) == isHome)
-            .Select(p => new[] { Round(p.X), Round(p.Y), p.Jersey })
+            .Select(p => new[]
+            {
+                Round(p.X),
+                Round(p.Y),
+                p.Jersey,
+                s.Info.FindPlayer(p.PlayerId)?.Role == Role.Goalkeeper ? 1d : 0d,
+            })
             .ToArray();
 
         return new(

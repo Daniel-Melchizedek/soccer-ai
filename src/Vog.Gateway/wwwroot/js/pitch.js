@@ -3,7 +3,7 @@ const WIDTH = 68;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow }) {
+export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, homeKey, awayKey }) {
   const context = canvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let message = null;
@@ -12,10 +12,13 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow })
   let followBall = false;
   let lastDraw = -Infinity;
   let lastDescription = -Infinity;
+  let lastSummary = '';
   const colours = { red: '#e53935', blue: '#1e63ff', white: '#ffffff', yellow: '#ffd400', green: '#1faa59', claret: '#7b1e3a', sky_blue: '#64c8ff', orange: '#ff8a2a', black: '#111111', purple: '#7e3ff2' };
 
   function setTeams(value) {
     teams = value;
+    homeKey.textContent = teams.home;
+    awayKey.textContent = teams.away;
     draw();
   }
 
@@ -41,7 +44,11 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow })
     const attackingRight = message.o === 'h' ? Boolean(message.hr) : message.o === 'a' ? !message.hr : null;
     const depth = attackingRight === null ? x / LENGTH : (attackingRight ? x : LENGTH - x) / LENGTH;
     const zone = depth >= 2 / 3 ? 'attacking third' : depth >= 1 / 3 ? 'middle third' : 'defensive third';
-    description.textContent = `Ball: ${zone}${owner ? `, ${owner} in possession` : ', no team in possession'}.`;
+    const summary = `Ball: ${zone}${owner ? `, ${owner} in possession` : ', no team in possession'}.`;
+    if (summary !== lastSummary) {
+      description.textContent = summary;
+      lastSummary = summary;
+    }
   }
 
   function draw() {
@@ -80,6 +87,8 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow })
     context.strokeStyle = '#d9eee5';
     context.lineWidth = 2;
     context.strokeRect(...[point(left, bottom + viewHeight).x, point(left, bottom + viewHeight).y, mapWidth, mapHeight]);
+    drawGoalEnd(0, point, context);
+    drawGoalEnd(LENGTH, point, context);
     const halfway = point(LENGTH / 2, bottom + viewHeight);
     context.beginPath();
     context.moveTo(halfway.x, margin);
@@ -103,12 +112,64 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow })
     context.stroke();
   }
 
+  function drawGoalEnd(goalX, point, context) {
+    const goalTop = (WIDTH - 7.32) / 2;
+    const goalBottom = (WIDTH + 7.32) / 2;
+    const penaltyTop = (WIDTH - 40.32) / 2;
+    const penaltyBottom = (WIDTH + 40.32) / 2;
+    const goalAreaTop = (WIDTH - 18.32) / 2;
+    const goalAreaBottom = (WIDTH + 18.32) / 2;
+    const inward = goalX === 0 ? 1 : -1;
+    const rectangle = (depth, top, bottom) => {
+      const a = point(goalX, top);
+      const b = point(goalX + inward * depth, bottom);
+      context.strokeRect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    };
+
+    rectangle(16.5, penaltyTop, penaltyBottom);
+    rectangle(5.5, goalAreaTop, goalAreaBottom);
+
+    // A shallow, cross-hatched net makes goals clear at a glance without obscuring play.
+    const netDepth = 2.2;
+    const frontTop = point(goalX, goalTop);
+    const frontBottom = point(goalX, goalBottom);
+    const backTop = point(goalX + inward * netDepth, goalTop);
+    const backBottom = point(goalX + inward * netDepth, goalBottom);
+    context.save();
+    context.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    context.beginPath();
+    context.moveTo(frontTop.x, frontTop.y);
+    context.lineTo(backTop.x, backTop.y);
+    context.lineTo(backBottom.x, backBottom.y);
+    context.lineTo(frontBottom.x, frontBottom.y);
+    context.closePath();
+    context.fill();
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = 2.5;
+    context.stroke();
+    context.setLineDash([3, 3]);
+    context.lineWidth = 1;
+    for (let t = 0.2; t < 1; t += 0.2) {
+      const x1 = frontTop.x + (backTop.x - frontTop.x) * t;
+      const y1 = frontTop.y + (backTop.y - frontTop.y) * t;
+      const x2 = frontBottom.x + (backBottom.x - frontBottom.x) * t;
+      const y2 = frontBottom.y + (backBottom.y - frontBottom.y) * t;
+      context.beginPath();
+      context.moveTo(x1, y1);
+      context.lineTo(x2, y2);
+      context.stroke();
+    }
+    context.restore();
+  }
+
   function drawPlayers(players, kit, isHome, point) {
     const fill = colours[kit] ?? '#f0f0f0';
-    for (const [x, y, number] of players ?? []) {
+    for (const [x, y, number, goalkeeper] of players ?? []) {
       const position = point(x, y);
       context.beginPath();
-      if (isHome) {
+      if (goalkeeper) {
+        context.rect(position.x - 8, position.y - 8, 16, 16);
+      } else if (isHome) {
         context.arc(position.x, position.y, 9, 0, Math.PI * 2);
       } else {
         context.moveTo(position.x, position.y - 10);
@@ -119,13 +180,28 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow })
 
       context.fillStyle = fill;
       context.fill();
+      // A diagonal hatch makes the two teams distinguishable without relying on colour.
+      context.save();
+      context.clip();
+      context.strokeStyle = isHome ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)';
+      context.lineWidth = 1.25;
+      for (let offset = -12; offset <= 12; offset += 5) {
+        context.beginPath();
+        context.moveTo(position.x - 12, position.y + offset);
+        context.lineTo(position.x + 12, position.y + offset - 12);
+        context.stroke();
+      }
+      context.restore();
       context.strokeStyle = '#ffffff';
-      context.lineWidth = 1.5;
+      context.lineWidth = 2;
       context.stroke();
-      context.fillStyle = '#ffffff';
-      context.font = 'bold 9px system-ui';
+      context.fillStyle = '#000000';
+      context.font = 'bold 10px system-ui';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
+      context.lineWidth = 2.5;
+      context.strokeStyle = '#ffffff';
+      context.strokeText(String(number), position.x, position.y);
       context.fillText(String(number), position.x, position.y);
     }
   }

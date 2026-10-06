@@ -27,6 +27,8 @@ const pitchMap = createPitchMap({
   zoomIn: el('pitch-zoom-in'),
   zoomOut: el('pitch-zoom-out'),
   follow: el('pitch-follow'),
+  homeKey: el('pitch-home-key'),
+  awayKey: el('pitch-away-key'),
 });
 const atmosphere = el('atmosphere-meter');
 const atmosphereText = el('atmosphere-text');
