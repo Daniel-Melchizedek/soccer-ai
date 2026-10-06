@@ -3,7 +3,7 @@
 ##
 ## Get latest from `dotnet new gitignore`
 .vscode/
-
+.playwright-mcp/
 # dotenv files
 .env
 
