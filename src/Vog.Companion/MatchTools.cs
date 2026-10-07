@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Vog.Contracts;
@@ -43,8 +44,8 @@ public sealed class MatchTools(Func<MatchSnapshot?> snapshot, string lang)
             "Team statistics so far: possession, shots, shots on target, expected goals, passing, corners, fouls, cards and offsides.",
             """{"type":"object","properties":{}}"""),
         new("get_player",
-            "A player by name or part of a name: team, shirt number, position, whether they are on the pitch, and their key events in this match.",
-            """{"type":"object","properties":{"name":{"type":"string","description":"The player's name or part of it."}},"required":["name"]}"""),
+            "A player by name, part of a name, or shirt number: team, shirt number, position, whether they are on the pitch, and their key events in this match.",
+            """{"type":"object","properties":{"name":{"type":"string","description":"The player's name, part of it, or shirt number."}},"required":["name"]}"""),
     ];
 
     public string Invoke(string name, string? argumentsJson)
@@ -190,9 +191,13 @@ public sealed class MatchTools(Func<MatchSnapshot?> snapshot, string lang)
         }
 
         var slots = new SlotFactory(s.Info);
+        var playerQuery = query.Trim();
+        var byShirtNumber = int.TryParse(playerQuery, NumberStyles.None, CultureInfo.InvariantCulture, out var shirtNumber);
         var matches = new[] { s.Info.Home, s.Info.Away }
             .SelectMany(t => t.Starters.Select(p => (Team: t, Player: p, Starter: true)).Concat(t.Bench.Select(p => (Team: t, Player: p, Starter: false))))
-            .Where(x => x.Player.Name.Contains(query.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Where(x => byShirtNumber
+                ? x.Player.Number == shirtNumber
+                : x.Player.Name.Contains(playerQuery, StringComparison.OrdinalIgnoreCase))
             .Take(3)
             .Select(x =>
             {
@@ -213,9 +218,7 @@ public sealed class MatchTools(Func<MatchSnapshot?> snapshot, string lang)
             })
             .ToList();
 
-        return matches.Count == 0
-            ? Error($"No player in this match has a name containing '{query}'. Check the spelling, or ask for recent events.")
-            : Serialize(new { clock = s.Clock, players = matches });
+        return Serialize(new { clock = s.Clock, players = matches });
     }
 
     private object Describe(MatchSnapshot s, MatchEvent e)

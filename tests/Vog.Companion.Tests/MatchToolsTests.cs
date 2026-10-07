@@ -85,6 +85,23 @@ public sealed class MatchToolsTests
     }
 
     [Fact]
+    public void PlayersAreFoundByShirtNumber()
+    {
+        var players = Call("get_player", """{"name":"9"}""").GetProperty("players").EnumerateArray().ToList();
+
+        Assert.NotEmpty(players);
+        Assert.All(players, player => Assert.Equal(9, player.GetProperty("number").GetInt32()));
+    }
+
+    [Fact]
+    public void MissingPlayerReturnsAnEmptyResult()
+    {
+        var players = Call("get_player", """{"name":"Nobody Byname"}""").GetProperty("players").EnumerateArray();
+
+        Assert.Empty(players);
+    }
+
+    [Fact]
     public void BallAnswerSaysWhichWayEachTeamAttacks()
     {
         var result = Call("get_ball_and_possession");
@@ -106,7 +123,6 @@ public sealed class MatchToolsTests
     [InlineData("get_recent_events", """{"count":0}""")]
     [InlineData("get_recent_events", """{"count":"lots"}""")]
     [InlineData("get_player", "{}")]
-    [InlineData("get_player", """{"name":"Nobody Byname"}""")]
     [InlineData("get_player", "not json")]
     [InlineData("delete_everything", null)]
     public void BadCallsGetAnErrorTheModelCanActOn(string tool, string? args)

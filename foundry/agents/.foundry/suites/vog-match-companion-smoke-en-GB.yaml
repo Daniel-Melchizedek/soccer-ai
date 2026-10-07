@@ -1,0 +1,13 @@
+name: vog-match-companion-smoke-en-GB-v5
+version: 1
+agent:
+  name: vog-match-companion-en-gb
+  kind: prompt
+dataset:
+  local_uri: /workspaces/soccer-ai/foundry/agents/.foundry/datasets/vog-match-companion-smoke-en-GB.jsonl
+evaluators:
+  - name: vog-match-companion-smoke
+    version: "1"
+options:
+  eval_model: gpt-5.6-terra
+max_samples: 12
