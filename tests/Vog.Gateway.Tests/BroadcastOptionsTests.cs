@@ -44,14 +44,14 @@ public sealed class BroadcastOptionsTests
         var runner = new LiveMatchRunner(GoldenMatch.Setup(options.Seed), channels, options.Speed);
         using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(115));
         var elapsed = Stopwatch.StartNew();
-        var goals = new List<TimeSpan>();
+        var goalsByChannel = channels.ToDictionary(channel => channel.Id, _ => new List<TimeSpan>());
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => runner.RunAsync(matchEvent =>
         {
-            if (matchEvent.Channel.Id == "en-GB:AudioDescription" && matchEvent.Event.Kind == BoothEventKind.Started && matchEvent.Event.Utterance.Intent.Kind == IntentKind.Goal)
+            if (matchEvent.Event.Kind == BoothEventKind.Started && matchEvent.Event.Utterance.Intent.Kind == IntentKind.Goal)
             {
-                goals.Add(elapsed.Elapsed);
-                if (goals.Count == 3)
+                goalsByChannel[matchEvent.Channel.Id].Add(elapsed.Elapsed);
+                if (goalsByChannel.Values.All(goals => goals.Count >= 3))
                 {
                     cancellation.Cancel();
                 }
@@ -60,8 +60,12 @@ public sealed class BroadcastOptionsTests
             return ValueTask.CompletedTask;
         }, cancellation.Token));
 
-        Assert.Equal(3, goals.Count);
-        Assert.True(goals[^1] < TimeSpan.FromMinutes(2), $"Third goal call took {goals[^1]}");
+        foreach (var (channelId, goals) in goalsByChannel)
+        {
+            Assert.True(goals.Count == 3, $"{channelId} delivered {goals.Count} goal calls");
+            Assert.True(goals[^1] < TimeSpan.FromMinutes(2), $"{channelId}: third goal call took {goals[^1]}");
+        }
+
         Assert.Equal(3, runner.Pipeline.Ball!.HomeScore + runner.Pipeline.Ball.AwayScore);
     }
 }
