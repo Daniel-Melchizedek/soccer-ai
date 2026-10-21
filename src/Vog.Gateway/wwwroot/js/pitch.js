@@ -70,7 +70,7 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       return;
     }
 
-    const margin = 12;
+    const margin = 18;
     const viewWidth = LENGTH / zoom;
     const viewHeight = WIDTH / zoom;
     const ballX = clamp(Number(message.b?.[0]) || 0, 0, LENGTH);
@@ -103,13 +103,12 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     drawPlayers(message.a, teams.awayKit, false, point);
 
     const ball = point(ballX, ballY);
-    context.beginPath();
-    context.arc(ball.x, ball.y, 7, 0, Math.PI * 2);
-    context.fillStyle = '#ffffff';
-    context.fill();
-    context.strokeStyle = '#101010';
-    context.lineWidth = 2;
-    context.stroke();
+    for (const [radius, colour] of [[12, '#101010'], [10, '#ffd400'], [7, '#101010'], [5, '#ffffff']]) {
+      context.beginPath();
+      context.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
+      context.fillStyle = colour;
+      context.fill();
+    }
   }
 
   function drawGoalEnd(goalX, point, context) {
