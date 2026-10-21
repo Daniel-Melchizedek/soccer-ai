@@ -5,6 +5,8 @@
 > **Chosen idea: #4, Voice of the Game.** Accessibility-first, multilingual AI match commentary.
 > The detailed build plan is in [BUILD_PLAN.md](BUILD_PLAN.md).
 
+> **Implementation update, 21 October 2026:** this is the historical research and idea-selection record, not a shipped-feature inventory. Current source uses a .NET 10 gateway with a static JavaScript listener, self-hosted SignalR/JSON, deterministic Booth scheduling and Foundry prompt-agent companion Q&A through Voice Live and five read-only MCP tools. Blazor, hosted-agent workflows, Fabric and dedicated overlay/Studio remain planned. See [README.md](README.md) for source status and the independently verified Azure revision/model/runtime snapshot, and [the accessibility ledger](please-reasearch-online-then-mighty-hanrahan.md) for partial delivery. Research, regulatory, availability and price claims below were not freshly revalidated and are not compliance or production-readiness evidence.
+
 ---
 
 ## 1. The hackathon at a glance
@@ -230,6 +232,7 @@ Each idea lists its pitch, how it uses agents, the demo "wow" moment, the best-f
 | 2 Oct 2026 | One **medium-cost** model for every LLM agent: **gpt-5.6-terra**, a little above gpt-4o in price |
 | 2 Oct 2026 | `.gitignore` first; **no secrets or personal data in the repo** |
 | 2 Oct 2026 | **Microsoft Fabric is used** as the telemetry, operations and grounding layer (F1–F4 on the free trial), never on the live audio path |
+| 21 Oct 2026 | Superseding implementation status: static JavaScript instead of Blazor; PowerShell + Azure CLI + Bicep instead of azd/Aspire; prompt agents rather than hosted workflows. Fabric/Insight Desk/recap/transcreation remain planned. Azure has one healthy gateway replica and `gpt-5.6-terra` version `2026-07-09`; see README for the dated evidence. Earlier decisions above record intent, not delivery. |
 
 ### Claims to verify before they go in the pitch
 - **WHO hearing-loss figure** (">1.5 billion"): confirm from a WHO primary source.

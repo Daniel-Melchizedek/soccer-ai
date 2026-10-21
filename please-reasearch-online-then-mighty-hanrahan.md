@@ -1,11 +1,32 @@
 # Voice of the Game: next accessibility innovations (research-led)
 
+## Implementation Ledger: 21 October 2026
+
+This research plan is retained as a proposal/history. The ledger below reflects current source, not a claim that every proposed detail or verification step is delivered. [README.md](README.md) separately records the Azure deployment verified on this date: healthy revision `ca-vog-dev-gateway--0000015`, image dated 7 October, one replica, and `gpt-5.6-terra` version `2026-07-09`. Source review does not establish that this image includes every current feature.
+
+| Idea | Current source status | Still outstanding |
+|---|---|---|
+| 1 Hear the ball | Sonification, independent level and Learn the sounds implemented | Dedicated less-talk/more-sound preset and user evaluation not established |
+| 2 Feel the moments | Capability-detected browser vibration implemented | Physical-device and assistive-technology testing |
+| 3 Atmosphere | Language sound tags, visual atmosphere meter and synthetic crowd implemented | User validation of comprehension and stimulation levels |
+| 4 Mix/captions | Five independent levels; clear/gentle settings; size/colour/opacity/outline/font/position controls, preview and local preferences | Live timing, contrast/reflow and compliance audit |
+| 5 No-hold companion | Default tap with local silence auto-stop; optional hold, Alt+Shift+A and typed input | Motor/switch/eye-gaze testing; not hands-free |
+| 6 One-tap questions | Deterministic Score/Ball readouts; Who scored via agent | What did I miss absent; half-second response is a target, not a measured guarantee |
+| 7 Catch-up | Not implemented | Foundry workflow, fact checking and post-answer catch-up |
+| 8 Braille ticker | Partial backend `BrailleBrief`/brief messages and text-group support | No browser output selector or live braille feed; display testing required |
+| 9 Pitch map | Canvas map, zoom/follow-ball, shape/number markers and polite zone/possession description | Low-vision and screen-reader validation; no player-follow claim |
+| 10 Immersive Reader | Not implemented | Resource, integration and evaluation |
+| 11 Hands-free | Not implemented | Voice Live live-reference echo cancellation/barge-in; browser microphone echo cancellation is not this feature |
+| 12 Lip-readable avatar | Stretch, not implemented | Feasibility and community evaluation |
+
+No application tests, controlled latency benchmark or disability co-design/device audit was run in this documentation pass. The research claims below are historical references and hypotheses, not legal advice, compliance certification or a current platform-support matrix. Verify primary sources and applicability before using them in a pitch. The Design, build order, file-change suggestions and verification sections describe proposed work; this ledger supersedes their present-tense assumptions and original delivery dates.
+
 ## Context
-The live site (Azure Container Apps) already has:
+The current browser source (served by the gateway) has:
 - **Modes:** audio description, commentary and calm.
 - **Languages:** English, plus Spanish and Tamil (both drafts).
 - **Sound and text:** earcons panned to the ball, and word-timed captions.
-- **Companion:** a Foundry-agent voice companion (hold-to-ask or typed).
+- **Companion:** a Foundry prompt-agent voice companion (tap with silence auto-stop, optional hold, or typed), plus quick score/ball readouts.
 
 The user loves the new look and asked for research-led, innovative improvements for disabled fans. This plan turns three online research passes (blind/low-vision/deafblind; Deaf, cognitive, motor and speech; Microsoft/Azure and web-platform capabilities) into features that fit the existing architecture. They're ranked by impact for disabled fans, demo value for the hackathon (submission 26 Oct 2026) and effort.
 
@@ -28,13 +49,13 @@ The user loves the new look and asked for research-led, innovative improvements 
   - 81% want to join chants, and 74% feel cut off from the atmosphere (Liverpool/Carlsberg, 2026).
   - FIFA 2026 interpreters relayed whistles, crowd cheers and emotional shifts.
   - Newcastle's Sound Shirt turns the crowd into vibration.
-- **Caption settings are a legal requirement.**
+- **Caption settings have regulatory relevance; applicability needs review.**
   - EN 301 549 §7.1.4 (EAA): users must be able to change caption colour, font, size, background and outline.
   - FCC: the settings must be easy to find, previewable and remembered.
 - **Hearing-aid users need the mix under their control.** The balance between speech and background was hearing-impaired viewers' top complaint (47%). Wimbledon let viewers set commentary and crowd levels separately.
-- **Hold-to-talk is a barrier.** Keys that must be held down are a recognised barrier (WCAG 2.1.1). Eye-gaze dwell can only click, never hold, and users with tremor struggle to hold.
+- **Hold-to-talk can be a barrier.** Sustained activation can exclude users with tremor, switches or eye-gaze dwell. Providing tap and typed alternatives addresses that interaction risk; holding a key is not by itself a blanket WCAG 2.1.1 violation.
 - **Typing is slow for some users.** AAC users manage 8–10 words a minute, and switch users about 1.7, which is a strong case for one-tap questions.
-- **Deafblind fans are almost unserved.** Today it's human tactile signing. No live-sport braille feed exists. Screen readers show live-region updates on braille displays as short flash messages, so a key-first, abbreviated feed is needed.
+- **Deafblind access needs more investigation.** The original research did not identify a live-sport braille feed; that is not proof none exists. A key-first abbreviated feed is a design hypothesis that needs testing with screen readers and braille displays.
 - **Platform limits.**
   - Vibration works only on Chrome/Samsung on Android, not on iOS or Firefox.
   - The browser's built-in binaural panner uses one generic head model and confuses front and back, so use stereo panning plus pitch rather than 3D.
@@ -61,7 +82,7 @@ The user loves the new look and asked for research-led, innovative improvements 
 
 **The user chose to build all of ideas 1–11.** Idea 12 (lip-readable avatar) is a later stretch.
 
-## Design
+## Design (Proposed Details; Ledger Above Controls Status)
 
 ### Foundation (everything else builds on it)
 - **Live pitch stream:** `LiveBroadcastService` gets a second loop next to `BroadcastStateAsync`. Every 200 ms it sends a compact `pitch` message, read from `_pipeline.Snapshot` (`MatchSnapshot.Frame` gives `BallFrame` and `PlayerFrame` list):

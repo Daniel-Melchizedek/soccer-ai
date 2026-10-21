@@ -1,10 +1,28 @@
 # Voice of the Game: build plan
 
-*.NET 10 · Blazor · Microsoft Foundry (Hosted Agents) · Microsoft Agent Framework · Azure Speech and Voice Live · Microsoft Fabric · Azure Container Apps*
+*Target architecture: .NET 10 · Blazor · Microsoft Foundry (Hosted Agents) · Microsoft Agent Framework · Azure Speech and Voice Live · Microsoft Fabric · Azure Container Apps*
 *Plan date: 2 October 2026 · Submission target: **26 October 2026** (deadline 27 October, 11:59 PM PT)*
 
 > This document goes with [IDEAS.md](IDEAS.md), which covers the research, the idea catalogue and why idea #4 was chosen.
 > Package versions and API names were checked against Microsoft Learn, NuGet and GitHub on 1–2 October 2026. Anything not yet confirmed is listed in [§20 Verify during build](#20-verify-during-build).
+
+## Implementation Status: 21 October 2026
+
+**This is a design plan, not a delivery or compliance report.** Except where explicitly marked built/current, the architecture diagrams, agent roster, UX, Fabric, security controls, deployment examples and acceptance criteria below describe targets. Historical research, package availability and pricing claims were not revalidated in this documentation pass. The following status supersedes earlier present-tense design claims; [README.md](README.md) records the independently queried Azure deployment and dated runtime snapshot.
+
+| Surface | Current source / deployment status |
+|---|---|
+| HOT path | Deterministic simulator, stats, intents, phrase-bank realization and serial Booth scheduling; no LLM in this path. English reviewed; Spanish/Tamil draft. |
+| Listener | Static JavaScript served by ASP.NET Core; self-hosted SignalR with JSON, AudioWorklet PCM playback. Nine configured live language/mode channels; Analyst/Casual/Kids are offline CLI options. No Blazor, Azure SignalR, overlay/Studio or Media Session integration delivered. |
+| Accessibility controls | Ball sonification, supported-browser haptics, sound tags/atmosphere, independent mix, clear/gentle sound settings, caption preferences, tap/hold/typed questions, quick score/ball readouts and zoom/follow-ball canvas map. Device, assistive-technology and compliance validation remains outstanding. |
+| Companion | One prompt-agent template registered per language; Voice Live agent-mode relay; five read-only gateway MCP tools. Tap with local silence auto-stop is default. No hosted Insight Desk, recap, transcreation or catch-up workflow. |
+| Braille / reading | Backend brief/text support is partial; no browser braille output selector/feed. Immersive Reader and hands-free live-reference echo cancellation are not built. |
+| Speech | Live synthesis starts after Booth dispatch; caption cues are sent after synthesis completes. Offline timing/word-boundary-cut utilities do not prove live browser alignment or live word-boundary interruption. |
+| Provisioning / telemetry | PowerShell 7 + Azure CLI + Bicep, `.env.local` and startup Key Vault loading. Container Apps, registry, identity, Foundry, Key Vault, Log Analytics and Application Insights are deployed. Fabric/Event Hubs/Cosmos/storage/Azure SignalR are not present in the reviewed resource group. No azd/Aspire delivery path implemented. |
+| Azure snapshot | Healthy revision `ca-vog-dev-gateway--0000015`, image tag `0a9f32f-evalfix-20261007`, one 0.5-vCPU/1-GiB replica in Sweden Central. Model `gpt-5.6-terra` version `2026-07-09`, GlobalStandard capacity 800, NoAutoUpgrade. The deployed image is not asserted to match current source. |
+| Validation / hardening | Recorded golden-match metrics cover scheduling/coverage, not all accessibility goals. `/healthz` is not a dependency probe. Unbounded queues, per-conversation question limits and provisioning-secret error handling still need code hardening. No code, deployment or application tests were changed/run in this documentation pass. |
+
+The actual CI workflow restores, builds and tests in Release, runs a 20-seed data card and commentary check, and scans history with gitleaks. The additional audit/eval/deploy/phrase-bank workflows below are proposals, not a verified CI inventory. See [the accessibility ledger](please-reasearch-online-then-mighty-hanrahan.md) for idea-by-idea delivery status.
 
 ---
 
@@ -18,7 +36,7 @@
 - a Calm mode and a low-vision mode
 - a sighted HTML5 overlay where every cue carries alt text
 
-**How it works, in five parts:**
+**Target design, in five parts (steps 4 and 5 remain planned):**
 1. A seeded C# simulator streams match events and 10 Hz tracking data.
 2. A deterministic **HOT** path turns them into statistics and language-neutral "utterance intents" in milliseconds.
 3. A per-channel **Booth Producer** schedules the single, serial audio stream. AI agents never speak directly; they *bid* for airtime.
@@ -32,15 +50,15 @@
 | Area | Decision | Why |
 |---|---|---|
 | Concept | Idea #4 Voice of the Game | Real impact for disabled fans; meets all five pipeline stages; strongest multi-agent and demo story ([IDEAS.md §5](IDEAS.md#5-decision-why-idea-4)) |
-| Stack | .NET 10 / C# 14, Blazor Web App (WebAssembly for the Listener and Overlay, Interactive Server for the Studio) | Team skills; reuse from certflow-ai |
-| Orchestration | **Agent Framework .NET 1.23 workflows deployed as Foundry Hosted Agents** | The Foundry portal's visual designer is a preview retiring on 1 Dec 2026; Microsoft points new work to Agent Framework + hosted agents |
+| Stack | Current: .NET 10 gateway + static JavaScript listener. Target: Blazor Listener/Overlay/Studio | Current implementation supersedes the original Blazor assumption |
+| Orchestration | Current: versioned Foundry prompt agents for companion Q&A. Target: Agent Framework hosted workflows | Hosted-workflow APIs and availability still need verification before implementation |
 | LLM | **One deployment: `gpt-5.6-terra`** for every LLM agent and the eval judge | Medium cost, a little above gpt-4o (§11) |
 | Realtime voice | Voice Live with `gpt-realtime-mini` | The low-cost realtime tier |
 | Live speech | Standard neural voices (full SSML) | HD and Omni voices lack `<prosody>` and `<break>` |
-| Fabric | F1–F4 on the free trial; F5–F7 optional | Telemetry, operations, grounding and compliance; never on the live path (§10) |
-| Deploy | azd + Bicep (ported from certflow-ai) + `azd ai agent`; Aspire for local dev only | Replaces certflow's 526-line imperative script |
+| Fabric | Planned: F1–F4; F5–F7 optional | No Fabric integration delivered; capacity/pricing require verification (§10) |
+| Deploy | Current: PowerShell 7 + Azure CLI + Bicep | azd hosted-agent tooling and Aspire remain proposals |
 | Region | Sweden Central (gpt-5.6-terra, neural voices and Voice Live confirmed there) | EU accessibility story; confirm model, voice and hosted-agent availability first |
-| Secrets | Managed identity everywhere, Key Vault, `dotnet user-secrets`; `.gitignore` first; gitleaks + push protection | "Never commit sensitive info" (§12) |
+| Secrets | Current: Entra credentials/managed identity, Key Vault startup loading, nonsecret `.env.local`, CI gitleaks | Other controls in §12 are targets unless verified separately |
 
 ---
 
@@ -67,7 +85,7 @@
 |---|---|---|
 | **AD** (Audio Description) | Blind and low-vision fans | Action, not stats; ball location at most every 4 s; reminders at every restart; graphics read at dead balls |
 | **Commentary** | All fans | Classic commentary with brief colour |
-| **Calm** | Neurodivergent fans, or anyone wanting low stimulation | No shouting styles or crowd bed, softened earcons, fixed cadence, Easy-read captions |
+| **Calm** | Neurodivergent fans, or anyone wanting low stimulation | Current: quieter commentary cadence and pass filtering; crowd/gentle settings independent. Easy-read captions remain planned. |
 | **Analyst** | Data-hungry fans | Pass difficulty, xT, PPDA, pressure regimes; graphics read automatically |
 | **Casual** | New or occasional fans | Plain language, rules explained briefly |
 | **Kids** | Young fans | Simple language, upbeat; **no free-text Q&A** (suggested questions only) |
@@ -83,7 +101,7 @@
 
 ---
 
-## 3. Architecture
+## 3. Architecture (Target, Not Deployed Topology)
 
 ### 3.1 Diagram
 ```
@@ -770,10 +788,10 @@ AIAgent recapAgent = recap.AsAgent(name: "vog-match-recap");      // verify
 - **Built (Oct 3):** the companion is a Foundry prompt agent per language, `vog-match-companion-<lang>` (gpt-5.6-terra, reasoning `none`, `VogAgentGuardrail`), defined in `foundry/agents/vog-match-companion.agent.yaml` and registered by `tools/Vog.FoundrySetup`. The gateway relays each fan's question to Voice Live in **agent mode** (`AgentSessionConfig`), so Voice Live hears and speaks while the Foundry agent answers.
 - **Tools run in Foundry, not the app:** in agent mode Foundry Agent Service runs the agent's tools, so the match tools are an **MCP server on the gateway** (`/mcp/<lang>`, read-only, API key). Each language has its own project connection (`RemoteTool`, key in Key Vault and the connection): Agent Service sends MCP requests to the connection's target, not the tool's own URL.
 - **Push-to-talk works in agent mode** with `NoTurnDetection` and `mai-transcribe` transcription (`azure-speech` requires semantic VAD; the SDK's `mai-transcribe-1` is retired).
-- **Measured:** question → first answer audio p50 6.1 s, p95 8.7 s on Azure, above the ≤2 s target: the next work for the companion.
-- **Sessions:** one Voice Live session per active asker. Push-to-talk by default; a distinct "assistant" voice.
+- **Historical measurement:** question → first answer audio p50 6.1 s, p95 8.7 s on Azure, above the ≤2 s target. The 21 October retrieved snapshot had 5 answers, p50 3.562 s / p95 7.335 s; neither snapshot is a controlled latency benchmark.
+- **Sessions:** one Voice Live conversation per connection/language. Tap-to-ask with local silence auto-stop is default; hold-to-talk and typed input are optional. The 50-question limit resets with the conversation and is not durable rate/cost protection.
 - **Tools** (planned in full; the first five are built as `MatchTools`): `score_time`, `where_is_ball`, `who_has_ball`, `recent_events`, `lineup_subs`, `player_info`, `stat`, `repeat_last`, `set_preference`, and `explain_moment`, which calls `vog-insight-desk`.
-- **On speech start:** the listener's channel bus is ducked. **When the answer ends:** a Booth catch-up utterance plays.
+- **Current audio behavior:** commentary is muted during recording and ducked during answers. **Planned:** a Booth catch-up utterance after the answer; none is emitted today.
 - **Text-chat twin:** the same tools for Deaf and speech-impaired users.
 - **Safety:**
   - Fan input is wrapped as untrusted (certflow's `<untrusted_user_input>` pattern).
@@ -786,7 +804,7 @@ AIAgent recapAgent = recap.AsAgent(name: "vog-match-recap");      // verify
 
 The README explains *why not everything is an agent*. Judges reward knowing when not to use an LLM.
 
-### 8.6 Calling hosted agents: latency and resilience
+### 8.6 Calling hosted agents: latency and resilience (Planned)
 - **Calls:** the Gateway calls `vog-insight-desk` through the Responses API. The client builds on certflow's `GetProjectResponsesClientForAgent`; verify the hosted-agent reference shape.
 - **Warm and dedupe:**
   - Warm-up ping at kick-off; hosted idle timeout set to 60 min.
@@ -798,7 +816,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 
 ---
 
-## 9. UX (Blazor)
+## 9. UX (Planned Blazor/Overlay/Studio)
 
 ### 9.1 Listener app (WASM PWA, screen-reader first)
 - **Start:** the first focus is a large **"Start listening"** button, which unlocks audio playback (`audioCtx.resume()`). Pages have landmarks and a single H1, and onboarding is audio-guided.
@@ -931,8 +949,8 @@ The README explains *why not everything is an agent*. Judges reward knowing when
   - `!.vscode/mcp.json` is allowed back in, and must stay secret-free
 - **No secrets in code, YAML, `agent.yaml`, docs or Fabric definitions:**
   - **Managed identity + `DefaultAzureCredential`** for Foundry, Event Hubs, Cosmos, SignalR, Speech, Storage, Key Vault and Eventhouse.
-  - The **only shared secret**, the `Vog.Mcp` API key used by Foundry's MCP tool, is generated at deploy time and stored in **Key Vault**. It reaches Container Apps as a Key Vault secret reference and lives in a **Foundry project connection**.
-  - **Local dev:** `dotnet user-secrets` (outside the repo) and `azd env` (in the ignored `.azure/`). The repo holds only `.env.example` and secret-free `appsettings.json`.
+  - **Current:** the gateway MCP API key is stored in Key Vault and a Foundry project connection. The gateway reads Key Vault at startup; it is not delivered through a Container Apps Key Vault secret reference. Provisioning lookup/error handling needs future hardening.
+  - **Current local dev:** nonsecret settings in git-ignored `.env.local`, with Azure CLI credentials. `dotnet user-secrets` / `azd env` are original design options, not the implemented setup.
   - **No fallback secret defaults** in code. Options classes use `ValidateOnStart`, so the app fails fast when a setting is missing.
   - **GitHub Actions** uses OIDC federated credentials, with no client secrets.
   - `.vscode/mcp.json` uses `${input:…}` prompts.
@@ -948,15 +966,15 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 
 ## 13. Infrastructure and delivery
 
-- **Decision (2 Oct 2026): provision with the Azure CLI + Bicep**, via `infra/provision.ps1` and `infra/teardown.ps1`, rather than azd. Built so far: the Foundry (AI Services) account with key auth disabled, the Foundry project, and the developer's data-plane roles in Sweden Central. The azd notes below are kept only for the hosted-agent tooling (`azd ai agent`), if needed later.
+- **Current (verified 21 Oct 2026): Azure CLI + Bicep via PowerShell 7**, using `infra/provision.ps1` and `infra/teardown.ps1`. Built: Foundry account/project/model/guardrail, gateway managed identity and roles, Key Vault, registry, Container Apps environment/gateway, Log Analytics and App Insights. `-SkipBuild` skips image build only; it still deploys infrastructure, writes settings and registers agents. The azd notes below are future hosted-agent options.
 - **azd** (`azure.yaml`):
   - Container Apps services: `gateway`, `web`, `mcp`, `simulator`, `companion`.
   - Three hosted agents via the `azure.ai.agents` azd extension: `azd ai agent init` creates each host's `agent.yaml` manifest. Verify how `azure.yaml` references them.
   - Local loop: `azd ai agent run` / `invoke --local`. Deploy: `azd provision` + `azd deploy`.
 - **Bicep modules:**
   - **Ported from certflow-ai:** identity, monitoring, key-vault, container-registry, ai-foundry (AIServices account + project + `gpt-5.6-terra` deployment + RAI policy + roles), container-apps (including the `imagesPublished` two-pass trick).
-  - **New:** event-hubs (4 hubs: `match-events`, `tracking-lite`, `moments`, `cues`), signalr (S1), cosmos (with vector policy), storage, and an optional fabric-capacity.
-  - **Foundry project connections** (MCP, Fabric) are Bicep resources, replacing certflow's `az rest` calls. Verify the API version.
+  - **Planned, not present:** event-hubs (4 hubs: `match-events`, `tracking-lite`, `moments`, `cues`), signalr (S1), cosmos (with vector policy), storage and optional fabric-capacity.
+  - **Current:** a Foundry MCP connection module. Fabric connections remain planned.
 - **Identity and RBAC:** a user-assigned managed identity per app, least privilege:
   - Foundry User (renamed from Azure AI User)
   - Event Hubs Data Sender/Receiver
@@ -969,7 +987,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 
   Hosted-agent identities get only what their tools need.
 - **GitHub Actions:**
-  - `ci.yml`: build, tests, gitleaks, contract tests, cached evals.
+  - **Current `ci.yml`:** restore, Release build/tests, 20-seed simulator data card, commentary check and full-history gitleaks scan. The following additional workflows are planned:
   - `a11y-audit.yml`: the Accessibility Auditor on golden matches, with a PR comment via `gh`.
   - `evals-nightly.yml`: uncached; pushes datasets to Foundry cloud eval.
   - `deploy.yml`: OIDC, then `azd provision/deploy` and `fab deploy`.
@@ -978,7 +996,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 - **Local dev:**
   - Aspire AppHost with emulators: Event Hubs, Cosmos vNext with vector search, and Azure SignalR (serverless only, so verify the hub works or use in-process SignalR locally).
   - In-process channels as an Event Hubs alternative.
-- **Scaling for the demo:** `minReplicas = 1` for Gateway, Web and Companion; hosted-agent idle timeout 60 min; warm-up pings.
+- **Current scaling:** one gateway Container App, min/max replicas 1/1; listener and relay run in it. Separate Web/Companion apps and hosted-agent warm-up settings remain planned.
 - **Region:** Sweden Central. Confirm hosted agents, `gpt-5.6-terra` quota, neural/HD voices and Voice Live there on day 1.
 
 ---

@@ -2,14 +2,17 @@
 
 **Accessibility-first, multilingual AI match commentary**: an entry for the Microsoft × Premier League *Inside the Game* hackathon.
 
-Voice of the Game turns a synthetic football match into live commentary that works for every fan: audio description for blind and low-vision fans, multilingual commentary, captions for Deaf and hard-of-hearing fans, a Calm mode, and a sighted overlay where every graphic is also read aloud.
+Voice of the Game turns a synthetic football match into live audio description, multilingual commentary, captions, a Calm mode, and an on-demand match companion. The browser listener includes a live pitch map; a dedicated broadcast overlay and Studio remain planned.
 
 - Research and idea selection: [IDEAS.md](IDEAS.md)
 - Full build plan: [BUILD_PLAN.md](BUILD_PLAN.md)
+- Accessibility implementation ledger: [please-reasearch-online-then-mighty-hanrahan.md](please-reasearch-online-then-mighty-hanrahan.md)
 
 > All data is synthetic. The league, clubs and players are fictional and generated, with a deny-list of real club names. No real Premier League data, trademarks or footage are used.
 
 ## What works today
+
+Implementation reviewed against the current source on **21 October 2026**. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The additional CLI modes below are offline options.
 
 The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, with no cloud services needed:
 
@@ -20,11 +23,41 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | (c) Describe | `Vog.Describe` | Language-neutral utterance intents, realized through reviewed phrase banks (`en-GB` reviewed; `es-ES` and `ta-IN` (Tamil) **draft**: they need native-speaker review before use on air) |
 | (d) Schedule | `Vog.Booth` | The **Booth Producer**: decides what is spoken when on a serial audio channel, using priorities, preemption, staleness rules, location obligations and dead-ball colour |
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
-| Speech and captions | `Vog.Voice` | Azure neural voices signed in with Microsoft Entra ID (the resource has no keys), 24 kHz PCM streamed as it arrives, captions timed to the spoken words (WebVTT, at most 2 lines of 37 characters), and cuts at word boundaries when the booth interrupts |
+| Speech and captions | `Vog.Voice` | Azure neural voices authenticated with Microsoft Entra ID, 24 kHz PCM streaming and word-timed caption generation (WebVTT, at most 2 lines of 37 characters). Offline utilities support word-boundary cuts; live playback uses a sample-limit fade for interruption. |
 | (e) Render, live | `Vog.Gateway` | Plays the golden match in real time, on a wall-clock schedule every gateway shares, and broadcasts every channel that has listeners over SignalR: each line as the booth starts it, its audio streamed as it is synthesized, then word-timed captions. The listener page plays the audio through an AudioWorklet, with procedural earcons panned to where the action is. |
-| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Hold-to-ask or typed questions through Azure Voice Live in agent mode. The answering agent is a versioned Foundry prompt agent (gpt-5.6-terra, agent guardrail) whose MCP tools read the live match from the gateway, so every fact comes from match data. Answers come back in their own voice, with the commentary turned down. |
+| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. A versioned Foundry prompt agent uses five read-only MCP tools at `/mcp/<lang>` to ground answers in match data. Commentary is muted while recording and ducked during answers. |
 
-Still to come, per the milestones: the Foundry agent workflows (Insight Desk, match recap, transcreation), the Blazor listener app and overlay, and Fabric.
+The browser also provides independent commentary/answer/event/ball/crowd levels, ball sonification, supported-device haptics, sound learning, clear-speech and gentle-sound settings, sound tags and an atmosphere meter. Caption size, colours, opacity, outline, font and position are configurable; preferences are stored on the device. The pitch map has zoom, follow-ball, shape/number markers and a polite position description. Calm changes commentary cadence and pass filtering; crowd and gentle-sound settings are independent.
+
+Still planned: hosted Foundry workflows (Insight Desk, recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
+
+### Azure deployment verified on 21 October 2026
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/
+
+Read-only Azure CLI queries confirmed the following deployment, separately from the current source:
+
+| Item | Observed value |
+|---|---|
+| Resource group / region | `rg-vog-dev` / Sweden Central |
+| Active revision | `ca-vog-dev-gateway--0000015`, Healthy; created 7 October 2026 |
+| Image | `crvogdevy6po56.azurecr.io/vog-gateway:0a9f32f-evalfix-20261007` |
+| Gateway scale / resources | Single revision; min/max replicas 1/1; 0.5 vCPU, 1 GiB memory |
+| Ingress / identity | External, port 8080; user-assigned managed identity |
+| Foundry model | `gpt-5.6-terra`, version `2026-07-09`, `GlobalStandard`, capacity 800, `NoAutoUpgrade`; deployment Succeeded |
+| Probes | Readiness and liveness both use `/healthz` |
+
+The resource-group inventory contains the Foundry account/project, managed identity, Key Vault, registry, Container Apps environment/gateway, Log Analytics, Application Insights and its smart-detection action group. No Fabric, Event Hubs, Azure SignalR, Cosmos DB or storage-account resources appeared in this resource group. This is not a subscription-wide inventory, nor proof that the deployed image matches current source. `/healthz` returned `{"status":"ok"}`; it is a process probe, not a Speech/Foundry dependency check.
+
+The public `/stats` snapshot retrieved during this review reported the following timings in milliseconds. These are accumulated runtime observations, not a controlled benchmark or a new test run:
+
+| Metric | Count | p50 | p95 |
+|---|---|---|---|
+| Server first audio chunk | 240 | 72 | 244 |
+| Client receive to playback | 226 | 444 | 1305 |
+| Companion question to first audio | 5 | 3562 | 7335 |
+
+The same snapshot reported 0 server and 13 client stale skips, 5 companion answers, 3 tool calls, 5,524 input tokens and 530 output tokens. Five answers are too few to establish a companion latency service level.
 
 ### Sample: audio-description channel, golden match
 
@@ -40,9 +73,9 @@ Still to come, per the milestones: the Foundry agent workflows (Insight Desk, ma
 [ 79:20] On screen: shot speed, 107 kilometres an hour.
 ```
 
-### Quality, measured on every run
+### Recorded offline quality
 
-The golden match meets all the accessibility targets from BUILD_PLAN.md §17, on English and Spanish audio description and on the Commentary and Calm modes:
+The recorded golden-match results below cover deterministic scheduling and coverage, not all accessibility targets in BUILD_PLAN.md §17. Browser accessibility, co-design outcomes, real playback/caption alignment, load and transcription accuracy require separate validation. These results were not rerun during the documentation review:
 
 | Check (audio description, en-GB) | Result | Target |
 |---|---|---|
@@ -53,7 +86,7 @@ The golden match meets all the accessibility targets from BUILD_PLAN.md §17, on
 | Dead-ball calls (restarts, substitutions) → speech, p95 | 4.9 s | ≤ 8 s |
 | Overlapping utterances / urgent items lost | 0 / 0 | 0 / 0 |
 
-Speaking-time estimates are calibrated against the real Azure voices with `vog-replay speak`: spoken ÷ estimated duration is 1.01 at the median for English audio description, and 1.05 for Tamil, whose longer words get their own rate factor. Synthesizing each line when it is *queued* rather than when it airs hides the service's first-byte latency: a median of 36 ms added, against about 600 ms on this development network.
+Earlier `vog-replay speak` calibration recorded spoken/estimated median durations of 1.01 for English audio description and 1.05 for Tamil. An earlier queued-synthesis experiment recorded a median 36 ms added latency versus about 600 ms on that development network. The current live `SpeechWorker` starts synthesis after Booth dispatch; pre-synthesis while waiting in the Booth queue remains planned.
 
 The simulator passes its **synthetic data card** over 20 seeds. Means: 2.5 goals (2.6 xG), 25 shots, 81% pass completion, 61 minutes of ball in play, 10 km and 34 sprints per outfield player, plus realistic fouls, cards, corners, throw-ins and goal kicks.
 
@@ -62,7 +95,7 @@ The simulator passes its **synthetic data card** over 20 seeds. Means: 2.5 goals
 Prerequisite: the [.NET 10 SDK](https://dotnet.microsoft.com/download) (pinned in `global.json`).
 
 ```bash
-dotnet test                                   # 92 tests: determinism, physics, models, phrase banks, booth, golden match, schedule, captions, match tools
+dotnet test                                   # repository tests; no fixed test count
 
 dotnet run --project tools/Vog.Replay -- commentary                    # full match, English audio description
 dotnet run --project tools/Vog.Replay -- commentary --lang es-ES       # Spanish (draft phrase bank)
@@ -82,7 +115,7 @@ Prerequisites: the [Azure CLI](https://aka.ms/installazurecli) and PowerShell 7,
                              #   Foundry resource + project (keys disabled), gpt-5.6-terra, agent guardrail;
                              #   Key Vault, container registry, Container Apps, Log Analytics + App Insights;
                              #   registers the Foundry agents; writes .env.local (git-ignored, no secrets)
-./infra/provision.ps1 -SkipBuild                                       # infrastructure only
+./infra/provision.ps1 -SkipBuild  # skips image build; still deploys infrastructure, writes settings and registers agents
 
 dotnet run --project tools/Vog.Replay -- speak --from 78 --minutes 2   # out/audio/*.wav + word-timed *.vtt
 dotnet run --project tools/Vog.FoundrySetup                            # re-register agents after editing foundry/agents/*.yaml
@@ -100,9 +133,9 @@ dotnet run --project src/Vog.Gateway                                  # http://l
 dotnet run --project tools/Vog.Replay -- listen --seconds 30          # smoke test: joins a channel like a browser
 ```
 
-Open http://localhost:5080, pick a language and mode, and select **Start listening**. Headphones help: earcons are panned to where the action is, as seen from the main stand. The gateway needs the settings in `.env.local` (or the same names in its environment) and won't start without them. Speech is synthesized only for channels that have listeners, so cost scales with channels in use, not with listeners.
+Open http://localhost:5080, pick a language and mode, and select **Start listening**. Headphones help: earcons are panned to where the action is, as seen from the main stand. The gateway needs the settings in `.env.local` (or the same names in its environment) and won't start without them. Live utterances are dispatched to active audio channels, rather than synthesized per listener. Workers warm on join, and warm-up or already queued work can continue after listeners leave; this is not a strict no-listener cost guarantee.
 
-Measured on a developer network, from a cold start, English audio description:
+Historical developer-network measurement, from a cold start, English audio description (not rerun in this review):
 
 | Measure | p50 | p95 |
 |---|---|---|
@@ -113,21 +146,21 @@ A line that could only start well behind the booth's schedule is skipped, so a h
 
 ### Ask about the match (Foundry agents)
 
-On the listener page, hold **Hold to ask** (or hold Space or Enter on it) and ask; or type the question. The gateway relays it to Azure Voice Live in agent mode, connected to the Foundry agent for the channel's language (`vog-match-companion-en-gb`, `-es-es`, `-ta-in`): English, Spanish and Tamil, spoken or typed. The agent's MCP tools read the gateway's live match, so answers come from match data, and it declines anything that isn't about the match.
+On the listener page, select **Tap to ask**, speak, and let local silence detection stop recording, or tap again. Optional hold mode, Alt+Shift+A and typed questions are also available. Score and ball quick-readouts use deterministic match data; Who scored uses the agent. The gateway relays agent questions to Azure Voice Live in agent mode, connected to the channel's Foundry agent (`vog-match-companion-en-gb`, `-es-es`, `-ta-in`). Its read-only MCP tools provide match facts; instructions restrict answers to the match. Post-answer catch-up and hands-free live-reference echo cancellation are not implemented.
 
 ```powershell
 dotnet run --project tools/Vog.Replay -- companion --say "Who has the ball?"          # straight to the agent over Voice Live
 dotnet run --project tools/Vog.Replay -- ask --url $env:VOG_GATEWAY_URL               # through a gateway, typed and spoken
 ```
 
-Measured on the Azure deployment (Sweden Central):
+Historical Azure measurement (Sweden Central; not rerun in this review). See the dated snapshot above for the observations retrieved on 21 October:
 
 | Measure | p50 | p95 |
 |---|---|---|
 | Booth start → first speech chunk sent (commentary) | 0.09 s | 0.79 s |
 | Question finished → first answer audio (agent and tool call) | 6.1 s | 8.7 s |
 
-The answer latency is the agent's: the model calls an MCP tool and then answers, and Voice Live speaks the result. Bringing it down is the next piece of work for the companion.
+Answer latency includes relay, Voice Live, agent and MCP tool work; these aggregate timings do not isolate each component. Bringing it down remains work for the companion. Current speech/companion queues are unbounded, and the 50-question limit is per conversation, resetting on reconnection/language change; it is not durable authentication, rate limiting or cost protection. Queue bounding, session lifecycle and provisioning-secret error handling need later code hardening.
 
 Matches run on a fixed wall-clock schedule from 1 October 2026, so every gateway, local or in Azure, is at the same moment of the same match. That is also why a local gateway's questions, answered from the deployed gateway's match, stay consistent with what you hear.
 ## Repository layout
