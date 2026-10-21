@@ -8,6 +8,15 @@ The app should show at least three goals within two minutes of viewing. The user
 
 The prior session committed and pushed the implementation as b60e1ce. This verification session must also preserve software best practices and hackathon rules. After verification, the user explicitly authorized committing, pushing and deploying the verified changes to the existing Azure Container App. Deployment results must be checked before treating the release as complete.
 
+## Azure Release: 21 October 2026
+
+- Application commit 759aa26043c24958c92961a74c269218d4b77c38 was pushed to origin/main.
+- ACR build dtg successfully published vog-gateway:759aa26-20261021061006 from the clean worktree. The build pulled fresh .NET 10 SDK/runtime base images; their exact security coverage has not been audited.
+- Deployed immutable image crvogdevy6po56.azurecr.io/vog-gateway@sha256:cea54fae683a527e6bdfbae07302b91e5799fa5c7087e3d3f69a7eed549854c7 to the existing app in rg-vog-dev, without provisioning infrastructure or changing secrets/Foundry registration.
+- Revision ca-vog-dev-gateway--r759aa26-061158 is Healthy and latestReadyRevisionName, with 100% traffic in Single revision mode. The previous revision was deactivated. Both the revision-specific and public /healthz endpoints returned status ok.
+- Public URL: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/ . A fresh browser connection receives speed 60 and shows the 60x label. Previously open pages retained old JavaScript; hard-refresh after deployment.
+- A fresh English audio-description listener on Azure received three natural goals with PCM worklet playback acknowledgements at 30.7, 48.5 and 69.7 seconds after Start listening. The scoreboard advanced to 1-2, and no browser errors were captured. This is one successful end-to-end sample, not subjective audio validation or an outage SLA. Recording observed real traffic without modifying simulation outcomes.
+
 ## Implemented
 
 - Gateway defaults now use simulator seed 3, match-clock speed 60x, and zero between-match break. This is continuous accelerated match playback, not a highlights mode and not injected scoring.
@@ -61,7 +70,7 @@ Historical checks from the implementation session:
 2. The nine-channel pipeline timing check now passes. Actual concurrent multilingual Azure speech, transient outages, slow clients and resource-pressure behavior remain unverified.
 3. The page at http://127.0.0.1:5088/ is a static preview, not the gateway. Use http://127.0.0.1:5090/ for local live verification.
 4. Review and patch installed/deployed ASP.NET Core shared runtimes as appropriate. The SignalR client package fix alone is not a complete runtime security update.
-5. Azure still runs revision ca-vog-dev-gateway--0000015 with image vog-gateway:0a9f32f-evalfix-20261007, one 0.5-vCPU/1GiB replica and no Broadcast overrides. It has not been updated to b60e1ce or this session's fixes. Local and deployed gateways must use identical seed, speed and break settings because the companion's MCP tools can read the deployed gateway rather than the local instance; even identical settings do not prove synchronized clocks/state.
+5. Azure now runs the release recorded above, with the existing one 0.5-vCPU/1GiB replica and no Broadcast overrides. Local and deployed gateways must use identical seed, speed and break settings because the companion's MCP tools can read the deployed gateway rather than the local instance; even identical settings do not prove synchronized clocks/state.
 6. At the default rate, detailed spoken audio description and mode-specific routine commentary are filtered out. Ball sonification, pitch data and quick readouts remain available. Validate this usability tradeoff with the user and actual listeners; do not describe it as equivalent to full real-time audio description. Speech queues remain unbounded; P0 retention can build backlog during outages, and synthesis failures currently lose a call without retry. The successful local sample is not proof of resilient delivery.
 7. The schedule guarantee assumes the configured fixture/rate and an operating gateway. Startup catch-up, CPU pressure, SignalR latency, Azure warm-up and audio playback are not covered by the synthetic viewing-window test. Arbitrary seed/rate/break overrides invalidate the guarantee.
 
