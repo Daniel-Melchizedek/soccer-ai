@@ -53,7 +53,7 @@ public sealed record CaptionCueMessage(long StartMs, long EndMs, IReadOnlyList<s
     public static CaptionCueMessage From(CaptionCue cue) => new(cue.StartMs, cue.EndMs, cue.Lines);
 }
 
-public sealed record StateMessage(string Clock, int Period, int HomeScore, int AwayScore, bool BallInPlay);
+public sealed record StateMessage(string Clock, int Period, int HomeScore, int AwayScore, bool BallInPlay, double Speed = 1);
 
 /// <summary>
 /// The pitch five times a second, for the ball sound, vibration, crowd meter and pitch map. Compact

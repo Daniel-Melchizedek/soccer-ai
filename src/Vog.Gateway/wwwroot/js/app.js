@@ -266,6 +266,7 @@ function addHistory(u) {
 const KIT_COLOURS = { red: '#e53935', blue: '#1e63ff', white: '#ffffff', yellow: '#ffd400', green: '#1faa59', claret: '#7b1e3a', sky_blue: '#64c8ff', orange: '#ff8a2a', black: '#111111', purple: '#7e3ff2' };
 
 function showState(s) {
+  el('match-speed').textContent = s.speed > 1 ? ` | ${s.speed}x match clock` : '';
   const part = (text, className) => Object.assign(document.createElement('span'), { textContent: text, className });
   const team = (name, kit) => {
     const span = part(name ?? '', 'team');

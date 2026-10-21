@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Vog.Contracts;
 using Vog.Simulator;
 
@@ -18,34 +19,39 @@ public sealed class LiveMatchRunner(MatchSetup setup, IReadOnlyList<ChannelSpec>
     /// </param>
     public async Task RunAsync(Func<ChannelBoothEvent, ValueTask> onBoothEvent, CancellationToken cancellationToken, Func<long>? catchUpTo = null)
     {
-        PeriodicTimer? timer = null;
-        try
+        var clock = new Stopwatch();
+        long firstPts = 0;
+        foreach (var tick in Pipeline.Ticks)
         {
-            foreach (var tick in Pipeline.Ticks)
+            if (!clock.IsRunning && catchUpTo is not null && tick.Frame.PtsMs < catchUpTo())
             {
-                if (timer is null && catchUpTo is not null && tick.Frame.PtsMs < catchUpTo())
-                {
-                    Pipeline.Step(tick);
-                    cancellationToken.ThrowIfCancellationRequested();
-                    continue;
-                }
-
-                timer ??= new PeriodicTimer(TimeSpan.FromMilliseconds(TrackingFrame.IntervalMs / Math.Max(0.1, speed)));
-                await timer.WaitForNextTickAsync(cancellationToken);
-                foreach (var e in Pipeline.Step(tick))
-                {
-                    await onBoothEvent(e);
-                }
+                Pipeline.Step(tick);
+                cancellationToken.ThrowIfCancellationRequested();
+                continue;
             }
 
-            foreach (var e in Pipeline.Drain())
+            if (!clock.IsRunning)
+            {
+                firstPts = tick.Frame.PtsMs;
+                clock.Start();
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            var remaining = TimeSpan.FromMilliseconds((tick.Frame.PtsMs - firstPts) / Math.Max(0.1, speed)) - clock.Elapsed;
+            if (remaining > TimeSpan.Zero)
+            {
+                await Task.Delay(remaining, cancellationToken);
+            }
+
+            foreach (var e in Pipeline.Step(tick))
             {
                 await onBoothEvent(e);
             }
         }
-        finally
+
+        foreach (var e in Pipeline.Drain())
         {
-            timer?.Dispose();
+            await onBoothEvent(e);
         }
     }
 }

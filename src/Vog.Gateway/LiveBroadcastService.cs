@@ -22,9 +22,6 @@ public sealed class LiveBroadcastService(
     IOptions<AzureAiOptions> azure,
     ILogger<LiveBroadcastService> log) : BackgroundService
 {
-    /// <summary>Between matches; listeners stay connected and hear the next kick-off.</summary>
-    private static readonly TimeSpan MatchBreak = TimeSpan.FromMinutes(2);
-
     /// <summary>Five pitch updates a second: smooth enough to follow by ear once the browser interpolates.</summary>
     private static readonly TimeSpan PitchInterval = TimeSpan.FromMilliseconds(200);
 
@@ -42,7 +39,7 @@ public sealed class LiveBroadcastService(
         var state = BroadcastStateAsync(stoppingToken);
         var pitch = BroadcastPitchAsync(stoppingToken);
         var seed = options.Value.Seed;
-        var schedule = new MatchSchedule(MatchSchedule.LengthOf(GoldenMatch.Setup(seed)), MatchBreak, options.Value.Speed);
+        var schedule = new MatchSchedule(MatchSchedule.LengthOf(GoldenMatch.Setup(seed)), TimeSpan.FromSeconds(options.Value.BreakSeconds), options.Value.Speed);
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -85,8 +82,11 @@ public sealed class LiveBroadcastService(
                 var message = UtteranceMessage.From(u, e.Frame, e.Channel.Lang);
                 if (directory.HasListeners(channelId))
                 {
-                    await hub.Clients.Group(channelId).SendAsync("utterance", message);
-                    Worker(e.Channel).Enqueue(u);
+                    if (options.Value.Speak(u.Intent.Kind))
+                    {
+                        await hub.Clients.Group(channelId).SendAsync("utterance", message);
+                        Worker(e.Channel).Enqueue(u);
+                    }
                 }
 
                 if (directory.HasTextListeners(channelId))
@@ -95,7 +95,7 @@ public sealed class LiveBroadcastService(
                 }
                 break;
 
-            case BoothEventKind.Finished when u.Status == UtteranceStatus.Preempted && directory.HasListeners(channelId):
+            case BoothEventKind.Finished when u.Status == UtteranceStatus.Preempted && directory.HasListeners(channelId) && options.Value.Speak(u.Intent.Kind) && options.Value.Speed <= 4:
                 await hub.Clients.Group(channelId).SendAsync("cut", u.UtteranceId, u.DurationMs);
                 break;
         }
@@ -117,7 +117,7 @@ public sealed class LiveBroadcastService(
             {
                 if (_pipeline is { Frame: { } frame, Ball: { } ball })
                 {
-                    var message = new StateMessage(MatchClock.Display(frame.Period, frame.MatchClockMs), frame.Period, ball.HomeScore, ball.AwayScore, ball.Status == BallStatus.InPlay);
+                    var message = new StateMessage(MatchClock.Display(frame.Period, frame.MatchClockMs), frame.Period, ball.HomeScore, ball.AwayScore, ball.Status == BallStatus.InPlay, options.Value.Speed);
                     await hub.Clients.All.SendAsync("state", message, ct);
                 }
             }
