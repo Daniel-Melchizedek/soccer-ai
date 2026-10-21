@@ -24,14 +24,16 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | (d) Schedule | `Vog.Booth` | The **Booth Producer**: decides what is spoken when on a serial audio channel, using priorities, preemption, staleness rules, location obligations and dead-ball colour |
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices authenticated with Microsoft Entra ID, 24 kHz PCM streaming and word-timed caption generation (WebVTT, at most 2 lines of 37 characters). Offline utilities support word-boundary cuts; live playback uses a sample-limit fade for interruption. |
-| (e) Render, live | `Vog.Gateway` | Plays a seeded synthetic match at 60x by default, on a wall-clock schedule every gateway shares. Key match calls stream as audio with word-timed captions; full text commentary remains available. The listener page plays audio through an AudioWorklet, with procedural earcons panned to where the action is. |
+| (e) Render, live | `Vog.Gateway` | Plays a seeded synthetic match at natural 1x speed by default, on a shared wall-clock schedule. Full mode-specific narration streams as audio with word-timed captions. The listener page plays audio through an AudioWorklet, with procedural earcons panned to where the action is. |
 | Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. A versioned Foundry prompt agent uses five read-only MCP tools at `/mcp/<lang>` to ground answers in match data. Commentary is muted while recording and ducked during answers. |
 
 The browser also provides independent commentary/answer/event/ball/crowd levels, ball sonification, supported-device haptics, sound learning, clear-speech and gentle-sound settings, sound tags and an atmosphere meter. Caption size, colours, opacity, outline, font and position are configurable; preferences are stored on the device. The pitch map has zoom, follow-ball, shape/number markers and a polite position description. Calm changes commentary cadence and pass filtering; crowd and gentle-sound settings are independent.
 
 Still planned: hosted Foundry workflows (Insight Desk, recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
-### Azure deployment verified on 21 October 2026
+### Historical Azure snapshot: 21 October 2026
+
+The following inventory predates the later accelerated release recorded in [NEXT_SESSION.md](NEXT_SESSION.md). The natural-speed correction is verified locally only; neither snapshot proves Azure runs the corrected source.
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/
 
@@ -102,6 +104,7 @@ dotnet run --project tools/Vog.Replay -- commentary --lang es-ES       # Spanish
 dotnet run --project tools/Vog.Replay -- commentary --mode calm --from 70 --to 80
 dotnet run --project tools/Vog.Replay -- commentary --quiet --latency  # coverage report + latency by template
 dotnet run --project tools/Vog.Replay -- datacard --seeds 20           # simulator realism report
+dotnet run --project tools/Vog.Replay -- goaltiming --seeds 100 --seed 1 # raw natural-speed goal timestamps; at most 100 seeds
 ```
 
 Modes: `ad` (audio description), `commentary`, `calm`, `analyst`, `casual`, `kids`.
@@ -135,9 +138,13 @@ dotnet run --project tools/Vog.Replay -- listen --seconds 30          # smoke te
 
 Open http://localhost:5080, pick a language and mode, and select **Start listening**. Headphones help: earcons are panned to where the action is, as seen from the main stand. The gateway needs the settings in `.env.local` (or the same names in its environment) and won't start without them. Live utterances are dispatched to active audio channels, rather than synthesized per listener. Workers warm on join, and warm-up or already queued work can continue after listeners leave; this is not a strict no-listener cost guarantee.
 
-The app defaults to seed 3 at **60x match-clock speed**, with no between-match break. This fixture naturally generates four goals, at approximately 42, 60, 81 and 91 seconds after kick-off. Tests verify at least three goals in any two-minute viewing window across repeated matches. This is accelerated synthetic playback, not two minutes of regulation football; the scoreboard labels the actual speed. There is no separate demo mode or injected scoring.
+The app defaults to seed **20261026**, natural **1x match-clock speed**, and a **120-second between-match break**. Full mode-specific narration and normal speech preemption are enabled. The pitch map uses uniform metres-to-screen scaling and a stable 28 CSS-pixel yellow ball with a separated white outline and dark borders. There is no separate demo mode, highlights playback or injected scoring.
 
-At speeds above 4x, spoken commentary is limited to goals and period changes so normal-speed speech does not queue every pass. Full text-only commentary, the pitch map, ball sonification and match tools still use the complete match data. The detailed spoken audio-description stream remains available at lower speeds. Setting `Broadcast__Speed=1` restores real-time playback; `Broadcast__Seed` and `Broadcast__BreakSeconds` can also override the defaults. Custom rates or fixtures do not carry the three-goal timing guarantee. All gateways used by the companion must use matching settings.
+Optional acceleration remains explicit through `Broadcast__Speed`; `Broadcast__Seed` and `Broadcast__BreakSeconds` can also override the defaults. Above 4x, spoken commentary is limited to goals and period changes; this is not equivalent to detailed real-time audio description. The full text-only stream and match data remain available. Companion MCP grounding must reference the same configured match and schedule as the listener; corrected local state is not synchronized with the older deployed 60x gateway.
+
+**Three natural goals within 120 real seconds remain unresolved.** The offline `goaltiming` command records raw `MatchEngine.Run()` goal PTS, score changes and the first emitted kickoff without dividing by a speed. Seeds 1-100 had no qualifying opening or later three-goal window: the shortest span was 246,800 ms (seed 36). The default seed has one goal at 4,857,200 ms; seed 3's shortest triple spans 1,836,600 ms at 1x. From simulation start, the 12-second opening delay plus two minimum 55-second post-goal waits already exceed 120 seconds before actual play. No universal impossibility is claimed for a window starting at first kickoff or later, but no candidate was verified. Changing restart rules, realism or recording format needs user approval.
+
+Local corrective verification: isolated Release build and all 119 tests passed; Playwright measured 10 DOM-clock seconds and 10.2 seconds of pitch PTS over 10 wall seconds. An English sample delivered routine narration, captions, PCM and two worklet playback acknowledgements; all nine channel joins confirmed their selected modes. Renderer pixel/interaction checks passed 72 cases across desktop/mobile, DPR 1/2 and zoom/follow combinations. Full screenshot review, concurrent nine-language/mode speech and corrected local Foundry grounding remain unverified. See [NEXT_SESSION.md](NEXT_SESSION.md) for exact checks and release boundaries.
 
 Historical developer-network measurement, from a cold start, English audio description (not rerun in this review):
 

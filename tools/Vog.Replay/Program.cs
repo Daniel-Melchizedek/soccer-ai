@@ -11,6 +11,9 @@ switch (command)
     case "datacard":
         return DataCard.Run(options.Int("seeds", 20), options.ULong("seed", 1));
 
+    case "goaltiming":
+        return GoalTiming.Run(options.Int("seeds", 20), options.ULong("seed", 1));
+
     case "commentary":
         return Commentary.Run(options);
 
@@ -30,6 +33,7 @@ switch (command)
         Console.WriteLine("vog-replay: offline tools for the Voice of the Game pipeline");
         Console.WriteLine();
         Console.WriteLine("  datacard   [--seeds 20] [--seed 1]                realism report over many seeded matches");
+        Console.WriteLine("  goaltiming [--seeds 20] [--seed 1]                raw goal PTS and scores at 1x; at most 100 seeds");
         Console.WriteLine("  commentary [--seed N] [--lang en-GB|es-ES] [--mode ad|commentary|calm|analyst|casual|kids]");
         Console.WriteLine("             [--from MIN] [--to MIN] [--minutes MIN] [--verbose] [--quiet]");
         Console.WriteLine("                                                    play a match as commentary + coverage report");

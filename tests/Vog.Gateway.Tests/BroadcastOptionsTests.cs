@@ -9,14 +9,14 @@ namespace Vog.Gateway.Tests;
 public sealed class BroadcastOptionsTests
 {
     [Fact]
-    public void AppDefaultsUseVerifiedScoringFixtureAndContinuousFastPlayback()
+    public void AppDefaultsUseNaturalPlaybackAndTwoMinuteBreak()
     {
         var defaults = new BroadcastOptions();
         using var configuration = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "appsettings.json")));
         var broadcast = configuration.RootElement.GetProperty("Broadcast");
-        Assert.Equal(3UL, defaults.Seed);
-        Assert.Equal(60, defaults.Speed);
-        Assert.Equal(0, defaults.BreakSeconds);
+        Assert.Equal(GoldenMatch.DefaultMatchSeed, defaults.Seed);
+        Assert.Equal(1, defaults.Speed);
+        Assert.Equal(120, defaults.BreakSeconds);
         Assert.Equal(defaults.Seed, broadcast.GetProperty("Seed").GetUInt64());
         Assert.Equal(defaults.Speed, broadcast.GetProperty("Speed").GetDouble());
         Assert.Equal(defaults.BreakSeconds, broadcast.GetProperty("BreakSeconds").GetDouble());
@@ -25,7 +25,7 @@ public sealed class BroadcastOptionsTests
     [Fact]
     public void FastPlaybackSpeaksKeyCallsWithoutQueuingEveryPass()
     {
-        var options = new BroadcastOptions();
+        var options = new BroadcastOptions { Speed = 60 };
         Assert.True(options.Speak(IntentKind.Goal));
         Assert.True(options.Speak(IntentKind.PeriodChange));
         Assert.False(options.Speak(IntentKind.PbpPass));
@@ -35,9 +35,9 @@ public sealed class BroadcastOptionsTests
     }
 
     [Fact]
-    public async Task DefaultRateDeliversThreeGoalCallsWithinTwoMinutesWithAllChannelsRunning()
+    public async Task ExplicitAcceleratedRateDeliversThreeGoalCallsWithAllChannelsRunning()
     {
-        var options = new BroadcastOptions();
+        var options = new BroadcastOptions { Seed = 3, Speed = 60, BreakSeconds = 0 };
         var channels = new[] { "en-GB", "es-ES", "ta-IN" }
             .SelectMany(lang => new[] { ListenerMode.AudioDescription, ListenerMode.Commentary, ListenerMode.Calm }
                 .Select(mode => new ChannelSpec(lang, mode))).ToArray();

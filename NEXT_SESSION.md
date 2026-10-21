@@ -2,7 +2,58 @@
 
 Updated: 21 October 2026.
 
-## User Requirement
+## Current Corrective Handoff
+
+**This section supersedes all accelerated-default claims, resume instructions and release authorization in the historical record below.** The user rejected global 60x playback. No new commit, push, deployment, infrastructure, secret or Foundry registration change is authorized. The correction is local; obtain current approval before any release. Preserve the SignalR.Client 10.0.13 security fix and useful Stopwatch pacing/catch-up.
+
+### Implemented Locally
+
+- Restored code and JSON defaults: seed 20261026, Speed 1.0, BreakSeconds 120. At 1x all narration intents and normal preemption remain enabled. Explicit accelerated configurations and their honestly named tests remain supported.
+- Pitch geometry uses one uniform metres-to-screen scale and a centered plot with edge allowance and deliberate zoom clipping. Ball drawn last: solid yellow core, dark borders and separated white ring, 28 CSS pixels overall at every zoom/DPR. Nearby carrier numbers move away from the ball. Shapes, player numbers, hatching, keeper squares, coordinates, zoom 1-3, follow, descriptions and reduced-motion throttling remain.
+- Added bounded offline `goaltiming` CLI output: raw goal PTS and score changes, first kickoff, two opening-window definitions and minimum later triple span. It does not modify simulator outcomes or production playback.
+- PendingSpeechQueue and its six tests were started before this corrective pivot. They are present and tested, but the queue is NOT integrated into SpeechWorker. Existing unbounded-queue and synthesis-failure risks remain; do not describe queue hardening as complete.
+
+### Verified Results
+
+- Current worktree was checked; existing edits were preserved. Simulator realism/determinism, shared-schedule implementation, state/pitch contracts, companion implementation, infrastructure and security dependency remain unchanged.
+- Full Release solution build passed using `--artifacts-path TestResults/corrective-build` because the pre-existing 5090 Release process locks standard build outputs. Final full Release suite: **119 passed, zero failed or skipped**. GoldenMatch focused suite: 19 passed, including new natural pacing, reread catch-up/state reconstruction with earlier-callback suppression, and exact two-minute break boundaries. Explicit 60x nine-channel timing coverage still passes; that is pipeline coverage, not nine concurrent Azure speech streams.
+- Corrected Release gateway started via VS Code task **Run corrective gateway** at **http://127.0.0.1:5091/**, using source content root and seed 20261026. Startup joined the existing shared schedule at 14.4 minutes, not a per-listener kickoff. Existing http://127.0.0.1:5090/ process was left running and still uses old 60x binaries. Its source-served static assets are not evidence of corrected server defaults.
+- Actual gateway `run_playwright_code`: 11 state messages over 10 wall seconds, DOM clock 14:58 to 15:08; pitch PTS 898,100 to 908,300 ms (52 updates). All states speed 1, score 0-0, no captured browser errors. Initial sample was dead-ball and had no narration. A later 15-second English audio-description sample delivered tackle and foul utterances, 55 PCM chunks, two audioEnd messages, two caption sets, one cut and **two outgoing played acknowledgements**. These are browser worklet-start acknowledgements, not subjective audio/caption quality validation.
+- Reload clock 16:15 before and 16:17 after: shared match did not restart. Local Score readout returned text and 28 answerAudio chunks for "16 minutes gone. Reds 0, Blues 0", consistent with local state. Foundry companion grounding was NOT verified against the corrected local scoreboard; its registered MCP endpoint may still read deployed 60x state. Do not claim synchronization or alter registrations without approval.
+- All nine language/mode combinations confirmed selected channel status when each join was awaited. Rapid-switch sampling showed status lag; stable joins passed. Concurrent multilingual playback and rapid-switch race resilience remain unverified.
+- Isolated same-origin renderer fixture, imported without app.js/SignalR: **72 pixel/interaction cases passed**, using widths 1440, 1280 and 390, DPR 1/2, center/corners/goals/touchlines, ball over player/white markings, yellow/white kits, reversed attack/away possession, zoom 1/3 and follow off/on. Yellow core and dark/white ring pixels verified; no fixture overflow. Keyboard Enter zoom and Space follow worked. With browser time advanced, reduced-motion redraw throttle held below 500 ms, redraw resumed beyond 500 ms, and descriptions refreshed beyond five seconds, including null possession.
+- Non-text contrast calculations using renderer colors: yellow core/dark border 13.29:1, white ring/dark border 19.03:1, white ring/pitch 16.22:1, field lines/pitch 13.37:1. This is not complete accessibility compliance or screen-reader/co-design validation.
+- Actual page layout: no horizontal document overflow at 1440x900, 1280x900 or 390x844. Canvas sizes respectively 1186x612, 1155x612 and 283.5x183.59 CSS pixels. A preliminary inherited viewport overflow observation did not reproduce at these explicit sizes.
+- Screenshot captures were attempted, but integrated screenshot output showed compressed/unrelated page fragments inconsistent with measured canvas dimensions. Canvas-download export also timed out. **Visual screenshot acceptance remains unverified**; pixel and interaction evidence should not be presented as a complete visual review. Generated screenshot/report artifacts in TestResults are ignored, not submission assets.
+- Editor diagnostics for touched gateway, tests and replay code were clear. Repeat `git diff --check` before committing.
+
+### Natural Scoring Gate
+
+- Default seed 20261026: first kickoff PTS 12,000 ms; one goal at 4,857,200 ms, score 0-1. Seed 3 raw goal PTS: 2,539,100 (1-0), 3,605,400 (1-1), 4,879,100 (1-2), 5,442,000 (2-2); shortest triple span 1,836,600 ms.
+- Seeds 1-100: zero three-goal opening candidates from either simulation start or first kickoff; zero later-window candidates. Best seed 36 triple span **246,800 ms**, not within 120 seconds. Raw generated report: `TestResults/goal-timing-seeds-1-100.jsonl` (ignored).
+- Under current rules, three goals in 120 seconds from simulation start cannot fit: opening delay 12 seconds plus two minimum 55-second post-goal waits = 122 seconds before actual play. First-kickoff-relative and later windows are not proven universally impossible, but this bounded search found none. Every arbitrary sliding 120-second window is incompatible with current waits and 90-minute realism. No xG changes, shorter restarts, forced scores, join-triggered resets, disguised time jumps or highlights were introduced.
+- **Normal speed does not solve the three-goal requirement.** Approval is required for a different format/realism tradeoff. Do not release this as a supposedly complete three-goal correction. Video must remain strictly under two minutes, with fictional teams/players and synthetic football-realistic outcomes.
+
+### Current Resume Commands
+
+Use pinned SDK 10.0.400; MTP/xUnit v3 filters have no extra `--` separator. Existing local Azure CLI auth and ignored endpoint settings were reused; never print secrets. No need to provision infrastructure to run locally.
+
+```powershell
+git status --short
+& "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" build VoiceOfTheGame.slnx --configuration Release --artifacts-path TestResults/corrective-build
+& "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" test --solution VoiceOfTheGame.slnx --configuration Release --artifacts-path TestResults/corrective-build
+& "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" test --project tests/Vog.GoldenMatch.Tests --configuration Debug
+& "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" run --project tools/Vog.Replay -- goaltiming --seeds 100 --seed 1
+git diff --check
+```
+
+Check whether task Run corrective gateway is still running before starting another gateway. Use 5091 for corrected live testing, not 5088 static preview or the old 5090 binary. Await channel status when changing modes. Resolve screenshot capture and verify companion MCP source before claiming full acceptance. Installed/deployed ASP.NET Core runtime security review remains outstanding; the SignalR package patch alone does not patch shared runtimes.
+
+## Historical Record: Rejected 60x Release
+
+Everything below documents earlier work only. Its defaults, timing claims, resume commands and deployment approval are not the current requirements.
+
+### Historical User Requirement
 
 The app should show at least three goals within two minutes of viewing. The user explicitly rejected a separate demo mode: this must be the app's default behavior. The video submission must be less than two minutes; three goals is the user's requirement, not an official hackathon rule. Keep the data synthetic and the clubs and players fictional.
 

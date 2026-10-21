@@ -29,6 +29,16 @@ public sealed class MatchScheduleTests
     }
 
     [Fact]
+    public void ExactBreakBoundariesPreserveTheFullTwoMinuteBreak()
+    {
+        var breakStart = Schedule.At(MatchSchedule.Epoch.AddMinutes(95));
+        Assert.Null(breakStart.MatchMs);
+        Assert.Equal(TimeSpan.FromMinutes(2), breakStart.UntilKickOff);
+        Assert.Null(Schedule.At(MatchSchedule.Epoch.AddMinutes(97).AddMilliseconds(-1)).MatchMs);
+        Assert.Equal(0, Schedule.At(MatchSchedule.Epoch.AddMinutes(97)).MatchMs);
+    }
+
+    [Fact]
     public void MatchesRepeatEveryCycle()
     {
         var later = MatchSchedule.Epoch + (Schedule.Cycle * 40) + TimeSpan.FromMinutes(3);

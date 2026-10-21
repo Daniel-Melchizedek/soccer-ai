@@ -391,6 +391,10 @@ input:disabled {
   flex-wrap: wrap;
 }
 
+.pitch-controls {
+  flex-wrap: wrap;
+}
+
 .pitch-header h2 {
   margin: 0;
 }
@@ -449,7 +453,9 @@ input:disabled {
 .pitch-marker.ball {
   border-radius: 50%;
   border-color: #111;
-  background: #fff;
+  background: #ffd400;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111;
+  margin: 4px;
 }
 
 .pitch-canvas {

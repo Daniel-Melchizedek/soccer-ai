@@ -7,12 +7,12 @@ public sealed class BroadcastOptions
 {
     public const string Section = "Broadcast";
 
-    public ulong Seed { get; set; } = 3;
+    public ulong Seed { get; set; } = GoldenMatch.DefaultMatchSeed;
 
-    /// <summary>Presentation rate: 60.0 runs one match minute per wall-clock second.</summary>
-    public double Speed { get; set; } = 60.0;
+    /// <summary>Presentation rate: 1.0 follows the natural match clock.</summary>
+    public double Speed { get; set; } = 1.0;
 
-    public double BreakSeconds { get; set; }
+    public double BreakSeconds { get; set; } = 120;
 
     public bool Speak(IntentKind kind) => Speed <= 4 || kind is IntentKind.Goal or IntentKind.PeriodChange;
 

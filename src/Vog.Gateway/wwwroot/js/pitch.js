@@ -52,6 +52,8 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
   }
 
   function draw() {
+    zoomOut.disabled = zoom === 1;
+    zoomIn.disabled = zoom === 3;
     const bounds = canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) {
       return;
@@ -70,45 +72,60 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       return;
     }
 
-    const margin = 18;
+    const margin = 22;
     const viewWidth = LENGTH / zoom;
     const viewHeight = WIDTH / zoom;
     const ballX = clamp(Number(message.b?.[0]) || 0, 0, LENGTH);
     const ballY = clamp(Number(message.b?.[1]) || 0, 0, WIDTH);
     const left = followBall ? clamp(ballX - viewWidth / 2, 0, LENGTH - viewWidth) : (LENGTH - viewWidth) / 2;
     const bottom = followBall ? clamp(ballY - viewHeight / 2, 0, WIDTH - viewHeight) : (WIDTH - viewHeight) / 2;
-    const mapWidth = bounds.width - margin * 2;
-    const mapHeight = bounds.height - margin * 2;
+    const scale = Math.min((bounds.width - margin * 2) / viewWidth, (bounds.height - margin * 2) / viewHeight);
+    if (scale <= 0) {
+      return;
+    }
+    const mapWidth = viewWidth * scale;
+    const mapHeight = viewHeight * scale;
+    const plotLeft = (bounds.width - mapWidth) / 2;
+    const plotTop = (bounds.height - mapHeight) / 2;
     const point = (x, y) => ({
-      x: margin + ((x - left) / viewWidth) * mapWidth,
-      y: margin + ((bottom + viewHeight - y) / viewHeight) * mapHeight,
+      x: plotLeft + (x - left) * scale,
+      y: plotTop + (bottom + viewHeight - y) * scale,
     });
 
+    context.save();
+    context.beginPath();
+    context.rect(plotLeft - 16, plotTop - 16, mapWidth + 32, mapHeight + 32);
+    context.clip();
     context.strokeStyle = '#d9eee5';
     context.lineWidth = 2;
-    context.strokeRect(...[point(left, bottom + viewHeight).x, point(left, bottom + viewHeight).y, mapWidth, mapHeight]);
+    const field = point(0, WIDTH);
+    context.strokeRect(field.x, field.y, LENGTH * scale, WIDTH * scale);
     drawGoalEnd(0, point, context);
     drawGoalEnd(LENGTH, point, context);
-    const halfway = point(LENGTH / 2, bottom + viewHeight);
+    const halfway = point(LENGTH / 2, WIDTH);
     context.beginPath();
-    context.moveTo(halfway.x, margin);
-    context.lineTo(halfway.x, margin + mapHeight);
+    context.moveTo(halfway.x, halfway.y);
+    context.lineTo(halfway.x, point(LENGTH / 2, 0).y);
     context.stroke();
     const centre = point(LENGTH / 2, WIDTH / 2);
     context.beginPath();
-    context.arc(centre.x, centre.y, Math.min(mapWidth / viewWidth, mapHeight / viewHeight) * 9.15, 0, Math.PI * 2);
+    context.arc(centre.x, centre.y, scale * 9.15, 0, Math.PI * 2);
     context.stroke();
 
-    drawPlayers(message.h, teams.homeKit, true, point);
-    drawPlayers(message.a, teams.awayKit, false, point);
+    const visible = (x, y) => x >= left && x <= left + viewWidth && y >= bottom && y <= bottom + viewHeight;
+    drawPlayers(message.h, teams.homeKit, true, point, visible);
+    drawPlayers(message.a, teams.awayKit, false, point, visible);
 
     const ball = point(ballX, ballY);
-    for (const [radius, colour] of [[12, '#101010'], [10, '#ffd400'], [7, '#101010'], [5, '#ffffff']]) {
-      context.beginPath();
-      context.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
-      context.fillStyle = colour;
-      context.fill();
+    if (visible(ballX, ballY)) {
+      for (const [radius, colour] of [[14, '#101010'], [12, '#ffffff'], [10, '#101010'], [8, '#ffd400']]) {
+        context.beginPath();
+        context.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
+        context.fillStyle = colour;
+        context.fill();
+      }
     }
+    context.restore();
   }
 
   function drawGoalEnd(goalX, point, context) {
@@ -161,9 +178,12 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     context.restore();
   }
 
-  function drawPlayers(players, kit, isHome, point) {
+  function drawPlayers(players, kit, isHome, point, visible) {
     const fill = colours[kit] ?? '#f0f0f0';
     for (const [x, y, number, goalkeeper] of players ?? []) {
+      if (!visible(x, y)) {
+        continue;
+      }
       const position = point(x, y);
       context.beginPath();
       if (goalkeeper) {
@@ -200,8 +220,11 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       context.textBaseline = 'middle';
       context.lineWidth = 2.5;
       context.strokeStyle = '#ffffff';
-      context.strokeText(String(number), position.x, position.y);
-      context.fillText(String(number), position.x, position.y);
+      const ball = point(clamp(Number(message.b?.[0]) || 0, 0, LENGTH), clamp(Number(message.b?.[1]) || 0, 0, WIDTH));
+      const overlapsBall = Math.hypot(position.x - ball.x, position.y - ball.y) < 24;
+      const numberY = overlapsBall ? position.y + (position.y < canvas.height / (window.devicePixelRatio || 1) / 2 ? 25 : -25) : position.y;
+      context.strokeText(String(number), position.x, numberY);
+      context.fillText(String(number), position.x, numberY);
     }
   }
 
