@@ -4,7 +4,15 @@ Updated: 21 October 2026.
 
 ## Current Corrective Handoff
 
-**This section supersedes all accelerated-default claims, resume instructions and release authorization in the historical record below.** The user rejected global 60x playback. No new commit, push, deployment, infrastructure, secret or Foundry registration change is authorized. The correction is local; obtain current approval before any release. Preserve the SignalR.Client 10.0.13 security fix and useful Stopwatch pacing/catch-up.
+**This section supersedes all accelerated-default claims, resume instructions and release authorization in the historical record below.** The user rejected global 60x playback. The user authorized committing and pushing the correction, then updating and pushing this handoff. Neither request authorizes deployment, infrastructure, secret or Foundry registration changes. The correction is verified locally only; obtain current approval before any deployment. Preserve the SignalR.Client 10.0.13 security fix and useful Stopwatch pacing/catch-up.
+
+### Git Status And Next Steps
+
+- Corrective application commit **95aeb90**, `Restore natural match playback and improve pitch visibility`, was committed and successfully pushed to `origin/main` at https://github.com/Daniel-Melchizedek/soccer-ai on 21 October 2026. It includes the implementation, tests, goal-timing command, standalone unintegrated speech queue and corrective documentation.
+- After that push, `git status --short --branch` confirmed a clean worktree and `main` synchronized with `origin/main`. It was checked again before this documentation-only handoff update. The handoff update is a separate follow-up commit; use `git log -2 --oneline` and `git status --short --branch` to confirm both on resume.
+- No deployment was performed. Azure's last recorded release is still the historical 60x image below; its current live revision has not been rechecked. Do not confuse a Git push with a Container App rollout.
+- First remaining acceptance checks: obtain trustworthy pitch screenshots and verify the companion's MCP match context. Concurrent multilingual playback, rapid-switch race resilience and runtime security review also remain open. The 119-test and Playwright results below belong to the corrective application verification; they were not rerun for this documentation-only update.
+- Three natural goals within 120 real seconds remains an unresolved requirement, not a completed feature. Obtain approval before changing scoring realism, restart timing or presentation format. Speech queue integration is also unfinished; preserve the standalone queue without claiming resilient live delivery.
 
 ### Implemented Locally
 
