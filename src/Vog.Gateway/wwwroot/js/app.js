@@ -117,6 +117,17 @@ async function start() {
     await join();
     stopCompanion = await startCompanion({ ctx, connection, mix, setStatus, idleStatus: () => listeningStatus });
     el('start').textContent = 'Stop listening';
+
+    // Stadium entry confirmation: blind users need immediate audio feedback that the match is live.
+    // A whistle earcon + gentle crowd swell tells them the connection succeeded before any booth
+    // utterance arrives. Both route through mix buses so fan volume controls apply.
+    playEarcon(ctx, 'whistle', 0, mix.earcons);
+    crowdBed.update(0.25);
+
+    // Add a sound label to the history log so Deaf/HoH users see the same context.
+    const stadiumEntry = document.createElement('li');
+    stadiumEntry.textContent = '[CROWD RISES]';
+    el('history').prepend(stadiumEntry);
   } catch (err) {
     console.error(err);
     await stop();
@@ -265,8 +276,18 @@ function addHistory(u) {
 /** Kit colours for the scoreboard markers (decorative: team names carry the meaning). */
 const KIT_COLOURS = { red: '#e53935', blue: '#1e63ff', white: '#ffffff', yellow: '#ffd400', green: '#1faa59', claret: '#7b1e3a', sky_blue: '#64c8ff', orange: '#ff8a2a', black: '#111111', purple: '#7e3ff2' };
 
+// Track BallInPlay to fire a kick-off whistle when the match starts.
+let lastBallInPlay = false;
+
 function showState(s) {
   el('match-speed').textContent = s.speed > 1 ? ` | ${s.speed}x match clock` : '';
+
+  // Kick-off whistle: fires when ball transitions from dead to in-play (e.g., kick-off).
+  if (s.ballInPlay && !lastBallInPlay && ctx && mix) {
+    playEarcon(ctx, 'whistle', 0, mix.earcons);
+  }
+  lastBallInPlay = Boolean(s.ballInPlay);
+
   const part = (text, className) => Object.assign(document.createElement('span'), { textContent: text, className });
   const team = (name, kit) => {
     const span = part(name ?? '', 'team');
@@ -311,3 +332,35 @@ function toFloat32(base64) {
 
   return samples;
 }
+
+// ---- Recent match history ----
+// Fetches the last 10 match summaries from /history (Azure Blob Storage archive).
+// The <ul> has aria-live="polite" so screen readers announce new results.
+async function loadHistory() {
+  const list = el('recent-matches');
+  if (!list) return;
+  try {
+    const res = await fetch('/history');
+    if (!res.ok) {
+      list.innerHTML = '<li>No match history available.</li>';
+      return;
+    }
+    const summaries = await res.json();
+    list.innerHTML = '';
+    if (!summaries.length) {
+      list.innerHTML = '<li>No matches recorded yet.</li>';
+      return;
+    }
+    for (const s of summaries) {
+      const item = document.createElement('li');
+      const date = new Date(s.utcDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+      // Plain text: screen-reader-friendly, no icon-only content.
+      item.textContent = `${s.homeName} ${s.homeScore} – ${s.awayScore} ${s.awayName} · ${date}`;
+      list.appendChild(item);
+    }
+  } catch {
+    // Silently ignore: history is supplementary, never breaks the live experience.
+  }
+}
+
+loadHistory();

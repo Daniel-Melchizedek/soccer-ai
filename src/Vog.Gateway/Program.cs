@@ -1,3 +1,4 @@
+using Azure.Storage.Blobs;
 using Vog.Gateway;
 using Vog.Voice;
 
@@ -20,6 +21,7 @@ builder.Services.AddOptions<AzureAiOptions>()
     .ValidateOnStart();
 builder.Services.AddSingleton<ChannelDirectory>();
 builder.Services.AddSingleton<LatencyStats>();
+builder.Services.AddSingleton<MatchArchiveService>();
 builder.Services.AddSingleton<LiveBroadcastService>();
 builder.Services.AddSingleton<CompanionRelay>();
 builder.Services.AddSingleton<ReadoutService>();
@@ -35,5 +37,38 @@ app.UseStaticFiles();
 app.MapHub<CommentaryHub>("/hubs/commentary");
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 app.MapGet("/stats", (LatencyStats stats, ChannelDirectory directory) => Results.Ok(new { listeners = directory.ListenerCounts(), latency = stats.Snapshot() }));
+
+// Recent match history from Azure Blob Storage. Returns an empty array when storage is not configured.
+app.MapGet("/history", async (MatchArchiveService archive, CancellationToken ct) =>
+{
+    var summaries = await archive.GetRecentAsync(10, ct);
+    return Results.Ok(summaries);
+});
+
+// Pre-aggregated historical football data (Kaggle CC0, proxied from Azure Blob Storage).
+// Only serves the two allowed files to prevent arbitrary blob reads.
+app.MapGet("/data/{file}", async (string file, IConfiguration config, CancellationToken ct) =>
+{
+    var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "goals-per-decade.json", "home-advantage.json" };
+    if (!allowed.Contains(file)) return Results.NotFound();
+
+    var endpoint = config["VogStorage__BlobEndpoint"];
+    if (string.IsNullOrWhiteSpace(endpoint)) return Results.NotFound();
+
+    try
+    {
+        Azure.Core.TokenCredential cred = AzureCredentials.Shared;
+        var blobUri = new Uri(endpoint.TrimEnd('/') + $"/vog-data/public/{file}");
+        var blobClient = new BlobClient(blobUri, cred);
+        var response = await blobClient.DownloadContentAsync(ct);
+        return Results.Content(response.Value.Content.ToString(), "application/json");
+    }
+    catch (Exception ex)
+    {
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning(ex, "Could not serve /data/{File} from blob storage", file);
+        return Results.NotFound();
+    }
+});
 
 app.Run();

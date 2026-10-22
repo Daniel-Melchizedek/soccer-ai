@@ -197,12 +197,16 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
         context.closePath();
       }
 
-      context.fillStyle = fill;
+      // Goalkeepers use gold (#ffd400) regardless of kit colour, matching the legend.
+      // Shape and shirt number remain the primary accessible signals; colour closes the
+      // legend-vs-canvas gap for sighted and low-vision users.
+      context.fillStyle = goalkeeper ? '#ffd400' : fill;
       context.fill();
       // A diagonal hatch makes the two teams distinguishable without relying on colour.
+      // For goalkeepers (gold fill) use dark stripes to maintain contrast.
       context.save();
       context.clip();
-      context.strokeStyle = isHome ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)';
+      context.strokeStyle = goalkeeper ? 'rgba(0, 0, 0, 0.55)' : (isHome ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)');
       context.lineWidth = 1.25;
       for (let offset = -12; offset <= 12; offset += 5) {
         context.beginPath();

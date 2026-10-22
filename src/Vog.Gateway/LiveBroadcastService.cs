@@ -20,6 +20,7 @@ public sealed class LiveBroadcastService(
     LatencyStats stats,
     IOptions<BroadcastOptions> options,
     IOptions<AzureAiOptions> azure,
+    MatchArchiveService archive,
     ILogger<LiveBroadcastService> log) : BackgroundService
 {
     /// <summary>Five pitch updates a second: smooth enough to follow by ear once the browser interpolates.</summary>
@@ -56,6 +57,33 @@ public sealed class LiveBroadcastService(
                 _pipeline = runner.Pipeline;
                 log.LogInformation("Joining {Home} v {Away} (seed {Seed}) {Minutes:0.0} minutes in, on the schedule every gateway shares", Info!.Home.Name, Info.Away.Name, seed, matchMs.Value / 60_000.0);
                 await runner.RunAsync(OnBoothEventAsync, stoppingToken, () => schedule.At(DateTimeOffset.UtcNow).MatchMs ?? long.MaxValue);
+
+                // Archive a lightweight match summary after each completed match.
+                // This is fire-and-forget: a failure never delays the next match.
+                if (_pipeline is { Ball: { } ball, Info: { } info, Frame: { } frame })
+                {
+                    // Collect goals from the snapshot's key events list.
+                    var goals = (_pipeline.Snapshot?.KeyEvents ?? [])
+                        .Where(e => e.Type == MatchEventType.Goal)
+                        .Select(e =>
+                        {
+                            var player = info.FindPlayer(e.PlayerId ?? string.Empty);
+                            var teamName = e.TeamId == info.Home.TeamId ? info.Home.Name : info.Away.Name;
+                            var minute = (int)(e.MatchClockMs / 60_000);
+                            return new GoalRecord(minute, teamName, player?.ShortName ?? e.PlayerId ?? "Unknown");
+                        })
+                        .ToList();
+                    var summary = new MatchSummary(
+                        seed,
+                        DateTimeOffset.UtcNow,
+                        ball.HomeScore,
+                        ball.AwayScore,
+                        info.Home.Name,
+                        info.Away.Name,
+                        goals,
+                        frame.PtsMs);
+                    _ = archive.ArchiveAsync(summary);
+                }
             }
             catch (OperationCanceledException)
             {

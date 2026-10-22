@@ -32,10 +32,11 @@ export function createCrowdBed(ctx, bus) {
     pulseEnergy = Math.max(pulseEnergy, Math.max(0, Math.min(1, value)));
     apply();
     clearTimeout(pulseTimer);
+    // Extended to 3000 ms for a more emphatic goal celebration crowd roar.
     pulseTimer = setTimeout(() => {
       pulseEnergy = 0;
       apply();
-    }, 1800);
+    }, 3000);
   }
 
   function dispose() {

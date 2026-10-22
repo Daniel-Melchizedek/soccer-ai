@@ -189,9 +189,53 @@
       <p class="note pitch-help">Goals, nets and penalty areas are shown. The map uses shapes and player numbers as well as kit colours. Ball position is announced only when its area or possession changes; use “Where's the ball?” for an on-demand update.</p>
     </section>
 
+    <!-- Recent match history (from Azure Blob Storage archive). aria-live so screen readers announce new results. -->
+    <section class="card" aria-labelledby="recent-heading">
+      <h2 id="recent-heading">Recent matches</h2>
+      <ul id="recent-matches" aria-live="polite" aria-label="Recent match results">
+        <li>Loading…</li>
+      </ul>
+    </section>
+
+    <!-- Historical football data panel. Lazy-loaded from Kaggle dataset (CC0) via Azure Blob Storage.
+         Each chart has a hidden data table as a full screen-reader text alternative. -->
+    <details id="football-history" class="card">
+      <summary>Football through the ages</summary>
+      <p class="note history-note">Historical international football statistics, 1872–2017.</p>
+
+      <figure>
+        <canvas id="chart-goals"
+          role="img"
+          aria-label="Bar chart: average goals per match in international football by decade. Loading data…">
+        </canvas>
+        <figcaption>Average goals per match by decade (international football, 1872–2017).</figcaption>
+        <!-- Full data table for screen readers — visually hidden but present in the DOM. -->
+        <table class="visually-hidden" aria-label="Average goals per match by decade — data table">
+          <thead><tr><th>Decade</th><th>Average goals per match</th></tr></thead>
+          <tbody id="goals-table-body"></tbody>
+        </table>
+      </figure>
+
+      <figure>
+        <canvas id="chart-home"
+          role="img"
+          aria-label="Line chart: home team win percentage in international football by decade. Loading data…">
+        </canvas>
+        <figcaption>Home team win percentage by decade (international football, 1872–2017).</figcaption>
+        <table class="visually-hidden" aria-label="Home win percentage by decade — data table">
+          <thead><tr><th>Decade</th><th>Home win %</th></tr></thead>
+          <tbody id="home-table-body"></tbody>
+        </table>
+      </figure>
+
+      <p class="note">
+        Data: <a href="https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017" rel="noopener noreferrer" target="_blank">Mart Jürisoo, Kaggle</a>, CC0 Public Domain.
+        Inspiration: <a href="https://github.com/bbenz/football-results-dashboard" rel="noopener noreferrer" target="_blank">bbenz/football-results-dashboard</a> (MIT).
+      </p>
+    </details>
+
     <div class="columns">
-      <section class="card" aria-labelledby="captions-heading">
-        <h2 id="captions-heading">Captions</h2>
+      <section class="card" aria-labelledby="captions-heading">        <h2 id="captions-heading">Captions</h2>
         <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
         <div id="caption" class="caption" aria-hidden="true" data-channel-lang></div>
         <h2 id="history-heading">Recent commentary</h2>
@@ -234,5 +278,8 @@
 
   <script src="lib/signalr/signalr.min.js"></script>
   <script type="module" src="js/app.js"></script>
+  <!-- Chart.js for the historical football data panel (MIT licence). Pinned version. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script type="module" src="js/charts.js"></script>
 </body>
 </html>
