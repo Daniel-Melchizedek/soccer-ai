@@ -203,3 +203,33 @@ Nothing sensitive belongs in this repository (BUILD_PLAN.md §12):
 - The AI resource has key authentication disabled. Locally, apps use your Azure CLI sign-in; in Azure, a managed identity.
 - The only secret is the key Foundry presents to the gateway's MCP endpoint. It is generated once and kept in Key Vault (the gateway reads it at startup) and in the Foundry project connection, so it never appears in an agent definition, a setting or the repository.
 - CI runs a gitleaks secret scan. Locally, install [gitleaks](https://github.com/gitleaks/gitleaks) and run `gitleaks git` before pushing.
+
+## Credits and attributions
+
+| Work | Author / Licence | How it is used |
+|---|---|---|
+| [International football results from 1872 to 2017](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) | Mart Jürisoo, **CC0 Public Domain** | Pre-aggregated into two JSON files (goals per decade, home-win %) for the "Football through the ages" panel. No individual match rows are redistributed. |
+| [football-results-dashboard](https://github.com/bbenz/football-results-dashboard) | Brian Benz, **MIT** | Inspiration for the pattern of aggregating historical football data and serving AI-explained charts on Azure |
+| [Chart.js](https://www.chartjs.org) | Chart.js contributors, **MIT** | Renders the historical data charts in the browser |
+| [Atkinson Hyperlegible](https://brailleinstitute.org/freefont) | Braille Institute, **SIL OFL 1.1** | Optional accessible caption font (self-hosted; licence in `fonts/atkinson-hyperlegible/`) |
+| [Microsoft Playwright](https://playwright.dev) | Microsoft, **Apache 2.0** | Browser-based testing via the Playwright MCP server |
+| [SignalR](https://github.com/dotnet/aspnetcore) | Microsoft, **MIT** (part of ASP.NET Core) | Real-time browser communication for audio, captions and pitch data |
+| Microsoft Foundry, Azure AI Speech, Azure Voice Live, Azure Container Apps, Azure Blob Storage | Microsoft | AI agents, neural TTS, real-time voice Q&A, hosting, and match/data archiving |
+
+> **Synthetic data notice:** All football data in this application is synthetic. The league, clubs and players are fictional and machine-generated. No real Premier League data, trademarks, player names or footage are used anywhere in this repository.
+
+## Demo configuration
+
+The live deployment uses `Broadcast__Seed=3` and `Broadcast__Speed=6` set as Azure Container App environment variables so three goals appear within 90 seconds of listening — suitable for a 2-minute demo video. The goals are natural simulator outcomes; nothing is injected.
+
+The source code defaults (`appsettings.json`) use `Seed: 20261026, Speed: 1.0` for natural 1× pacing with full narration for all modes.
+
+Override locally:
+
+```powershell
+# Natural 1× (full commentary, first goal ~81 real minutes):
+dotnet run --project src/Vog.Gateway
+
+# Demo speed (three goals within ~90 real seconds):
+dotnet run --project src/Vog.Gateway -- --Broadcast:Seed=3 --Broadcast:Speed=6 --Broadcast:BreakSeconds=30
+```
