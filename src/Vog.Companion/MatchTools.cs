@@ -43,6 +43,9 @@ public sealed class MatchTools(Func<MatchSnapshot?> snapshot, string lang)
         new("get_match_stats",
             "Team statistics so far: possession, shots, shots on target, expected goals, passing, corners, fouls, cards and offsides.",
             """{"type":"object","properties":{}}"""),
+        new("get_match_recap",
+            "Grounded synthetic match recap, chronological highlights and why goals or dismissals matter, with source event IDs. Scope recent means the last two match-clock minutes within the current half. Halftime and fulltime are unavailable until that period ends. No tactical speculation or window possession/xG.",
+            """{"type":"object","properties":{"scope":{"type":"string","enum":["recent","match","halftime","fulltime"]}},"required":["scope"]}"""),
         new("get_player",
             "A player by name, part of a name, or shirt number: team, shirt number, position, whether they are on the pitch, and their key events in this match.",
             """{"type":"object","properties":{"name":{"type":"string","description":"The player's name, part of it, or shirt number."}},"required":["name"]}"""),
@@ -73,6 +76,7 @@ public sealed class MatchTools(Func<MatchSnapshot?> snapshot, string lang)
                 "get_ball_and_possession" => Serialize(BallAndPossession(s)),
                 "get_recent_events" => RecentEvents(s, args),
                 "get_match_stats" => Serialize(Stats(s)),
+                "get_match_recap" => Recap(s, args),
                 "get_player" => Player(s, args),
                 _ => Error($"There is no tool called '{name}'. The tools are: {string.Join(", ", Specs.Select(t => t.Name))}."),
             };
@@ -153,6 +157,88 @@ public sealed class MatchTools(Func<MatchSnapshot?> snapshot, string lang)
             .Select(e => Describe(s, e))
             .ToList();
         return Serialize(new { clock = s.Clock, events });
+    }
+
+    private string Recap(MatchSnapshot snapshot, JsonElement args)
+    {
+        if (args.ValueKind != JsonValueKind.Object || !args.TryGetProperty("scope", out var scopeValue)
+            || scopeValue.ValueKind != JsonValueKind.String
+            || scopeValue.GetString() is not ("recent" or "match" or "halftime" or "fulltime"))
+        {
+            return Error("'scope' must be recent, match, halftime or fulltime.");
+        }
+
+        var scope = scopeValue.GetString()!;
+        var endPeriod = scope == "halftime" ? 1 : snapshot.Frame.Period;
+        var periodEnd = snapshot.KeyEvents.LastOrDefault(item => item.Type == MatchEventType.PeriodEnd && item.Period == endPeriod);
+        if ((scope == "halftime" && periodEnd is null) || (scope == "fulltime" && !snapshot.FullTime))
+        {
+            return Serialize(new { status = "unavailable", scope, clock = snapshot.Clock, reason = "That period has not ended yet." });
+        }
+
+        var endMs = scope is "halftime" or "fulltime" ? periodEnd!.MatchClockMs : snapshot.Frame.MatchClockMs;
+        var startMs = scope == "recent" ? Math.Max(endPeriod == 1 ? 0 : 45 * 60_000, endMs - 120_000) : 0;
+        var throughEnd = snapshot.KeyEvents.Where(item => item.Period < endPeriod || (item.Period == endPeriod && item.MatchClockMs <= endMs)).ToList();
+        var events = throughEnd.Where(item => scope != "recent" || (item.Period == endPeriod && item.MatchClockMs >= startMs)).ToList();
+        var slots = new SlotFactory(snapshot.Info);
+        var homeGoals = 0;
+        var awayGoals = 0;
+        var explanations = new Dictionary<string, string>();
+        foreach (var item in throughEnd)
+        {
+            if (item.Type == MatchEventType.Goal)
+            {
+                if (item.TeamId == snapshot.Info.Home.TeamId) homeGoals++;
+                else if (item.TeamId == snapshot.Info.Away.TeamId) awayGoals++;
+                var difference = item.TeamId == snapshot.Info.Home.TeamId ? homeGoals - awayGoals : awayGoals - homeGoals;
+                explanations[item.EventId] = difference switch
+                {
+                    0 => "Brings the score level.",
+                    1 => "Puts the scoring team ahead.",
+                    > 1 => "Extends the scoring team's lead.",
+                    _ => "Reduces the scoring team's deficit.",
+                };
+            }
+            else if (item.Type == MatchEventType.Card && item.Outcome is EventOutcome.Red or EventOutcome.SecondYellow)
+            {
+                explanations[item.EventId] = "Dismissal: this player can no longer take part.";
+            }
+        }
+
+        var highlights = events.Where(Shown).Where(item => item.Type is MatchEventType.Goal or MatchEventType.Shot or MatchEventType.Card or MatchEventType.Substitution or MatchEventType.PeriodEnd)
+            .Select(item => new
+            {
+                eventId = item.EventId,
+                period = item.Period,
+                matchClockMs = item.MatchClockMs,
+                fact = Describe(snapshot, item),
+                why = explanations.GetValueOrDefault(item.EventId),
+            }).ToList();
+
+        return Serialize(new
+        {
+            status = "available",
+            provenance = "Deterministic synthetic match; fictional teams and players.",
+            matchId = snapshot.Info.MatchId,
+            scope,
+            clock = MatchClock.Display(endPeriod, endMs),
+            startPeriod = scope == "recent" ? endPeriod : 1,
+            startClockMs = startMs,
+            endPeriod,
+            endClockMs = endMs,
+            score = new { home = homeGoals, away = awayGoals },
+            scoreEventIds = throughEnd.Where(item => item.Type == MatchEventType.Goal).Select(item => item.EventId).ToArray(),
+            teams = new[] { snapshot.Info.Home, snapshot.Info.Away }.Select(team => new
+            {
+                name = _words.TeamName(slots.Team(team.TeamId)),
+                shots = events.Count(item => item.Type == MatchEventType.Shot && item.TeamId == team.TeamId),
+                goals = events.Count(item => item.Type == MatchEventType.Goal && item.TeamId == team.TeamId),
+                corners = events.Count(item => item.Type == MatchEventType.Corner && item.TeamId == team.TeamId),
+                shotEventIds = events.Where(item => item.Type == MatchEventType.Shot && item.TeamId == team.TeamId).Select(item => item.EventId).ToArray(),
+            }).ToArray(),
+            highlights,
+            limitations = "Event counts cover the selected scope; score is at its end. Recent scope does not cross halftime. No inferred momentum, tactical causation or win probability. Explanations are English; names and places follow the listening language.",
+        });
     }
 
     private object Stats(MatchSnapshot s)

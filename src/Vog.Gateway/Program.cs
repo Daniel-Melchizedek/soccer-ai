@@ -1,4 +1,5 @@
-using Azure.Storage.Blobs;
+using System.Text.Json;
+using Vog.Companion;
 using Vog.Gateway;
 using Vog.Voice;
 
@@ -45,30 +46,18 @@ app.MapGet("/history", async (MatchArchiveService archive, CancellationToken ct)
     return Results.Ok(summaries);
 });
 
-// Pre-aggregated historical football data (Kaggle CC0, proxied from Azure Blob Storage).
-// Only serves the two allowed files to prevent arbitrary blob reads.
-app.MapGet("/data/{file}", async (string file, IConfiguration config, CancellationToken ct) =>
+app.MapGet("/insights", (string? scope, string? lang, LiveBroadcastService broadcast, HttpContext context) =>
 {
-    var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "goals-per-decade.json", "home-advantage.json" };
-    if (!allowed.Contains(file)) return Results.NotFound();
-
-    var endpoint = StorageConfiguration.BlobEndpoint(config);
-    if (string.IsNullOrWhiteSpace(endpoint)) return Results.NotFound();
-
-    try
+    scope ??= "recent";
+    lang ??= "en-GB";
+    context.Response.Headers.CacheControl = "no-store";
+    if (scope is not ("recent" or "match" or "halftime" or "fulltime") || lang is not ("en-GB" or "es-ES" or "ta-IN"))
     {
-        Azure.Core.TokenCredential cred = AzureCredentials.Shared;
-        var blobUri = new Uri(endpoint.TrimEnd('/') + $"/vog-data/public/{file}");
-        var blobClient = new BlobClient(blobUri, cred);
-        var response = await blobClient.DownloadContentAsync(ct);
-        return Results.Content(response.Value.Content.ToString(), "application/json");
+        return Results.BadRequest(new { error = "Unsupported scope or language." });
     }
-    catch (Exception ex)
-    {
-        var logger = app.Services.GetRequiredService<ILogger<Program>>();
-        logger.LogWarning(ex, "Could not serve /data/{File} from blob storage", file);
-        return Results.NotFound();
-    }
+
+    var snapshot = broadcast.Snapshot;
+    return Results.Content(new MatchTools(() => snapshot, lang).Invoke("get_match_recap", JsonSerializer.Serialize(new { scope })), "application/json");
 });
 
 app.Run();

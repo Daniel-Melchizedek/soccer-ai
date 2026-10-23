@@ -7,12 +7,13 @@ Voice of the Game turns a synthetic football match into live audio description, 
 - Research and idea selection: [IDEAS.md](IDEAS.md)
 - Full build plan: [BUILD_PLAN.md](BUILD_PLAN.md)
 - Accessibility implementation ledger: [please-reasearch-online-then-mighty-hanrahan.md](please-reasearch-online-then-mighty-hanrahan.md)
+- Actual-device demo and synthetic data card: [DEMO.md](DEMO.md)
 
-> The live match is synthetic. Its league, clubs and players are fictional and generated, with a deny-list of real club names. The separate historical chart panel currently uses real CC0 international results. The hackathon requires synthetic, football-realistic data, so this panel's eligibility is unresolved; CC0 licensing is not eligibility approval. Keep accessible synthetic live-match commentary as the project's purpose. No real Premier League data, trademarks or footage are used in the live simulation.
+> The submitted app uses synthetic matches with fictional generated leagues, clubs and players. Historical charts and the public `/data` proxy have been removed from the current worktree; no real historical data is used in the submitted app. The legacy DataPrep utility and private historical blobs remain unused, and earlier real-data usage remains credited below. No actual club data, trademarks or footage are used in the simulation. Synthetic-only data does not by itself establish full hackathon eligibility.
 
 ## What works today
 
-Implementation and deployment status updated on **23 October 2026**. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The additional CLI modes below are offline options.
+Implementation status updated on **23 October 2026**; local recap browser checks passed, while Azure deployment and deployed-browser verification are **pending the next session**. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The new Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
 
 The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, with no cloud services needed:
 
@@ -25,13 +26,31 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices authenticated with Microsoft Entra ID, 24 kHz PCM streaming and word-timed caption generation (WebVTT, at most 2 lines of 37 characters). Offline utilities support word-boundary cuts; live playback uses a sample-limit fade for interruption. |
 | (e) Render, live | `Vog.Gateway` | Plays a seeded synthetic match at natural 1x speed by default, on a shared wall-clock schedule. Full mode-specific narration streams as audio with word-timed captions. The listener page plays audio through an AudioWorklet, with procedural earcons panned to where the action is. |
-| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. A versioned Foundry prompt agent uses five read-only MCP tools at `/mcp/<lang>` to ground answers in match data. Commentary is muted while recording and ducked during answers. |
+| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. The gateway now exposes six read-only MCP tools at `/mcp/<lang>`, including `get_match_recap`; the updated Foundry YAML allowlist and recap grounding prompt await registration. Commentary is muted while recording and ducked during answers. |
 
 The browser also provides independent commentary/answer/event/ball/crowd levels, ball sonification, supported-device haptics, sound learning, clear-speech and gentle-sound settings, sound tags and an atmosphere meter. Caption size, colours, opacity, outline, font and position are configurable; preferences are stored on the device. The pitch map has zoom, follow-ball, shape/number markers and a polite position description. Calm changes commentary cadence and pass filtering; crowd and gentle-sound settings are independent.
 
-Still planned: hosted Foundry workflows (Insight Desk, recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
+Still planned: hosted Foundry workflows (Insight Desk, workflow-based recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Deterministic scoped recaps are implemented as described below, not as a hosted workflow. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
-### Latest Browser-Fix Release: 23 October 2026
+### Scoped Insights: Current Worktree
+
+The public, `no-store` endpoint `/insights?scope=recent|match|halftime|fulltime&lang=en-GB|es-ES|ta-IN` uses the same `get_match_recap` MCP tool over a single immutable snapshot per recap. Recaps report deterministic raw key-event counts, source event IDs, goal score effects and dismissal explanations. Scores are taken at the scope end. They do not infer window xG, window possession, tactics, momentum or probabilities.
+
+- `recent` covers at most two match-clock minutes, clamped within the current half; `match` covers the match so far.
+- `halftime` is unavailable until the first half ends, then remains first-half-only. `fulltime` is unavailable until the final whistle.
+- The panel is English, with that limitation disclosed. Casual selects up to five decisive/latest highlights; Analyst shows the last 40 highlights and a raw event-count table. Native shot meters and expandable source event IDs expose the evidence.
+- Auto-refresh runs every 15 seconds, pausing in hidden tabs or while focus is in the panel or evidence is open. The nine live listening channels and natural defaults remain unchanged: seed `20261026`, speed `1`, break `120` seconds.
+- Reported full-solution Release result: **128 tests passed**, including **23 companion** and **15 gateway** tests. Six new recap tests cover actual goal-event evidence/deduplication, halftime isolation, availability validation, second-half boundaries, inclusion of the final event in fulltime counts, and empty intervals. These are test results, not deployed-browser acceptance.
+
+### Latest Recap Release Verification: Pending
+
+**Paused for the user's commit/push checkpoint. No new Azure build, deployment or Foundry registration has started.** Local Playwright verified Casual/Analyst selection, persistence, keyboard evidence, no overflow at actual widths 320/390/1280, `no-store`, invalid-scope 400, removed-chart-route 404, full-time unavailability and recovery after an injected HTTP 503. This is local acceptance, not deployed verification. [NEXT_SESSION.md](NEXT_SESSION.md#resume-steps) records the local task, tooling and remaining steps. Replace this placeholder after rollout with actual source provenance, image digest, Azure revision/readiness/traffic, public URL, Foundry registration results and fresh deployed-browser evidence without local asset overrides.
+
+Native-language review (Spanish/Tamil and recap responses), human screen-reader/co-design validation, actual microphone use, subjective audio/caption timing, concurrent multilingual playback, and a completed-match archive write/read round trip remain open. Use [DEMO.md](DEMO.md) for a target 110-second demonstration without promised goals or manufactured match timing.
+
+### Historical Browser-Fix Release: 23 October 2026
+
+This dated release record is superseded for current implementation status by [Scoped Insights](#scoped-insights-current-worktree). It is not evidence that the recap work has been deployed; see [pending release verification](#latest-recap-release-verification-pending).
 
 The user subsequently authorized commit, push and deployment of the reviewed fixes. Application commit **`1d5ab9a`** was pushed to `origin/main` and built from a clean Git archive by ACR run **`dtp`**. The image-only update deployed `crvogdevy6po56.azurecr.io/vog-gateway@sha256:2bae9f40390d1da12522b5e37fc2534322667d28af50dbb3d47bb6b691c5950a` as revision **`ca-vog-dev-gateway--browserfix-1d5ab9a`**. Azure confirmed Healthy, latest-ready, one running replica and 100% traffic in Single revision mode. Infrastructure, secrets and Foundry registrations were not changed.
 
@@ -41,7 +60,7 @@ Fresh deployed Playwright checks, with no local asset overrides, verified the co
 
 The 15 passing gateway tests immediately before release still apply. Full screenshot acceptance, microphone input, subjective audio quality, concurrent multilingual audio and complete accessibility validation remain unverified. Earlier source-only and Azure records below are historical; this release supersedes their undeployed-fix status and active-revision claims.
 
-### Source Review And Browser Fixes: 23 October 2026
+### Historical Source Review And Browser Fixes: 23 October 2026
 
 A subsequent code/documentation review and live Playwright session found and fixed four browser issues locally: horizontal overflow at 320px (including hidden chart-table sizing), an English-only stadium-entry sound tag, retained commentary inheriting the newly selected channel's language, and a footer incorrectly claiming all data was synthetic. The entry tag now uses the existing English, Spanish and Tamil phrase-bank wording; each history row keeps its own language. The footer distinguishes fictional live matches from real historical results.
 
@@ -51,7 +70,9 @@ A subsequent code/documentation review and live Playwright session found and fix
 - The live history panel now displayed two archived Norton Borough 0-1 Brackworth Town results. This confirms readable records, not an observed completed-match archive write/read round trip.
 - No commit, push, Azure deployment, infrastructure change or secret change was performed in this review. Azure revision/traffic metadata below remains the earlier recorded release state. Historical-data eligibility and natural short-demo scoring remain unresolved.
 
-### Current Azure Release: 23 October 2026
+### Historical Chart Azure Release: 23 October 2026
+
+The chart/data endpoints and eligibility actions below describe that older release only; current source has removed the charts and public proxy. Its checks do not validate the pending recap release.
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=charts-bottom-20261023
 
@@ -225,11 +246,11 @@ src/
   Vog.Pipeline       offline and wall-clock live composition, shared match schedule, golden match
   Vog.Voice          Azure neural TTS, captions, WAV, word-boundary cuts
   Vog.Companion      match tools (read-only, grounded in the live match) and the Voice Live agent-mode session
-  Vog.Gateway        live broadcast, listener, companion/MCP, best-effort archive/history and aggregate-data routes
+  Vog.Gateway        live broadcast, listener, companion/MCP, scoped insights and best-effort archive/history
 foundry/agents/      Foundry agent definitions (instructions, tools, reasoning effort), reviewed like code
 tools/Vog.Replay     CLI: commentary playback, coverage report, data card, speech rendering, gateway smoke tests
 tools/Vog.FoundrySetup  registers foundry/agents/*.agent.yaml as new Foundry agent versions
-tools/Vog.DataPrep   aggregates blob-hosted results.csv into the two historical-chart JSON blobs
+tools/Vog.DataPrep   unused legacy utility for historical-chart JSON blobs; not part of the submitted app
 infra/               Bicep + Azure CLI provisioning and deployment (provision.ps1, teardown.ps1)
 tests/               xUnit v3 test projects
 ```
@@ -246,38 +267,31 @@ Nothing sensitive belongs in this repository (BUILD_PLAN.md §12):
 
 | Work | Author / Licence | How it is used |
 |---|---|---|
-| [International football results from 1872 to 2017](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) | Mart Jürisoo, **CC0 Public Domain** | Pre-aggregated into two JSON files (goals per decade, home-win %) for the "Football through the ages" panel. No individual match rows are redistributed. |
-| [football-results-dashboard](https://github.com/bbenz/football-results-dashboard) | Brian Benz, **MIT** | Inspiration for the pattern of aggregating historical football data and serving AI-explained charts on Azure |
-| [Chart.js](https://www.chartjs.org) | Chart.js contributors, **MIT** | Renders the historical data charts in the browser |
+| [International football results from 1872 to 2017](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) | Mart Jürisoo, **CC0 Public Domain** | Previously aggregated into goals-per-decade and home-win JSON for the removed historical panel. Retained private blobs/legacy DataPrep are unused by the submitted app; credit records that real-data usage. |
+| [football-results-dashboard](https://github.com/bbenz/football-results-dashboard) | Brian Benz, **MIT** | Historical inspiration for the removed chart experiment; not the current synthetic recap implementation |
+| [Chart.js](https://www.chartjs.org) | Chart.js contributors, **MIT** | Previously rendered the removed historical charts; current insights use native meters and tables |
 | [Atkinson Hyperlegible](https://brailleinstitute.org/freefont) | Braille Institute, **SIL OFL 1.1** | Optional accessible caption font (self-hosted; licence in `fonts/atkinson-hyperlegible/`) |
 | [Microsoft Playwright](https://playwright.dev) | Microsoft, **Apache 2.0** | Browser-based testing via the Playwright MCP server |
 | [SignalR](https://github.com/dotnet/aspnetcore) | Microsoft, **MIT** (part of ASP.NET Core) | Real-time browser communication for audio, captions and pitch data |
 | Microsoft Foundry, Azure AI Speech, Azure Voice Live, Azure Container Apps, Azure Blob Storage | Microsoft | AI agents, neural TTS, real-time voice Q&A, hosting, and match/data archiving |
 
-> **Synthetic data notice:** The live match, league, clubs and players are fictional and machine-generated. The separate historical charts use the credited CC0 international football results dataset. No real Premier League data, trademarks, player names or footage are used in the live simulation.
+> **Synthetic data notice:** The current submitted experience uses fictional, machine-generated matches, leagues, clubs and players, not real historical data. Historical charts and the public `/data` proxy are removed. Prior real CC0 usage is credited above; unused legacy tooling/private blobs are retained. No actual club data, trademarks or footage are used in the simulation. Synthetic-only data does not establish full eligibility.
 
-## Historical charts and storage
+## Legacy Historical Data And Storage
 
 `infra/modules/storage.bicep` creates a private `vog-data` container with shared-key authentication disabled. The gateway identity and provisioning developer receive container-scoped Storage Blob Data Contributor access. `infra/main.bicep` supplies `VogStorage__BlobEndpoint` to the gateway and outputs it for local configuration.
 
-Download the credited Kaggle dataset separately, then upload and aggregate it:
+Legacy DataPrep and existing historical blobs are retained unused. They are not setup prerequisites for the submitted app. The removed panel previously consumed `public/goals-per-decade.json` and `public/home-advantage.json` from private storage through an allowlisted public proxy. The current gateway no longer exposes `/data/{file}` and the listener no longer renders those charts. Historical home-win percentage counted home-team wins across all dataset matches, including neutral fixtures.
 
-```powershell
-az storage blob upload --account-name <account> --container-name vog-data --name kaggle/results.csv --file <path-to-results.csv> --auth-mode login --overwrite
-dotnet run --project tools/Vog.DataPrep --configuration Release -- --storage https://<account>.blob.core.windows.net/
-```
+DataPrep still accepts `--storage <endpoint>` or the process environment variable `VogStorage__BlobEndpoint`; it does not load the repository dotenv file. This describes retained tooling, not a request to upload real data or re-enable the removed proxy. `/history` remains public even though its backing blobs disallow anonymous access.
 
-The tool writes `public/goals-per-decade.json` and `public/home-advantage.json`. These are private blobs: the gateway exposes only the two allowlisted aggregate files through `/data/{file}`. Expand **Football through the ages** to load both charts and their screen-reader tables. Home-win percentage counts home-team wins across all dataset matches, including neutral fixtures.
-
-DataPrep accepts `--storage <endpoint>` or the process environment variable `VogStorage__BlobEndpoint`; it does not load the repository dotenv file. The gateway's `/data/{file}` and `/history` outputs are public even though their backing blobs disallow anonymous access. Missing or unreadable chart data returns 404 and the browser displays an unavailable message without stopping live commentary.
-
-The 23 October 2026 data preparation processed 49,945 matches with no skipped rows and produced 16 decades in each chart. All four user-supplied CSV files were SHA-256-identical to the public Kaggle download. Only the results dataset feeds these two charts; scorer, shootout and former-name datasets are not used. Raw CSV data is not checked into Git or served by the gateway. These real aggregates are not established as eligible under the synthetic-data rule.
+The historical 23 October 2026 preparation processed 49,945 matches with no skipped rows and produced 16 decades per chart. All four user-supplied CSV files were SHA-256-identical to the public Kaggle download. Only results fed those charts; scorer, shootout and former-name datasets were unused. Raw CSV data was not checked into Git or served by the gateway. These were real aggregates, not synthetic data or proof of eligibility; they are no longer used by the submitted app.
 
 After a simulated match completes, the gateway attempts a best-effort upload of a lightweight summary under `match-snapshots/`. Uploads run without awaiting completion and failures are logged without retry. `/history` returns up to ten successfully read summaries, newest blob modification first. An empty array can mean no archived matches, disabled storage or a storage-read failure; a completed-match write/read round trip remains unverified.
 
 ## Demo configuration
 
-The live deployment uses the source defaults: seed `20261026`, speed `1.0`, and a `120`-second between-match break. It does not promise three goals during a two-minute viewing window. The submission video must remain under two minutes; changing realism or the recording format requires an explicit decision.
+Source defaults remain seed `20261026`, speed `1.0`, and a `120`-second between-match break; deployment verification for the recap work is pending. [DEMO.md](DEMO.md) budgets 110 seconds on an actual device without promising goals during the recording. The submission video must remain under two minutes; changing realism or the recording format requires an explicit decision.
 
 The source code defaults (`appsettings.json`) use `Seed: 20261026, Speed: 1.0` for natural 1× pacing with full narration for all modes.
 

@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Collections.Immutable;
+using Vog.Contracts;
 using Vog.Pipeline;
 
 namespace Vog.Companion.Tests;
@@ -147,5 +149,76 @@ public sealed class MatchToolsTests
         {
             Assert.Equal("object", JsonDocument.Parse(spec.ParametersSchema).RootElement.GetProperty("type").GetString());
         }
+    }
+
+    [Fact]
+    public void RecentRecapGroundsTheGoalWithoutDuplicatingTheScoredShot()
+    {
+        var recap = Call("get_match_recap", """{"scope":"recent"}""");
+        Assert.Equal(78 * 60_000, recap.GetProperty("startClockMs").GetInt64());
+        var highlights = recap.GetProperty("highlights").EnumerateArray().ToList();
+        var goal = Assert.Single(highlights, item => item.GetProperty("fact").GetProperty("kind").GetString() == "goal");
+        Assert.Equal("Puts the scoring team ahead.", goal.GetProperty("why").GetString());
+        Assert.Contains(At80.Value.KeyEvents, item => item.EventId == goal.GetProperty("eventId").GetString());
+        Assert.DoesNotContain(highlights, item => item.GetProperty("fact").GetProperty("what").GetString() == "shot" && item.GetProperty("matchClockMs").GetInt64() == goal.GetProperty("matchClockMs").GetInt64());
+    }
+
+    [Fact]
+    public void HalftimeRecapDoesNotLeakSecondHalfGoals()
+    {
+        var recap = Call("get_match_recap", """{"scope":"halftime"}""");
+        Assert.Equal(0, recap.GetProperty("score").GetProperty("away").GetInt32());
+        Assert.All(recap.GetProperty("highlights").EnumerateArray(), item => Assert.Equal(1, item.GetProperty("period").GetInt32()));
+    }
+
+    [Fact]
+    public void FulltimeIsUnavailableBeforeTheWhistle()
+    {
+        Assert.Equal("unavailable", Call("get_match_recap", """{"scope":"fulltime"}""").GetProperty("status").GetString());
+        Assert.True(Call("get_match_recap", """{"scope":"invented"}""").TryGetProperty("error", out _));
+    }
+
+    [Fact]
+    public void RecentRecapClampsToSecondHalfAndIncludesExactBoundary()
+    {
+        var template = At80.Value.KeyEvents[0];
+        var snapshot = At80.Value with
+        {
+            Frame = At80.Value.Frame with { Period = 2, MatchClockMs = 46 * 60_000 },
+            KeyEvents = ImmutableList.Create(
+                template with { EventId = "first-half-stoppage", Type = MatchEventType.Shot, Period = 1, MatchClockMs = 46 * 60_000 },
+                template with { EventId = "boundary", Type = MatchEventType.Shot, Period = 2, MatchClockMs = 45 * 60_000 },
+                template with { EventId = "future", Type = MatchEventType.Shot, Period = 2, MatchClockMs = 47 * 60_000 }),
+        };
+        var recap = JsonDocument.Parse(new MatchTools(() => snapshot, "en-GB").Invoke("get_match_recap", """{"scope":"recent"}""")).RootElement;
+        Assert.Equal(45 * 60_000, recap.GetProperty("startClockMs").GetInt64());
+        Assert.Equal("boundary", Assert.Single(recap.GetProperty("highlights").EnumerateArray()).GetProperty("eventId").GetString());
+    }
+
+    [Fact]
+    public void FulltimeUsesRawEvidenceAndIncludesTheFinalEvent()
+    {
+        var end = At80.Value.KeyEvents[0] with { EventId = "end", Type = MatchEventType.PeriodEnd, Period = 2, MatchClockMs = 90 * 60_000 };
+        var snapshot = At80.Value with
+        {
+            Frame = At80.Value.Frame with { MatchClockMs = 90 * 60_000 },
+            KeyEvents = At80.Value.KeyEvents.Add(end),
+        };
+        var recap = JsonDocument.Parse(new MatchTools(() => snapshot, "en-GB").Invoke("get_match_recap", """{"scope":"fulltime"}""")).RootElement;
+        Assert.Equal("available", recap.GetProperty("status").GetString());
+        Assert.Equal(1, recap.GetProperty("score").GetProperty("away").GetInt32());
+        Assert.Equal("end", recap.GetProperty("highlights").EnumerateArray().Last().GetProperty("eventId").GetString());
+        Assert.Equal(snapshot.KeyEvents.Count(item => item.Type == MatchEventType.Shot), recap.GetProperty("teams").EnumerateArray().Sum(team => team.GetProperty("shots").GetInt32()));
+    }
+
+    [Fact]
+    public void EmptyIntervalDoesNotInventHighlightsOrStats()
+    {
+        var snapshot = At80.Value with { KeyEvents = ImmutableList<MatchEvent>.Empty };
+        var tools = new MatchTools(() => snapshot, "en-GB");
+        var recap = JsonDocument.Parse(tools.Invoke("get_match_recap", """{"scope":"recent"}""")).RootElement;
+        Assert.Empty(recap.GetProperty("highlights").EnumerateArray());
+        Assert.All(recap.GetProperty("teams").EnumerateArray(), team => Assert.Equal(0, team.GetProperty("shots").GetInt32()));
+        Assert.Equal("unavailable", JsonDocument.Parse(tools.Invoke("get_match_recap", """{"scope":"halftime"}""")).RootElement.GetProperty("status").GetString());
     }
 }

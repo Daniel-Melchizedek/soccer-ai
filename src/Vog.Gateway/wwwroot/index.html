@@ -229,46 +229,38 @@
       </section>
     </div>
 
-    <!-- Historical football data panel. Lazy-loaded from Kaggle dataset (CC0) via Azure Blob Storage.
-         Each chart has a hidden data table as a full screen-reader text alternative. -->
-    <details id="football-history" class="card">
-      <summary>Football through the ages</summary>
-      <p class="note history-note">Historical international football statistics from 1872.</p>
-
-      <figure>
-        <canvas id="chart-goals"
-          role="img"
-          aria-label="Bar chart: average goals per match in international football by decade. Loading data…">
-        </canvas>
-        <figcaption>Average goals per match by decade (international football).</figcaption>
-        <!-- Full data table for screen readers — visually hidden but present in the DOM. -->
-        <div class="visually-hidden">
-        <table aria-label="Average goals per match by decade — data table">
-          <thead><tr><th>Decade</th><th>Average goals per match</th></tr></thead>
-          <tbody id="goals-table-body"></tbody>
-        </table>
+    <section id="match-insights" class="insights" aria-labelledby="insights-heading" lang="en">
+      <h2 id="insights-heading">Match intelligence</h2>
+      <div class="fields">
+        <fieldset class="inline">
+          <legend>Insight view</legend>
+          <label><input type="radio" name="insight-view" value="casual" checked> Casual</label>
+          <label><input type="radio" name="insight-view" value="analyst"> Analyst</label>
+        </fieldset>
+        <div class="field">
+          <label for="recap-scope">Recap</label>
+          <select id="recap-scope">
+            <option value="recent">Last two minutes</option>
+            <option value="match">Match so far</option>
+            <option value="halftime">Half-time</option>
+            <option value="fulltime">Full-time</option>
+          </select>
         </div>
-      </figure>
-
-      <figure>
-        <canvas id="chart-home"
-          role="img"
-          aria-label="Line chart: home team win percentage in international football by decade. Loading data…">
-        </canvas>
-        <figcaption>Home team win percentage by decade (international football, including neutral fixtures).</figcaption>
-        <div class="visually-hidden">
-        <table aria-label="Home win percentage by decade — data table">
-          <thead><tr><th>Decade</th><th>Home win %</th></tr></thead>
-          <tbody id="home-table-body"></tbody>
+        <button id="refresh-insights" class="secondary" type="button">Refresh recap</button>
+      </div>
+      <output id="insights-status" role="status">Loading match facts...</output>
+      <p id="insights-score"></p>
+      <div id="insights-metrics" hidden>
+        <table aria-label="Event counts in selected recap period">
+          <thead><tr><th scope="col">Team</th><th scope="col">Shots</th><th scope="col">Goals</th><th scope="col">Corners</th></tr></thead>
+          <tbody id="insights-teams"></tbody>
         </table>
-        </div>
-      </figure>
-
-      <p class="note">
-        Data: <a href="https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017" rel="noopener noreferrer" target="_blank">Mart Jürisoo, Kaggle</a>, CC0 Public Domain.
-        Inspiration: <a href="https://github.com/bbenz/football-results-dashboard" rel="noopener noreferrer" target="_blank">bbenz/football-results-dashboard</a> (MIT).
-      </p>
-    </details>
+        <div id="shot-comparison" aria-label="Shots in selected period"></div>
+      </div>
+      <ol id="insights-highlights" aria-live="off"></ol>
+      <p id="insights-limitations" class="note"></p>
+      <p class="note">Synthetic match evidence. Fictional teams and players. Recap explanations: English.</p>
+    </section>
 
     <details class="card details">
       <summary>Latency</summary>
@@ -277,13 +269,11 @@
   </main>
 
   <footer class="footer">
-    <p>The live match, league, clubs and players are synthetic and fictional. Historical charts use real international results credited above. Built with Microsoft Foundry agents, Azure Voice Live and Azure AI Speech.</p>
+    <p>The match, league, clubs, players and match intelligence are synthetic and fictional. Built with Microsoft Foundry agents, Azure Voice Live and Azure AI Speech.</p>
   </footer>
 
   <script src="lib/signalr/signalr.min.js"></script>
   <script type="module" src="js/app.js"></script>
-  <!-- Chart.js for the historical football data panel (MIT licence). Pinned version. -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script type="module" src="js/charts.js"></script>
+  <script type="module" src="js/insights.js"></script>
 </body>
 </html>

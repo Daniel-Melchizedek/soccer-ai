@@ -2,7 +2,53 @@
 
 Updated: 23 October 2026.
 
-## Latest Deployment: Browser Fixes
+## Current Handoff: Scoped Recaps
+
+**Paused at the user's requested commit/push checkpoint for resumption next session.** Implementation, full-solution tests and local Playwright checks are complete. **Azure image build/deployment, Foundry registration and deployed Playwright verification have NOT STARTED for this feature.** No ACR build is running. The earlier deployment request remains unfinished. Fill [the latest release verification placeholder](README.md#latest-recap-release-verification-pending) only after rollout. Base before this checkpoint: `22b11ae` on `main`; use `git log -1` and `git status --short --branch` to identify the checkpoint and confirm synchronization.
+
+- Historical charts and the public `/data` proxy are removed. No real historical data is used in the submitted app; the unused legacy DataPrep utility/private blobs and honest historical credits remain. Synthetic-only data is not full eligibility approval.
+- Public `no-store` `/insights?scope=recent|match|halftime|fulltime&lang=en-GB|es-ES|ta-IN` uses the same `get_match_recap` MCP tool over a single immutable snapshot. Six read-only tools now exist; the Foundry YAML tool allowlist and recap grounding prompt await registration.
+- Recaps expose deterministic raw key-event counts, source IDs, goal score effects and dismissal explanations. Scores are at scope end; do not infer window xG/possession, tactics, momentum or probabilities. Recent covers at most two match-clock minutes within the current half. Halftime is unavailable until that half ends and stays first-half-only; fulltime is unavailable until final whistle.
+- The English panel discloses its language limitation. Casual selects up to five decisive/latest highlights; Analyst shows the last 40 plus a raw event-count table, with native shot meters and expandable event IDs. Refresh every 15 seconds pauses for a hidden tab, panel focus or open evidence. These are views, not new live channels: all nine channels and seed `20261026`, natural speed `1`, break `120` remain unchanged.
+- Reported full-solution Release result: **128 passed**, including **23 companion** and **15 gateway** tests. Six new recap cases cover actual goal-event evidence/deduplication, halftime isolation, availability validation, second-half boundary, final-event inclusion in fulltime counts and an empty interval. No remaining-project subtotal is asserted.
+- Remaining acceptance: native-language review, human screen-reader/co-design checks, actual microphone use, subjective audio/caption alignment, concurrent multilingual playback and a completed-match archive write/read round trip. Deployment checks must also verify removed chart routes, `no-store`, scope boundaries, evidence stability while focused/open, and the typed recap against the same deployed match.
+
+Use [DEMO.md](DEMO.md) for a target 110-second actual-device demo and human validation checklist. No goals, accelerated clock or half-time arrival are promised. Keep the final recording strictly under 120 seconds.
+
+### Local Browser Results
+
+- Actual local gateway at `http://localhost:5093/`: `run_playwright_code` verified Casual (five observed moments, metrics hidden) versus Analyst (six observed moments, two team rows), saved view after reload, and keyboard Enter opening source evidence.
+- At actual viewport widths 320/390/1280, document widths were 305/375/1265 with no horizontal overflow. API returned `Cache-Control: no-store`, invalid scope returned 400, removed `/data/goals-per-decade.json` returned 404, and full-time recap correctly said the period had not ended.
+- Local-only HTTP 503 injection showed the retry message; removing the route and refreshing restored both team rows. All injected routes were removed. No local fixture was passed off as deployed verification.
+- Screenshot output was compressed and is not full visual acceptance. Stability across an actual 15-second refresh interval while evidence is open remains to verify. No fresh recap answer through deployed Foundry or new-feature live audio test was performed.
+
+### Resume Steps
+
+1. Inspect branch/worktree before editing. The checkpoint includes application changes, six recap tests, agent YAML, project documentation and new `DEMO.md`; it excludes secrets, private blobs and generated output. Full Release solution passed **128 tests, zero failed or skipped** before this documentation checkpoint.
+2. Check VS Code task **Run gateway locally** before starting another process. It was left running on **http://localhost:5093/** with no listener connected. Its `.vscode/tasks.json` is ignored, machine-local and not pushed. Local archiving is disabled because no storage endpoint was supplied. There is no `.env.local`; the task supplies the four nonsecret Azure endpoints below and prepends the CLI directory to PATH. Do not run provisioning just to recreate local configuration.
+3. Preserve seed `20261026`, speed `1`, break `120` and all nine channels. Address remaining local acceptance issues first; rerun the tests below after code changes. Old historical-chart CSS is unused and not a release blocker.
+4. Build a clean Git archive of the checkpoint/application commit with ACR using `src/Vog.Gateway/Dockerfile`. Do not upload the entire worktree: generated `TestResults` is not comprehensively excluded by `.dockerignore`. Registry **crvogdevy6po56**, resource group **rg-vog-dev**, app **ca-vog-dev-gateway**. Deploy the immutable image digest only; no full provisioning, secret rotation, blob deletion or unrelated infrastructure changes.
+5. Once the new gateway serves six tools, register the updated YAML with `tools/Vog.FoundrySetup` for all three languages. Required configuration: `VOG_FOUNDRY_PROJECT_ENDPOINT`, `VOG_AGENT_MODEL_DEPLOYMENT`, `VOG_AGENT_GUARDRAIL_ID` (full ARM ID), `VOG_MCP_URL`, `VOG_MCP_CONNECTION_PREFIX`. Verify these nonsecret values from existing deployment outputs. Existing registrations still allow only the old tools; no registration was attempted this session.
+6. Verify Azure latest-ready revision, health and traffic. `az containerapp wait` is unsupported here; use `az resource wait` with API version `2025-01-01` and a latest-ready-revision condition. Last actual Azure read this session still showed **ca-vog-dev-gateway--browserfix-1d5ab9a**. Public URL: `https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/`.
+7. Run deployed `run_playwright_code` checks without local asset overrides: both views, scopes/availability, event IDs, retry recovery, preferences, keyboard controls, 320/390/1280 reflow, English AD PCM/captions and a typed recap grounded in the deployed snapshot. Check `/healthz`, `/insights`, removed `/data` routes, and evidence stability during automatic refresh. Do not infer subjective audio or human accessibility acceptance.
+8. Update README and this handoff with actual image digest, revision, registrations and test evidence. Any later commit/push should follow the user's authorization; this request is a checkpoint of work completed so far. A documentation-only follow-up needs no new image.
+
+### Current Tooling
+
+```powershell
+& 'C:\Program Files\dotnet\dotnet.exe' test --solution VoiceOfTheGame.slnx --configuration Release
+& 'C:\Program Files\dotnet\dotnet.exe' test --project tests/Vog.Companion.Tests --configuration Release
+& 'C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin\az.cmd' containerapp show --name ca-vog-dev-gateway --resource-group rg-vog-dev --query properties.latestReadyRevisionName -o tsv
+git diff --check
+```
+
+Azure CLI is installed but not on the default PATH; AzureCliCredential also needs its directory on process PATH. Do not print tokens or Key Vault secrets. Known nonsecret endpoints: `https://kv-vog-dev-y6po56.vault.azure.net/`, `https://vog-dev-y6po56.cognitiveservices.azure.com/`, `https://vog-dev-y6po56.services.ai.azure.com/`, project `https://vog-dev-y6po56.services.ai.azure.com/api/projects/vog-dev`. A running gateway may lock Release outputs; stop that process or use a separate artifacts path before rebuilding.
+
+Local shared browser page ID: `1a7b1847-b2bb-4496-8916-8196b96a563a`; rediscover next session if unavailable. `page.request.get` fails with unsupported `Storage.getCookies`: use same-origin `fetch` inside `page.evaluate`. Wait for actual `innerWidth` after `setViewportSize`. Old deployed tabs may cache unversioned JS; use fresh/cache-disabled navigation and remove any pass-through routes afterward. Screenshot tooling remains unreliable.
+
+## Historical Deployment: Browser Fixes
+
+Everything from this heading through the older release records is retained as dated history, superseded for current worktree status by the handoff above. Chart endpoint successes and old active-revision claims are not recap-release acceptance.
 
 The user explicitly authorized commit, push and Azure deployment after the source-only review. Application commit **`1d5ab9a`** is pushed to `origin/main`; ACR build **`dtp`** succeeded from a clean Git archive. Image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:2bae9f40390d1da12522b5e37fc2534322667d28af50dbb3d47bb6b691c5950a` is deployed as **`ca-vog-dev-gateway--browserfix-1d5ab9a`**. Azure confirmed Healthy, latest-ready, one running replica and 100% traffic, Single revision mode. Only the image was updated; infrastructure, secrets, configuration and Foundry registrations were preserved.
 
@@ -12,7 +58,7 @@ The user explicitly authorized commit, push and Azure deployment after the sourc
 - Full visual screenshot acceptance, microphone input, subjective audio quality, concurrent multilingual playback, completed-match archive write verification and accessibility certification remain open. Submission/data eligibility and natural short-demo scoring constraints are unchanged.
 - This deployment supersedes the source-only status and older active-revision claims below. Git author name/email were configured locally for this repository from the prior commit at the user's request. Deployment documentation is a follow-up commit; no second image build is needed for Markdown-only changes.
 
-## Earlier Review: Local Browser Fixes
+## Historical Review: Local Browser Fixes
 
 The user subsequently requested a codebase/documentation review and live Playwright testing with fixes. This review made **no commit, push or deployment**; earlier release authorization below is historical, not authorization for another rollout.
 
@@ -23,12 +69,12 @@ The user subsequently requested a codebase/documentation review and live Playwri
 - Fresh gateway Release suite: **15 passed, zero failed or skipped**, SDK 10.0.400. Browser files and Markdown diagnostics plus `git diff --check` passed. No fresh full-solution or Bicep run was needed for these frontend/documentation changes.
 - Review the uncommitted worktree before continuing. Obtain current approval before committing, pushing or deploying. Real historical-data eligibility, native-speaker review, accessibility co-design, queue hardening and short-demo natural scoring remain open.
 
-## Current Release Handoff
+## Historical Chart Release Handoff
 
 **Purpose:** accessible, multilingual live commentary, captions, Calm mode and grounded companion Q&A over synthetic, football-realistic events. Do not turn this into a general historical football dashboard or change realism to manufacture a short demo.
 
 - The user authorized the 23 October deployment and storage/chart completion, then explicitly requested commit, push and a fresh deployed Playwright test. Base `83229d0` contains feature commit `ab62f5c`, which added charts, archive and DataPrep on 22 October but no storage infrastructure. Storage/mobile fixes and documentation are in `0fc5655`; chart placement and the final deployed verification record are in `8ede73d`. The subsequent documentation review started with a clean worktree and `main` and local `origin/main` at `8ede73d`; no remote fetch was performed. No new branch is required.
-- The user requested charts at the page end immediately before latency; `8ede73d` moves the unchanged panel below captions/companion. At the recorded release check, latest ready revision `ca-vog-dev-gateway--charts-bottom-20261023` received 100% traffic; immutable image/public URL are recorded in [README.md](README.md#current-azure-release-23-october-2026). The documentation review did not recheck Azure. Natural defaults remain seed 20261026, speed 1, break 120. Existing Foundry registrations, secrets and non-storage settings were preserved during that release.
+- The user requested charts at the page end immediately before latency; `8ede73d` moves the unchanged panel below captions/companion. At the recorded release check, latest ready revision `ca-vog-dev-gateway--charts-bottom-20261023` received 100% traffic; immutable image/public URL are recorded in [README.md](README.md#historical-chart-azure-release-23-october-2026). The documentation review did not recheck Azure. Natural defaults remain seed 20261026, speed 1, break 120. Existing Foundry registrations, secrets and non-storage settings were preserved during that release.
 - Added `infra/modules/storage.bicep` and wired `infra/main.bicep`. Account `stvogdevy6po56` has private `vog-data`; shared-key and anonymous blob access are disabled. Gateway/developer contributor roles are scoped to the container. `StorageConfiguration` handles normalized environment keys and literal local settings.
 - Uploaded the credited Kaggle results dataset privately and ran DataPrep: 49,945 rows, zero skipped, 16 decades per aggregate. All four supplied CSVs hash-match the download; only results feeds the charts. Both chart endpoints return 200; desktop and final deployed mobile pixel/table checks pass without horizontal overflow.
 - All 15 gateway tests passed, including three endpoint-configuration tests; Bicep compilation, touched-file diagnostics and whitespace validation passed. These are not a fresh full-solution or complete accessibility audit. Initial release verified English PCM/captions and a scoreboard-grounded typed companion answer; final frontend release reconnected live state/pitch.
@@ -36,7 +82,7 @@ The user subsequently requested a codebase/documentation review and live Playwri
 - **Submission blocker:** the historical panel uses real international results, whereas the official rules require synthetic data. Licensing does not resolve eligibility. Resolve removal from the submission or replacement with honestly labeled simulator-derived data before claiming compliance. The live engine/companion remains synthetic and does not ingest Kaggle results.
 - Three natural goals in 120 seconds remains unresolved. Keep original timing/realism boundaries and the rejected 60x history below. Complete co-design/screen-reader, concurrent multilingual playback, queue hardening and runtime security review separately.
 
-### Current Resume Commands
+### Historical Chart Resume Commands
 
 Use the confirmed SDK 10.0.400 at `C:\Program Files\dotnet\dotnet.exe`, not the old LOCALAPPDATA path. MTP/xUnit v3 uses no extra test-argument separator. Never print credentials or run the full provisioning script merely to update the image.
 
