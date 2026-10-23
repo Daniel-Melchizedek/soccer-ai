@@ -31,6 +31,16 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
+### Latest Browser-Fix Release: 23 October 2026
+
+The user subsequently authorized commit, push and deployment of the reviewed fixes. Application commit **`1d5ab9a`** was pushed to `origin/main` and built from a clean Git archive by ACR run **`dtp`**. The image-only update deployed `crvogdevy6po56.azurecr.io/vog-gateway@sha256:2bae9f40390d1da12522b5e37fc2534322667d28af50dbb3d47bb6b691c5950a` as revision **`ca-vog-dev-gateway--browserfix-1d5ab9a`**. Azure confirmed Healthy, latest-ready, one running replica and 100% traffic in Single revision mode. Infrastructure, secrets and Foundry registrations were not changed.
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=browserfix-1d5ab9a
+
+Fresh deployed Playwright checks, with no local asset overrides, verified the corrected footer, no horizontal overflow at actual widths 320/390/1280 with settings and charts expanded, two 16-row accessible tables, nonblank pitch/chart canvases, all three entry-tag translations and retained English row language after switching channels. The sample captured 91 PCM chunks, six caption messages and five playback acknowledgements; the typed companion answered Reds 0-0 Blues at 21 seconds, consistent with the clock. No runtime errors were captured; `/healthz` returned 200. Existing-tab JavaScript caching required a cache-disabled reload; hard-refresh old tabs after deployment. Browser routing was removed and listening stopped after verification.
+
+The 15 passing gateway tests immediately before release still apply. Full screenshot acceptance, microphone input, subjective audio quality, concurrent multilingual audio and complete accessibility validation remain unverified. Earlier source-only and Azure records below are historical; this release supersedes their undeployed-fix status and active-revision claims.
+
 ### Source Review And Browser Fixes: 23 October 2026
 
 A subsequent code/documentation review and live Playwright session found and fixed four browser issues locally: horizontal overflow at 320px (including hidden chart-table sizing), an English-only stadium-entry sound tag, retained commentary inheriting the newly selected channel's language, and a footer incorrectly claiming all data was synthetic. The entry tag now uses the existing English, Spanish and Tamil phrase-bank wording; each history row keeps its own language. The footer distinguishes fictional live matches from real historical results.

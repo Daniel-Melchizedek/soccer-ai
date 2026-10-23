@@ -2,7 +2,17 @@
 
 Updated: 23 October 2026.
 
-## Latest Review: Local Browser Fixes
+## Latest Deployment: Browser Fixes
+
+The user explicitly authorized commit, push and Azure deployment after the source-only review. Application commit **`1d5ab9a`** is pushed to `origin/main`; ACR build **`dtp`** succeeded from a clean Git archive. Image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:2bae9f40390d1da12522b5e37fc2534322667d28af50dbb3d47bb6b691c5950a` is deployed as **`ca-vog-dev-gateway--browserfix-1d5ab9a`**. Azure confirmed Healthy, latest-ready, one running replica and 100% traffic, Single revision mode. Only the image was updated; infrastructure, secrets, configuration and Foundry registrations were preserved.
+
+- Deployed Playwright checks passed at actual widths 320/390/1280 with settings and charts expanded: no horizontal overflow, 16 rows in each accessible chart table, nonblank pitch/charts, corrected footer, all three localized entry tags and retained English history language after channel changes.
+- Live sample: 91 PCM chunks, six caption messages, five playback acknowledgements, no captured runtime errors. Typed companion answered Reds 0-0 Blues at 21 seconds, consistent with the clock. `/healthz` returned 200. The preceding gateway Release suite passed all 15 tests.
+- Old tabs can retain cached unversioned JavaScript: hard-refresh after rollout. Testing used a cache-disabled network pass-through, not local asset overrides; routing was removed and listening stopped afterward.
+- Full visual screenshot acceptance, microphone input, subjective audio quality, concurrent multilingual playback, completed-match archive write verification and accessibility certification remain open. Submission/data eligibility and natural short-demo scoring constraints are unchanged.
+- This deployment supersedes the source-only status and older active-revision claims below. Git author name/email were configured locally for this repository from the prior commit at the user's request. Deployment documentation is a follow-up commit; no second image build is needed for Markdown-only changes.
+
+## Earlier Review: Local Browser Fixes
 
 The user subsequently requested a codebase/documentation review and live Playwright testing with fixes. This review made **no commit, push or deployment**; earlier release authorization below is historical, not authorization for another rollout.
 

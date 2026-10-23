@@ -8,7 +8,7 @@ This research plan is retained as a proposal/history. The ledger below reflects 
 |---|---|---|
 | 1 Hear the ball | Sonification, independent level and Learn the sounds implemented | Dedicated less-talk/more-sound preset and user evaluation not established |
 | 2 Feel the moments | Capability-detected browser vibration implemented | Physical-device and assistive-technology testing |
-| 3 Atmosphere | Phrase-bank-localized match-event sound tags, visual atmosphere meter and synthetic crowd implemented; stadium-entry tags now localized in local source and verified through browser asset overrides, not deployed | User validation of comprehension and stimulation levels; deploy verified entry-tag fix with approval |
+| 3 Atmosphere | Phrase-bank-localized match-event sound tags, visual atmosphere meter and synthetic crowd implemented; stadium-entry tags localized and verified on deployed revision `browserfix-1d5ab9a` | User validation of comprehension and stimulation levels |
 | 4 Mix/captions | Five independent levels; clear/gentle settings; size/colour/opacity/outline/font/position controls, preview and local preferences | Live timing, contrast/reflow and compliance audit |
 | 5 No-hold companion | Default tap with local silence auto-stop; optional hold, Alt+Shift+A and typed input | Motor/switch/eye-gaze testing; not hands-free |
 | 6 One-tap questions | Deterministic Score/Ball readouts; Who scored via agent | What did I miss absent; half-second response is a target, not a measured guarantee |
@@ -24,9 +24,9 @@ The preceding 23 October implementation/deployment work passed all 15 gateway te
 
 **Submission gate:** real CC0 chart data is not synthetic, even though the live simulator remains fictional. The rule requires synthetic, football-realistic data. Resolve whether to remove the panel from the entry or replace it with honestly labeled simulator-derived data before claiming eligibility. No general historical-analysis agent, real-team live simulation or new scoring/acceleration default was introduced.
 
-Supplementary charts and archiving currently use best-effort failure handling: storage failures do not stop live commentary, and an empty history response does not establish successful archive operation. This is a current-source exception to the historical no-degradation constraint below. The deployed footer's incorrect "Synthetic data only" claim has been corrected in local source to distinguish fictional live matches from real historical results; the correction is browser-verified through local asset overrides but not deployed. Eligibility remains unresolved.
+Supplementary charts and archiving currently use best-effort failure handling: storage failures do not stop live commentary, and an empty history response does not establish successful archive operation. This is a current-source exception to the historical no-degradation constraint below. The footer's incorrect "Synthetic data only" claim has been corrected to distinguish fictional live matches from real historical results; the correction was deployed and verified on revision `browserfix-1d5ab9a` with user approval. Eligibility remains unresolved.
 
-The subsequent 23 October browser review also fixed 320px horizontal overflow and retained commentary rows inheriting a newly selected channel's language. Local override checks passed at confirmed actual widths 320, 390 and 1280 with both accessible chart tables intact. These functional checks are not screen-reader, co-design or accessibility-compliance certification; screenshot tooling remains unreliable for full visual acceptance.
+The subsequent 23 October browser review also fixed 320px horizontal overflow and retained commentary rows inheriting a newly selected channel's language. Local override and subsequent deployed checks passed at confirmed actual widths 320, 390 and 1280 with both accessible chart tables intact. These functional checks are not screen-reader, co-design or accessibility-compliance certification; screenshot tooling remains unreliable for full visual acceptance.
 
 ## Context
 The current browser source (served by the gateway) has:
