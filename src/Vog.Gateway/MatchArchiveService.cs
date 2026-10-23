@@ -26,7 +26,7 @@ public sealed class MatchArchiveService(IConfiguration config, ILogger<MatchArch
 
     private static BlobContainerClient? TryCreateContainer(IConfiguration config, ILogger log)
     {
-        var endpoint = config["VogStorage__BlobEndpoint"];
+        var endpoint = StorageConfiguration.BlobEndpoint(config);
         if (string.IsNullOrWhiteSpace(endpoint))
         {
             log.LogInformation("VogStorage__BlobEndpoint not configured – match archiving disabled");

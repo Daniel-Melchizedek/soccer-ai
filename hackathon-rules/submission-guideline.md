@@ -1,3 +1,5 @@
+> **Repository status note, 23 October 2026 (not official rule text):** The live entry remains synthetic, accessibility-first football commentary. The latest release adds private storage and working historical charts, but their real CC0 data has unresolved eligibility under the synthetic-data requirement below. Deployment and passing tests are not submission-compliance approval. Preserve the under-two-minute video and public-repository requirements; three goals within 120 seconds is a separate unresolved user goal, not an official rule. See [the current release record](../README.md#current-azure-release-23-october-2026). The original submission text follows unchanged.
+
 Inside the Game: Developer Hackathon
 Microsoft and the Premier League invite developers worldwide to go beyond the scoreline and reimagine how football can be understood, experienced, and shared.
 

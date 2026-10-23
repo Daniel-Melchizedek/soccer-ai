@@ -6,9 +6,11 @@
 > This document goes with [IDEAS.md](IDEAS.md), which covers the research, the idea catalogue and why idea #4 was chosen.
 > Package versions and API names were checked against Microsoft Learn, NuGet and GitHub on 1–2 October 2026. Anything not yet confirmed is listed in [§20 Verify during build](#20-verify-during-build).
 
-## Implementation Status: 21 October 2026
+## Implementation Status: 23 October 2026
 
 **This is a design plan, not a delivery or compliance report.** Except where explicitly marked built/current, the architecture diagrams, agent roster, UX, Fabric, security controls, deployment examples and acceptance criteria below describe targets. Historical research, package availability and pricing claims were not revalidated in this documentation pass. The following status supersedes earlier present-tense design claims; [README.md](README.md) records the independently queried Azure deployment and dated runtime snapshot.
+
+**Purpose and submission boundary:** retain accessible, multilingual commentary and grounded Q&A over synthetic, football-realistic live events. The 22 October historical-chart addition is supplementary, not a replacement for this purpose. Its real CC0 international results are not synthetic; eligibility under the challenge rules is unresolved. Before submission, resolve removal from the entry or an honestly labeled simulator-derived replacement. Do not claim complete compliance, introduce real clubs into the live league, or change scoring realism to force a short demo.
 
 | Surface | Current source / deployment status |
 |---|---|
@@ -18,9 +20,10 @@
 | Companion | One prompt-agent template registered per language; Voice Live agent-mode relay; five read-only gateway MCP tools. Tap with local silence auto-stop is default. No hosted Insight Desk, recap, transcreation or catch-up workflow. |
 | Braille / reading | Backend brief/text support is partial; no browser braille output selector/feed. Immersive Reader and hands-free live-reference echo cancellation are not built. |
 | Speech | Live synthesis starts after Booth dispatch; caption cues are sent after synthesis completes. Offline timing/word-boundary-cut utilities do not prove live browser alignment or live word-boundary interruption. |
-| Provisioning / telemetry | PowerShell 7 + Azure CLI + Bicep, `.env.local` and startup Key Vault loading. Container Apps, registry, identity, Foundry, Key Vault, Log Analytics and Application Insights are deployed. Fabric/Event Hubs/Cosmos/storage/Azure SignalR are not present in the reviewed resource group. No azd/Aspire delivery path implemented. |
-| Azure snapshot | Healthy revision `ca-vog-dev-gateway--0000015`, image tag `0a9f32f-evalfix-20261007`, one 0.5-vCPU/1-GiB replica in Sweden Central. Model `gpt-5.6-terra` version `2026-07-09`, GlobalStandard capacity 800, NoAutoUpgrade. The deployed image is not asserted to match current source. |
-| Validation / hardening | Recorded golden-match metrics cover scheduling/coverage, not all accessibility goals. `/healthz` is not a dependency probe. Unbounded queues, per-conversation question limits and provisioning-secret error handling still need code hardening. No code, deployment or application tests were changed/run in this documentation pass. |
+| Provisioning / telemetry | PowerShell 7 + Azure CLI + Bicep, `.env.local` and startup Key Vault loading. Existing services now include private Blob Storage; normalized endpoint lookup is fixed. Storage was deployed separately; app image/settings were updated without changing Foundry registrations or secrets. Fabric/Event Hubs/Cosmos/Azure SignalR remain absent from the reviewed project deployment. |
+| Azure release | Latest deployed revision `ca-vog-dev-gateway--charts-mobile-20261023`, based on `83229d0` plus the fixes committed with this record; one 0.5-vCPU/1-GiB replica in Sweden Central. Natural seed 20261026, speed 1, break 120. See README for the immutable digest and dated evidence; the historical model configuration was not changed in this release. |
+| Historical charts / archive | Private `stvogdevy6po56` / `vog-data`, container-scoped contributor roles, no shared-key or anonymous blob access. Two allowlisted aggregates cover 49,945 real international results and 16 decades; desktop/mobile charts and table population verified. Archive writes after full synthetic matches; a completed write/read round trip is not yet verified. Real-data eligibility remains unresolved. |
+| Validation / hardening | All 15 gateway tests, Bicep compile and focused deployed chart checks passed on 23 October. Earlier golden/full-suite results remain dated evidence. `/healthz` is not a dependency probe. Queues, question limits, provisioning error handling, co-design and complete accessibility/runtime-security reviews remain open. Three natural goals within 120 seconds remains unresolved. |
 
 The actual CI workflow restores, builds and tests in Release, runs a 20-seed data card and commentary check, and scans history with gitleaks. The additional audit/eval/deploy/phrase-bank workflows below are proposals, not a verified CI inventory. See [the accessibility ledger](please-reasearch-online-then-mighty-hanrahan.md) for idea-by-idea delivery status.
 
@@ -167,7 +170,7 @@ The actual CI workflow restores, builds and tests in Release, runs a 20-seed dat
   - MAI-Voice-2.x (preview) is an A/B option for the "caller" persona.
 - **D8, "agents propose, the Booth Producer disposes."** Agents bid {priority, value, duration, validUntil}, and a deterministic arbiter schedules the scarce, serial audio resource. **This is the centrepiece of the multi-agent pitch.**
 
-### 3.3 Five-stage compliance
+### 3.3 Target Five-Stage Mapping
 | Stage | Where it happens |
 |---|---|
 | (a) Ingest | Simulator → Event Hubs (or an in-process channel) |
@@ -897,7 +900,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 ### 10.4 Capacity, privacy and the repo
 - **Trial:** start the Fabric trial **now**. It lasts 60 days at F64-equivalent with 1 TB of OneLake, so it runs to about 1 Dec, covering the build, judging and winners.
 - **Paid capacity:** F6/F7 need an **F2 pay-as-you-go** capacity, about **$0.36/hour** (US West 2), roughly $263/month if left running. **Pause it when idle**, and create it only if F6 or F7 is attempted.
-- **Fabric is part of the deployment:** no feature flag and no substitute dashboard.
+- **Target only:** Fabric would be part of the proposed deployment, with no substitute dashboard. It is not delivered in the current Azure release; the historical chart panel is not Fabric or Access Ops.
 - **Data minimization:** match and system telemetry only. No listener profiles, no microphone audio, no Q&A text. Tracking is down-sampled to 2 Hz.
 - **Repo:**
   - `fabric/kql/*.kql` (`.create-merge`) and `fabric/items/` (Git-integration folders), deployed by `fab deploy` from GitHub Actions with OIDC.
@@ -966,14 +969,15 @@ The README explains *why not everything is an agent*. Judges reward knowing when
 
 ## 13. Infrastructure and delivery
 
-- **Current (verified 21 Oct 2026): Azure CLI + Bicep via PowerShell 7**, using `infra/provision.ps1` and `infra/teardown.ps1`. Built: Foundry account/project/model/guardrail, gateway managed identity and roles, Key Vault, registry, Container Apps environment/gateway, Log Analytics and App Insights. `-SkipBuild` skips image build only; it still deploys infrastructure, writes settings and registers agents. The azd notes below are future hosted-agent options.
+- **Current (updated 23 Oct 2026): Azure CLI + Bicep via PowerShell 7**, using `infra/provision.ps1` and `infra/teardown.ps1`. Built: Foundry account/project/model/guardrail, gateway managed identity and roles, Key Vault, registry, Container Apps environment/gateway, Log Analytics, App Insights and private Blob Storage. `-SkipBuild` skips image build only; it still deploys infrastructure, writes settings and registers agents. This release deployed only the storage module, then updated the app image/endpoint. The azd notes below are future hosted-agent options.
 - **azd** (`azure.yaml`):
   - Container Apps services: `gateway`, `web`, `mcp`, `simulator`, `companion`.
   - Three hosted agents via the `azure.ai.agents` azd extension: `azd ai agent init` creates each host's `agent.yaml` manifest. Verify how `azure.yaml` references them.
   - Local loop: `azd ai agent run` / `invoke --local`. Deploy: `azd provision` + `azd deploy`.
 - **Bicep modules:**
   - **Ported from certflow-ai:** identity, monitoring, key-vault, container-registry, ai-foundry (AIServices account + project + `gpt-5.6-terra` deployment + RAI policy + roles), container-apps (including the `imagesPublished` two-pass trick).
-  - **Planned, not present:** event-hubs (4 hubs: `match-events`, `tracking-lite`, `moments`, `cues`), signalr (S1), cosmos (with vector policy), storage and optional fabric-capacity.
+  - **Current storage:** `storage.bicep` creates the private `vog-data` container and container-scoped gateway/developer roles. `main.bicep` wires its endpoint into the app and outputs. This is chart/archive storage, not the proposed TTS cache or Fabric pipeline.
+  - **Planned, not present:** event-hubs (4 hubs: `match-events`, `tracking-lite`, `moments`, `cues`), signalr (S1), cosmos (with vector policy) and optional fabric-capacity.
   - **Current:** a Foundry MCP connection module. Fabric connections remain planned.
 - **Identity and RBAC:** a user-assigned managed identity per app, least privilege:
   - Foundry User (renamed from Azure AI User)
@@ -981,7 +985,7 @@ The README explains *why not everything is an agent*. Judges reward knowing when
   - Cosmos DB data-plane role
   - SignalR App Server
   - Speech/Cognitive Services User
-  - Storage Blob Data Contributor
+  - Storage Blob Data Contributor (implemented for gateway/developer on `vog-data`; other listed service roles are targets where their services are not built)
   - Key Vault Secrets User
   - Eventhouse database viewer for `Vog.Mcp`
 

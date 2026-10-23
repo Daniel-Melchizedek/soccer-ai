@@ -1,8 +1,36 @@
 # Next Session Handoff
 
-Updated: 21 October 2026.
+Updated: 23 October 2026.
 
-## Current Corrective Handoff
+## Current Release Handoff
+
+**Purpose:** accessible, multilingual live commentary, captions, Calm mode and grounded companion Q&A over synthetic, football-realistic events. Do not turn this into a general historical football dashboard or change realism to manufacture a short demo.
+
+- The user authorized the 23 October deployment and storage/chart completion, then explicitly requested commit, push and a fresh deployed Playwright test. Base `83229d0` contains feature commit `ab62f5c`, which added charts, archive and DataPrep on 22 October but no storage infrastructure. The fixes and documentation are included in the commit containing this handoff; use `git log -1` and branch tracking to confirm its hash and push status. No new branch is required.
+- Latest ready revision: `ca-vog-dev-gateway--charts-mobile-20261023`, confirmed receiving 100% of traffic; immutable image and public URL are recorded in [README.md](README.md#current-azure-release-23-october-2026). Natural defaults remain seed 20261026, speed 1, break 120. Existing Foundry registrations, secrets and non-storage settings were preserved.
+- Added `infra/modules/storage.bicep` and wired `infra/main.bicep`. Account `stvogdevy6po56` has private `vog-data`; shared-key and anonymous blob access are disabled. Gateway/developer contributor roles are scoped to the container. `StorageConfiguration` handles normalized environment keys and literal local settings.
+- Uploaded the credited Kaggle results dataset privately and ran DataPrep: 49,945 rows, zero skipped, 16 decades per aggregate. All four supplied CSVs hash-match the download; only results feeds the charts. Both chart endpoints return 200; desktop and final deployed mobile pixel/table checks pass without horizontal overflow.
+- All 15 gateway tests passed, including three endpoint-configuration tests; Bicep compilation, touched-file diagnostics and whitespace validation passed. These are not a fresh full-solution or complete accessibility audit. Initial release verified English PCM/captions and a scoreboard-grounded typed companion answer; final frontend release reconnected live state/pitch.
+- Archive is empty until a full synthetic match completes. Do not seed fake recent results or claim a verified archive write/read round trip.
+- **Submission blocker:** the historical panel uses real international results, whereas the official rules require synthetic data. Licensing does not resolve eligibility. Resolve removal from the submission or replacement with honestly labeled simulator-derived data before claiming compliance. The live engine/companion remains synthetic and does not ingest Kaggle results.
+- Three natural goals in 120 seconds remains unresolved. Keep original timing/realism boundaries and the rejected 60x history below. Complete co-design/screen-reader, concurrent multilingual playback, queue hardening and runtime security review separately.
+
+### Current Resume Commands
+
+Use the confirmed SDK 10.0.400 at `C:\Program Files\dotnet\dotnet.exe`, not the old LOCALAPPDATA path. MTP/xUnit v3 uses no extra test-argument separator. Never print credentials or run the full provisioning script merely to update the image.
+
+```powershell
+git status --short
+& 'C:\Program Files\dotnet\dotnet.exe' test --project tests/Vog.Gateway.Tests --configuration Release
+az bicep build --file infra/main.bicep --stdout
+git diff --check
+```
+
+Check Azure readiness/traffic and hard-refresh existing browser tabs after changes; unversioned scripts may be cached. Review worktree and branch tracking on resume. All seven project Markdown files were updated; official rule text is preserved beneath repository notes and vendored SignalR documentation is unchanged. Azure readiness and 100% traffic were reconfirmed before the authorized commit; no application changes followed the existing rollout, so redeployment was unnecessary.
+
+## Historical Corrective Handoff: 21 October 2026
+
+The following records the state and authorization boundaries on 21 October only. It is superseded by the current release handoff above; old process paths, local ports and deployment limitations are not current instructions.
 
 **This section supersedes all accelerated-default claims, resume instructions and release authorization in the historical record below.** The user rejected global 60x playback. The user authorized committing and pushing the correction, then updating and pushing this handoff. Neither request authorizes deployment, infrastructure, secret or Foundry registration changes. The correction is verified locally only; obtain current approval before any deployment. Preserve the SignalR.Client 10.0.13 security fix and useful Stopwatch pacing/catch-up.
 
@@ -42,9 +70,9 @@ Updated: 21 October 2026.
 - Under current rules, three goals in 120 seconds from simulation start cannot fit: opening delay 12 seconds plus two minimum 55-second post-goal waits = 122 seconds before actual play. First-kickoff-relative and later windows are not proven universally impossible, but this bounded search found none. Every arbitrary sliding 120-second window is incompatible with current waits and 90-minute realism. No xG changes, shorter restarts, forced scores, join-triggered resets, disguised time jumps or highlights were introduced.
 - **Normal speed does not solve the three-goal requirement.** Approval is required for a different format/realism tradeoff. Do not release this as a supposedly complete three-goal correction. Video must remain strictly under two minutes, with fictional teams/players and synthetic football-realistic outcomes.
 
-### Current Resume Commands
+### Historical Resume Commands
 
-Use pinned SDK 10.0.400; MTP/xUnit v3 filters have no extra `--` separator. Existing local Azure CLI auth and ignored endpoint settings were reused; never print secrets. No need to provision infrastructure to run locally.
+The following commands record the 21 October environment. Its LOCALAPPDATA SDK path is obsolete; use the current commands above instead.
 
 ```powershell
 git status --short

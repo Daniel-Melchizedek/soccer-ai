@@ -44,6 +44,18 @@ module monitoring 'modules/monitoring.bicep' = {
   params: { location: location, name: name, tags: tags }
 }
 
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    name: 'stvog${environmentName}${suffix}'
+    tags: tags
+    appPrincipalId: identity.outputs.principalId
+    developerPrincipalId: developerPrincipalId
+    developerPrincipalType: developerPrincipalType
+  }
+}
+
 module registry 'modules/container-registry.bicep' = {
   name: 'container-registry'
   params: { location: location, name: 'crvog${environmentName}${suffix}', tags: tags, pullPrincipalId: identity.outputs.principalId }
@@ -90,6 +102,7 @@ module apps 'modules/container-apps.bicep' = {
       { name: 'VOG_AI_SERVICES_ENDPOINT', value: foundry.outputs.aiServicesEndpoint }
       { name: 'VOG_FOUNDRY_PROJECT_ENDPOINT', value: foundry.outputs.projectEndpoint }
       { name: 'VOG_KEY_VAULT_URI', value: vault.outputs.uri }
+      { name: 'VogStorage__BlobEndpoint', value: storage.outputs.blobEndpoint }
       // AzureCredentials uses the managed identity when this (and IDENTITY_ENDPOINT, set by the platform) is present.
       { name: 'AZURE_CLIENT_ID', value: identity.outputs.clientId }
       { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: monitoring.outputs.appInsightsConnectionString }
@@ -121,6 +134,8 @@ output VOG_AGENT_GUARDRAIL_ID string = foundry.outputs.agentGuardrailId
 output VOG_KEY_VAULT_NAME string = vault.outputs.name
 output VOG_KEY_VAULT_URI string = vault.outputs.uri
 output VOG_REGISTRY_NAME string = registry.outputs.name
+output VOG_STORAGE_ACCOUNT_NAME string = storage.outputs.accountName
+output VogStorage__BlobEndpoint string = storage.outputs.blobEndpoint
 output VOG_GATEWAY_APP string = apps.outputs.appName
 output VOG_GATEWAY_URL string = apps.outputs.url
 output VOG_MCP_URL string = '${apps.outputs.url}/mcp'

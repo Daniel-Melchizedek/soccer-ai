@@ -1,3 +1,5 @@
+> **Repository status note, 23 October 2026 (not official rule text):** Voice of the Game remains focused on accessible, multilingual commentary and grounded Q&A over synthetic live match events. Private Blob Storage and supplementary historical charts are deployed; those charts use real CC0 international results and are not established as eligible under the synthetic-data requirement below. Resolve the panel's inclusion before submission. See [the current release record](../README.md#current-azure-release-23-october-2026) for implementation and verification. The original challenge text follows unchanged.
+
 The Synthetic Match Insights Engine for Premier League Studio
 An AI insights engine runs on Azure that explains the game beyond the stats, turning football events into real-time insights, key narratives and recaps - personalized for every fan, for studio and streaming use. 
 

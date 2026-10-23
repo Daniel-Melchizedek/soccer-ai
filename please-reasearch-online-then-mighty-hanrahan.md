@@ -1,8 +1,8 @@
 # Voice of the Game: next accessibility innovations (research-led)
 
-## Implementation Ledger: 21 October 2026
+## Implementation Ledger: 23 October 2026
 
-This research plan is retained as a proposal/history. The ledger below reflects current source, not a claim that every proposed detail or verification step is delivered. [README.md](README.md) separately records the Azure deployment verified on this date: healthy revision `ca-vog-dev-gateway--0000015`, image dated 7 October, one replica, and `gpt-5.6-terra` version `2026-07-09`. Source review does not establish that this image includes every current feature.
+This research plan is retained as a proposal/history. The ledger below reflects current source, not a claim that every proposed detail or verification step is delivered. [README.md](README.md) records the 23 October deployed release `ca-vog-dev-gateway--charts-mobile-20261023`, its immutable image, tests and verification boundaries. Natural-speed synthetic live commentary remains the purpose; the new historical panel must not displace it.
 
 | Idea | Current source status | Still outstanding |
 |---|---|---|
@@ -18,8 +18,11 @@ This research plan is retained as a proposal/history. The ledger below reflects 
 | 10 Immersive Reader | Not implemented | Resource, integration and evaluation |
 | 11 Hands-free | Not implemented | Voice Live live-reference echo cancellation/barge-in; browser microphone echo cancellation is not this feature |
 | 12 Lip-readable avatar | Stretch, not implemented | Feasibility and community evaluation |
+| Supplementary historical charts / archive | Private Blob Storage and endpoint-key fix deployed; two charts and hidden tables populated from 49,945 real international results; desktop/mobile canvas and reflow checks pass | Synthetic-data eligibility unresolved; no full screen-reader/co-design audit or completed-match archive write/read verification |
 
-No application tests, controlled latency benchmark or disability co-design/device audit was run in this documentation pass. The research claims below are historical references and hypotheses, not legal advice, compliance certification or a current platform-support matrix. Verify primary sources and applicability before using them in a pitch. The Design, build order, file-change suggestions and verification sections describe proposed work; this ledger supersedes their present-tense assumptions and original delivery dates.
+The preceding 23 October implementation/deployment work passed all 15 gateway tests and Bicep compilation; chart endpoints returned 200 and mobile min-content overflow was fixed. This documentation pass adds no controlled latency benchmark or disability co-design/device audit. The research claims below are historical references and hypotheses, not legal advice, compliance certification or a current platform-support matrix. Verify primary sources and applicability before using them in a pitch. The Design, build order, file-change suggestions and verification sections describe proposed work; this ledger supersedes their present-tense assumptions and original delivery dates.
+
+**Submission gate:** real CC0 chart data is not synthetic, even though the live simulator remains fictional. The rule requires synthetic, football-realistic data. Resolve whether to remove the panel from the entry or replace it with honestly labeled simulator-derived data before claiming eligibility. No general historical-analysis agent, real-team live simulation or new scoring/acceleration default was introduced.
 
 ## Context
 The current browser source (served by the gateway) has:

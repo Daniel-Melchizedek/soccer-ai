@@ -52,7 +52,7 @@ app.MapGet("/data/{file}", async (string file, IConfiguration config, Cancellati
     var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "goals-per-decade.json", "home-advantage.json" };
     if (!allowed.Contains(file)) return Results.NotFound();
 
-    var endpoint = config["VogStorage__BlobEndpoint"];
+    var endpoint = StorageConfiguration.BlobEndpoint(config);
     if (string.IsNullOrWhiteSpace(endpoint)) return Results.NotFound();
 
     try

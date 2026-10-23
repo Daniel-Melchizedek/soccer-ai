@@ -8,11 +8,11 @@ Voice of the Game turns a synthetic football match into live audio description, 
 - Full build plan: [BUILD_PLAN.md](BUILD_PLAN.md)
 - Accessibility implementation ledger: [please-reasearch-online-then-mighty-hanrahan.md](please-reasearch-online-then-mighty-hanrahan.md)
 
-> All data is synthetic. The league, clubs and players are fictional and generated, with a deny-list of real club names. No real Premier League data, trademarks or footage are used.
+> The live match is synthetic. Its league, clubs and players are fictional and generated, with a deny-list of real club names. The separate historical chart panel currently uses real CC0 international results. The hackathon requires synthetic, football-realistic data, so this panel's eligibility is unresolved; CC0 licensing is not eligibility approval. Keep accessible synthetic live-match commentary as the project's purpose. No real Premier League data, trademarks or footage are used in the live simulation.
 
 ## What works today
 
-Implementation reviewed against the current source on **21 October 2026**. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The additional CLI modes below are offline options.
+Implementation and deployment status updated on **23 October 2026**. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The additional CLI modes below are offline options.
 
 The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, with no cloud services needed:
 
@@ -31,9 +31,23 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
+### Current Azure Release: 23 October 2026
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=charts-mobile-20261023
+
+- Source: base `83229d0` includes the 22 October charts/archive/data-prep commit `ab62f5c`. The deployed image additionally includes the storage-configuration and mobile-chart fixes committed alongside this release record; it is not an image of unchanged `83229d0`. Committing these already-deployed fixes does not require another rollout.
+- Final revision: `ca-vog-dev-gateway--charts-mobile-20261023`; image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:ceee86060ce9f0f1cd5e1e71211d407fc420112640de63327538b001bbc82920`. Azure confirms it is the latest ready revision and receives 100% of traffic. The app retains single-revision mode and one 0.5-vCPU/1-GiB replica. Foundry registrations and secrets were not changed.
+- Playback remains seed `20261026`, speed `1`, and a `120`-second between-match break. No forced goals, join-triggered resets, highlights or new analytics workflow was introduced.
+- Storage account `stvogdevy6po56` contains private `vog-data`; shared-key authentication and anonymous blob access are disabled. Gateway and developer access are container-scoped. The gateway now reads the normalized `VogStorage:BlobEndpoint` key, with a literal local-setting fallback.
+- Both `/data/goals-per-decade.json` and `/data/home-advantage.json` return 200 with 16 decades. Chart.js canvases and screen-reader tables populate. Desktop chart pixels were verified; the final deployed 390x844 mobile check also verified nonblank charts and no horizontal overflow after fixing min-content sizing.
+- Validation: Bicep compilation passed; all **15 gateway tests** passed, including three storage-configuration tests; editor diagnostics and `git diff --check` passed. This is not a fresh full-solution or accessibility-compliance certification.
+- English live audio/captions and a score-grounded typed companion answer were verified earlier in this release session. The final frontend follow-up reconnected the listener and received scoreboard/pitch state; subjective audio quality, concurrent multilingual playback and a completed-match archive round trip were not revalidated.
+- `/history` currently returns an empty array. This is expected for a new archive until a full synthetic match completes, not evidence of a tested archive write.
+- Submission gate: the real historical dataset must not be described as synthetic or proven eligible. Before submission, resolve whether the panel must be removed from the entry or replaced with honestly labeled simulator-derived data. Three natural goals within 120 seconds also remain unresolved.
+
 ### Historical Azure snapshot: 21 October 2026
 
-The following inventory predates the later accelerated release recorded in [NEXT_SESSION.md](NEXT_SESSION.md). The natural-speed correction is verified locally only; neither snapshot proves Azure runs the corrected source.
+The following inventory is retained as a dated historical observation. It is superseded by the 23 October release above and must not be used as the current deployment inventory.
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/
 
@@ -140,7 +154,7 @@ Open http://localhost:5080, pick a language and mode, and select **Start listeni
 
 The app defaults to seed **20261026**, natural **1x match-clock speed**, and a **120-second between-match break**. Full mode-specific narration and normal speech preemption are enabled. The pitch map uses uniform metres-to-screen scaling and a stable 28 CSS-pixel yellow ball with a separated white outline and dark borders. There is no separate demo mode, highlights playback or injected scoring.
 
-Optional acceleration remains explicit through `Broadcast__Speed`; `Broadcast__Seed` and `Broadcast__BreakSeconds` can also override the defaults. Above 4x, spoken commentary is limited to goals and period changes; this is not equivalent to detailed real-time audio description. The full text-only stream and match data remain available. Companion MCP grounding must reference the same configured match and schedule as the listener; corrected local state is not synchronized with the older deployed 60x gateway.
+Optional acceleration remains explicit through `Broadcast__Speed`; `Broadcast__Seed` and `Broadcast__BreakSeconds` can also override the defaults. Above 4x, spoken commentary is limited to goals and period changes; this is not equivalent to detailed real-time audio description. The full text-only stream and match data remain available. Companion MCP grounding must reference the same configured match and schedule as the listener. Azure now runs the natural-speed correction; a differently configured local gateway is not automatically synchronized with it.
 
 **Three natural goals within 120 real seconds remain unresolved.** The offline `goaltiming` command records raw `MatchEngine.Run()` goal PTS, score changes and the first emitted kickoff without dividing by a speed. Seeds 1-100 had no qualifying opening or later three-goal window: the shortest span was 246,800 ms (seed 36). The default seed has one goal at 4,857,200 ms; seed 3's shortest triple spans 1,836,600 ms at 1x. From simulation start, the 12-second opening delay plus two minimum 55-second post-goal waits already exceed 120 seconds before actual play. No universal impossibility is claimed for a window starting at first kickoff or later, but no candidate was verified. Changing restart rules, realism or recording format needs user approval.
 
@@ -173,7 +187,7 @@ Historical Azure measurement (Sweden Central; not rerun in this review). See the
 
 Answer latency includes relay, Voice Live, agent and MCP tool work; these aggregate timings do not isolate each component. Bringing it down remains work for the companion. Current speech/companion queues are unbounded, and the 50-question limit is per conversation, resetting on reconnection/language change; it is not durable authentication, rate limiting or cost protection. Queue bounding, session lifecycle and provisioning-secret error handling need later code hardening.
 
-Matches run on a fixed wall-clock schedule from 1 October 2026, so every gateway, local or in Azure, is at the same moment of the same match. That is also why a local gateway's questions, answered from the deployed gateway's match, stay consistent with what you hear.
+Matches use a fixed wall-clock schedule from 1 October 2026. Gateways can agree on match state only when their seed, speed, break and schedule agree. The companion reads its registered gateway's MCP context; matching state must be checked rather than inferred from the schedule alone.
 ## Repository layout
 
 ```
@@ -216,11 +230,28 @@ Nothing sensitive belongs in this repository (BUILD_PLAN.md §12):
 | [SignalR](https://github.com/dotnet/aspnetcore) | Microsoft, **MIT** (part of ASP.NET Core) | Real-time browser communication for audio, captions and pitch data |
 | Microsoft Foundry, Azure AI Speech, Azure Voice Live, Azure Container Apps, Azure Blob Storage | Microsoft | AI agents, neural TTS, real-time voice Q&A, hosting, and match/data archiving |
 
-> **Synthetic data notice:** All football data in this application is synthetic. The league, clubs and players are fictional and machine-generated. No real Premier League data, trademarks, player names or footage are used anywhere in this repository.
+> **Synthetic data notice:** The live match, league, clubs and players are fictional and machine-generated. The separate historical charts use the credited CC0 international football results dataset. No real Premier League data, trademarks, player names or footage are used in the live simulation.
+
+## Historical charts and storage
+
+`infra/modules/storage.bicep` creates a private `vog-data` container with shared-key authentication disabled. The gateway identity and provisioning developer receive container-scoped Storage Blob Data Contributor access. `infra/main.bicep` supplies `VogStorage__BlobEndpoint` to the gateway and outputs it for local configuration.
+
+Download the credited Kaggle dataset separately, then upload and aggregate it:
+
+```powershell
+az storage blob upload --account-name <account> --container-name vog-data --name kaggle/results.csv --file <path-to-results.csv> --auth-mode login --overwrite
+dotnet run --project tools/Vog.DataPrep --configuration Release -- --storage https://<account>.blob.core.windows.net/
+```
+
+The tool writes `public/goals-per-decade.json` and `public/home-advantage.json`. These are private blobs: the gateway exposes only the two allowlisted aggregate files through `/data/{file}`. Expand **Football through the ages** to load both charts and their screen-reader tables. Home-win percentage counts home-team wins across all dataset matches, including neutral fixtures.
+
+The 23 October 2026 data preparation processed 49,945 matches with no skipped rows and produced 16 decades in each chart. All four user-supplied CSV files were SHA-256-identical to the public Kaggle download. Only the results dataset feeds these two charts; scorer, shootout and former-name datasets are not used. Raw CSV data is not checked into Git or served by the gateway. These real aggregates are not established as eligible under the synthetic-data rule.
+
+Completed simulated matches are archived under `match-snapshots/` and exposed through `/history`. A newly provisioned store has no recent matches until a full live match completes.
 
 ## Demo configuration
 
-The live deployment uses `Broadcast__Seed=3` and `Broadcast__Speed=6` set as Azure Container App environment variables so three goals appear within 90 seconds of listening — suitable for a 2-minute demo video. The goals are natural simulator outcomes; nothing is injected.
+The live deployment uses the source defaults: seed `20261026`, speed `1.0`, and a `120`-second between-match break. It does not promise three goals during a two-minute viewing window. The submission video must remain under two minutes; changing realism or the recording format requires an explicit decision.
 
 The source code defaults (`appsettings.json`) use `Seed: 20261026, Speed: 1.0` for natural 1× pacing with full narration for all modes.
 
@@ -230,6 +261,6 @@ Override locally:
 # Natural 1× (full commentary, first goal ~81 real minutes):
 dotnet run --project src/Vog.Gateway
 
-# Demo speed (three goals within ~90 real seconds):
+# Optional acceleration; not the deployed default or a scoring guarantee:
 dotnet run --project src/Vog.Gateway -- --Broadcast:Seed=3 --Broadcast:Speed=6 --Broadcast:BreakSeconds=30
 ```
