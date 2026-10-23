@@ -2,7 +2,7 @@
 
 ## Implementation Ledger: 23 October 2026
 
-This research plan is retained as a proposal/history. The ledger below reflects current source, not a claim that every proposed detail or verification step is delivered. [README.md](README.md) records the 23 October deployed release `ca-vog-dev-gateway--charts-mobile-20261023`, its immutable image, tests and verification boundaries. Natural-speed synthetic live commentary remains the purpose; the new historical panel must not displace it.
+This research plan is retained as a proposal/history. The ledger below reflects current source, not a claim that every proposed detail or verification step is delivered. [README.md](README.md) records the 23 October deployed release `ca-vog-dev-gateway--charts-bottom-20261023`, its immutable image, tests and verification boundaries. The historical panel now follows captions/companion immediately before latency; fresh desktop/mobile checks pass. Natural-speed synthetic live commentary remains the purpose; the supplementary historical panel must not displace it.
 
 | Idea | Current source status | Still outstanding |
 |---|---|---|

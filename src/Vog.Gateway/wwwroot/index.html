@@ -197,6 +197,38 @@
       </ul>
     </section>
 
+    <div class="columns">
+      <section class="card" aria-labelledby="captions-heading">        <h2 id="captions-heading">Captions</h2>
+        <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
+        <div id="caption" class="caption" aria-hidden="true" data-channel-lang></div>
+        <h2 id="history-heading">Recent commentary</h2>
+        <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off" data-channel-lang></ol>
+      </section>
+
+      <section class="card ask" aria-labelledby="ask-heading">
+        <h2 id="ask-heading">Ask about the match</h2>
+        <div class="quick-asks" role="group" aria-label="Quick match questions">
+          <button type="button" data-readout="score" disabled>Score</button>
+          <button type="button" data-readout="ball" disabled>Where's the ball?</button>
+          <button id="who-scored" type="button" disabled>Who scored?</button>
+        </div>
+        <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished.</p>
+        <button id="talk" class="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>
+          <span class="talk-icon" aria-hidden="true"></span><span class="talk-label">Tap to ask</span>
+        </button>
+        <form id="ask-form">
+          <label for="question">Or type a question</label>
+          <div class="ask-row">
+            <input id="question" type="text" maxlength="300" autocomplete="off" disabled>
+            <button id="ask-send" class="secondary" type="submit" disabled>Ask</button>
+          </div>
+        </form>
+        <p id="heard" class="heard" data-channel-lang></p>
+        <!-- Spoken answers are heard already; typed questions turn this into a polite live region. -->
+        <p id="answer" class="answer" aria-live="off" data-channel-lang></p>
+      </section>
+    </div>
+
     <!-- Historical football data panel. Lazy-loaded from Kaggle dataset (CC0) via Azure Blob Storage.
          Each chart has a hidden data table as a full screen-reader text alternative. -->
     <details id="football-history" class="card">
@@ -233,38 +265,6 @@
         Inspiration: <a href="https://github.com/bbenz/football-results-dashboard" rel="noopener noreferrer" target="_blank">bbenz/football-results-dashboard</a> (MIT).
       </p>
     </details>
-
-    <div class="columns">
-      <section class="card" aria-labelledby="captions-heading">        <h2 id="captions-heading">Captions</h2>
-        <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
-        <div id="caption" class="caption" aria-hidden="true" data-channel-lang></div>
-        <h2 id="history-heading">Recent commentary</h2>
-        <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off" data-channel-lang></ol>
-      </section>
-
-      <section class="card ask" aria-labelledby="ask-heading">
-        <h2 id="ask-heading">Ask about the match</h2>
-        <div class="quick-asks" role="group" aria-label="Quick match questions">
-          <button type="button" data-readout="score" disabled>Score</button>
-          <button type="button" data-readout="ball" disabled>Where's the ball?</button>
-          <button id="who-scored" type="button" disabled>Who scored?</button>
-        </div>
-        <p id="ask-help" class="note">Hold the button (or hold Space or Enter on it) and ask, for example: "What's the score?", "Where's the ball?", "Who scored?" Let go when you've finished.</p>
-        <button id="talk" class="talk" type="button" aria-describedby="ask-help" aria-pressed="false" disabled>
-          <span class="talk-icon" aria-hidden="true"></span><span class="talk-label">Tap to ask</span>
-        </button>
-        <form id="ask-form">
-          <label for="question">Or type a question</label>
-          <div class="ask-row">
-            <input id="question" type="text" maxlength="300" autocomplete="off" disabled>
-            <button id="ask-send" class="secondary" type="submit" disabled>Ask</button>
-          </div>
-        </form>
-        <p id="heard" class="heard" data-channel-lang></p>
-        <!-- Spoken answers are heard already; typed questions turn this into a polite live region. -->
-        <p id="answer" class="answer" aria-live="off" data-channel-lang></p>
-      </section>
-    </div>
 
     <details class="card details">
       <summary>Latency</summary>
