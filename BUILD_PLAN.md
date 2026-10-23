@@ -789,17 +789,17 @@ AIAgent recapAgent = recap.AsAgent(name: "vog-match-recap");      // verify
 
 ### 8.4 Q&A Companion (Voice Live agent mode → Foundry agent)
 - **Built (Oct 3):** the companion is a Foundry prompt agent per language, `vog-match-companion-<lang>` (gpt-5.6-terra, reasoning `none`, `VogAgentGuardrail`), defined in `foundry/agents/vog-match-companion.agent.yaml` and registered by `tools/Vog.FoundrySetup`. The gateway relays each fan's question to Voice Live in **agent mode** (`AgentSessionConfig`), so Voice Live hears and speaks while the Foundry agent answers.
-- **Tools run in Foundry, not the app:** in agent mode Foundry Agent Service runs the agent's tools, so the match tools are an **MCP server on the gateway** (`/mcp/<lang>`, read-only, API key). Each language has its own project connection (`RemoteTool`, key in Key Vault and the connection): Agent Service sends MCP requests to the connection's target, not the tool's own URL.
+- **Foundry orchestrates tool calls; the gateway executes them:** Foundry Agent Service calls the API-key-protected `/mcp/<lang>` endpoint through a per-language project connection (`RemoteTool`, key in Key Vault and the connection). The gateway executes read-only `MatchTools` functions against its live in-memory match snapshot and returns JSON. Agent Service sends MCP requests to the connection's target, not the tool's own URL.
 - **Push-to-talk works in agent mode** with `NoTurnDetection` and `mai-transcribe` transcription (`azure-speech` requires semantic VAD; the SDK's `mai-transcribe-1` is retired).
 - **Historical measurement:** question → first answer audio p50 6.1 s, p95 8.7 s on Azure, above the ≤2 s target. The 21 October retrieved snapshot had 5 answers, p50 3.562 s / p95 7.335 s; neither snapshot is a controlled latency benchmark.
 - **Sessions:** one Voice Live conversation per connection/language. Tap-to-ask with local silence auto-stop is default; hold-to-talk and typed input are optional. The 50-question limit resets with the conversation and is not durable rate/cost protection.
-- **Tools** (planned in full; the first five are built as `MatchTools`): `score_time`, `where_is_ball`, `who_has_ball`, `recent_events`, `lineup_subs`, `player_info`, `stat`, `repeat_last`, `set_preference`, and `explain_moment`, which calls `vog-insight-desk`.
+- **Built tools:** `get_score_and_time`, `get_ball_and_possession`, `get_recent_events`, `get_match_stats`, and `get_player`. Ball location and possession share one tool; substitutions are available through recent events and player history. Dedicated lineup, repeat-last, preference-setting and Insight Desk explanation tools remain planned.
 - **Current audio behavior:** commentary is muted during recording and ducked during answers. **Planned:** a Booth catch-up utterance after the answer; none is emitted today.
 - **Text-chat twin:** the same tools for Deaf and speech-impaired users.
 - **Safety:**
-  - Fan input is wrapped as untrusted (certflow's `<untrusted_user_input>` pattern).
-  - Prompt Shields are on.
-  - Kids mode offers suggested questions only.
+  - Current agent instructions reject attempts to override its role; typed questions are trimmed and capped at 300 characters, without XML wrapping.
+  - Bicep configures agent attack filters; this is not a fresh runtime security validation.
+  - Explicit untrusted-input wrapping and a suggested-question-only Kids Q&A experience remain planned. Kids is currently an offline commentary mode.
 
 ### 8.5 What stays outside Foundry, on purpose
 - **The HOT describers and the Booth Producer:** deterministic and sub-second.

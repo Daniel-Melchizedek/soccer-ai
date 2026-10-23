@@ -242,10 +242,12 @@
         </canvas>
         <figcaption>Average goals per match by decade (international football).</figcaption>
         <!-- Full data table for screen readers — visually hidden but present in the DOM. -->
-        <table class="visually-hidden" aria-label="Average goals per match by decade — data table">
+        <div class="visually-hidden">
+        <table aria-label="Average goals per match by decade — data table">
           <thead><tr><th>Decade</th><th>Average goals per match</th></tr></thead>
           <tbody id="goals-table-body"></tbody>
         </table>
+        </div>
       </figure>
 
       <figure>
@@ -254,10 +256,12 @@
           aria-label="Line chart: home team win percentage in international football by decade. Loading data…">
         </canvas>
         <figcaption>Home team win percentage by decade (international football, including neutral fixtures).</figcaption>
-        <table class="visually-hidden" aria-label="Home win percentage by decade — data table">
+        <div class="visually-hidden">
+        <table aria-label="Home win percentage by decade — data table">
           <thead><tr><th>Decade</th><th>Home win %</th></tr></thead>
           <tbody id="home-table-body"></tbody>
         </table>
+        </div>
       </figure>
 
       <p class="note">
@@ -273,7 +277,7 @@
   </main>
 
   <footer class="footer">
-    <p>Synthetic data only: the league, clubs and players are fictional. Built with Microsoft Foundry agents, Azure Voice Live and Azure AI Speech.</p>
+    <p>The live match, league, clubs and players are synthetic and fictional. Historical charts use real international results credited above. Built with Microsoft Foundry agents, Azure Voice Live and Azure AI Speech.</p>
   </footer>
 
   <script src="lib/signalr/signalr.min.js"></script>

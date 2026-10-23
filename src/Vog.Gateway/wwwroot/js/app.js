@@ -126,7 +126,13 @@ async function start() {
 
     // Add a sound label to the history log so Deaf/HoH users see the same context.
     const stadiumEntry = document.createElement('li');
-    stadiumEntry.textContent = '[CROWD RISES]';
+    const stadiumSounds = {
+      'en-GB': '[CROWD RISING]',
+      'es-ES': '[CRECE EL AMBIENTE]',
+      'ta-IN': '[உற்சாகம் அதிகரிக்கிறது]',
+    };
+    stadiumEntry.lang = el('lang').value;
+    stadiumEntry.textContent = stadiumSounds[stadiumEntry.lang] ?? stadiumSounds['en-GB'];
     el('history').prepend(stadiumEntry);
   } catch (err) {
     console.error(err);
@@ -265,6 +271,7 @@ function showCaptions(u) {
 
 function addHistory(u) {
   const item = document.createElement('li');
+  item.lang = u.id.split(':')[0];
   item.textContent = [u.clock, u.sound, u.text].filter(Boolean).join(' ');
   const history = el('history');
   history.prepend(item);

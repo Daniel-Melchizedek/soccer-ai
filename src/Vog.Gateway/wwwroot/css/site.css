@@ -156,6 +156,8 @@ main {
 }
 
 .card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   background: linear-gradient(180deg, rgba(48, 22, 92, 0.85), rgba(28, 10, 58, 0.85));
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -194,6 +196,8 @@ h2 {
 
 .field {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   gap: 0.35rem;
 }
 
@@ -209,6 +213,8 @@ button {
 
 select,
 input {
+  min-width: 0;
+  max-width: 100%;
   min-height: 3rem;
   padding: 0.5rem 0.75rem;
   color: var(--fg);
@@ -218,6 +224,7 @@ input {
 }
 
 button {
+  max-width: 100%;
   min-height: 3rem;
   padding: 0.5rem 1.4rem;
   border-radius: 999px;
@@ -226,7 +233,7 @@ button {
 }
 
 .primary {
-  min-width: 13rem;
+  min-width: min(13rem, 100%);
   color: var(--on-accent);
   background: var(--accent);
   border: 2px solid var(--accent);
@@ -246,7 +253,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  min-width: 14rem;
+  min-width: min(14rem, 100%);
   min-height: 3.5rem;
   color: var(--on-accent);
   background: var(--teal);
@@ -338,7 +345,7 @@ input:disabled {
 
 .atmosphere-row {
   display: grid;
-  grid-template-columns: minmax(7rem, auto) minmax(8rem, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
   gap: 0.75rem;
   max-width: 28rem;
@@ -529,12 +536,13 @@ body.captions-pinned #caption:empty {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
   gap: 1rem;
   margin: 1rem 0;
 }
 
 fieldset {
+  min-width: 0;
   margin: 0;
   padding: 0.75rem 1rem 1rem;
   border: 1px solid var(--border);
@@ -568,7 +576,7 @@ fieldset.inline label,
 
 .range {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.15rem 0.75rem;
   margin: 0.5rem 0;

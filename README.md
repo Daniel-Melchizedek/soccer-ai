@@ -31,18 +31,28 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, recap, transcreation and post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Immersive Reader and hands-free live-reference echo cancellation. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
+### Source Review And Browser Fixes: 23 October 2026
+
+A subsequent code/documentation review and live Playwright session found and fixed four browser issues locally: horizontal overflow at 320px (including hidden chart-table sizing), an English-only stadium-entry sound tag, retained commentary inheriting the newly selected channel's language, and a footer incorrectly claiming all data was synthetic. The entry tag now uses the existing English, Spanish and Tamil phrase-bank wording; each history row keeps its own language. The footer distinguishes fictional live matches from real historical results.
+
+- The unmodified live app delivered English PCM, captions and playback acknowledgements. A typed companion answer matched the scoreboard at 77 minutes, 0-0. All nine language/mode selections settled successfully; this was sequential selection, not concurrent multilingual audio testing. No runtime errors were captured in the instrumented sample.
+- Local HTML/CSS/JavaScript were tested through Playwright asset overrides against the live backend, not deployed. Checks passed at actual viewport widths 320, 390 and 1280 with no horizontal overflow, both accessible tables retaining 16 rows, nonblank canvases, all three entry-tag translations, retained English history language after a Spanish switch, preference persistence and keyboard zoom/follow controls.
+- Fresh Release gateway tests: **15 passed, zero failed or skipped** on SDK 10.0.400. Editor diagnostics and whitespace checks passed. This was not a full-solution run, microphone test, subjective audio review or accessibility audit. Screenshot capture changed the effective viewport and returned inconsistent crops; full visual screenshot acceptance remains unverified.
+- The live history panel now displayed two archived Norton Borough 0-1 Brackworth Town results. This confirms readable records, not an observed completed-match archive write/read round trip.
+- No commit, push, Azure deployment, infrastructure change or secret change was performed in this review. Azure revision/traffic metadata below remains the earlier recorded release state. Historical-data eligibility and natural short-demo scoring remain unresolved.
+
 ### Current Azure Release: 23 October 2026
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=charts-bottom-20261023
 
-- Source: base `83229d0` includes the 22 October charts/archive/data-prep commit `ab62f5c`; `0fc5655` committed and pushed the storage/mobile fixes and release documentation. A subsequent layout-only follow-up moves the unchanged charts below captions and the companion, immediately before latency.
-- Final revision: `ca-vog-dev-gateway--charts-bottom-20261023`; image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:4227b9d4ce20e956eb10079ea327ae77694a3d23b832d8ded5d6a7a8451c08d6`. Azure confirms it is the latest ready revision and receives 100% of traffic. The app retains single-revision mode and one 0.5-vCPU/1-GiB replica. Foundry registrations and secrets were not changed.
+- Source: base `83229d0` includes the 22 October charts/archive/data-prep commit `ab62f5c`; `0fc5655` contains the storage/mobile fixes and release documentation. Commit `8ede73d` contains the chart-placement follow-up and its deployed verification record: the unchanged charts sit below captions and the companion, immediately before latency. The documentation review confirmed `main` and local `origin/main` both point to `8ede73d`; it did not fetch the remote or recheck Azure.
+- Recorded final revision: `ca-vog-dev-gateway--charts-bottom-20261023`; image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:4227b9d4ce20e956eb10079ea327ae77694a3d23b832d8ded5d6a7a8451c08d6`. At release verification, Azure confirmed it was the latest ready revision and received 100% of traffic, in single-revision mode with one 0.5-vCPU/1-GiB replica. Foundry registrations and secrets were not changed.
 - Playback remains seed `20261026`, speed `1`, and a `120`-second between-match break. No forced goals, join-triggered resets, highlights or new analytics workflow was introduced.
 - Storage account `stvogdevy6po56` contains private `vog-data`; shared-key authentication and anonymous blob access are disabled. Gateway and developer access are container-scoped. The gateway now reads the normalized `VogStorage:BlobEndpoint` key, with a literal local-setting fallback.
 - Both `/data/goals-per-decade.json` and `/data/home-advantage.json` return 200 with 16 decades. Chart.js canvases and screen-reader tables populate. Desktop chart pixels were verified; the final deployed 390x844 mobile check also verified nonblank charts and no horizontal overflow after fixing min-content sizing.
 - Validation: Bicep compilation passed; all **15 gateway tests** passed, including three storage-configuration tests; editor diagnostics and `git diff --check` passed. This is not a fresh full-solution or accessibility-compliance certification.
 - Final-release Playwright checks confirmed charts immediately before latency at 1280x900 and 390x844, nonblank canvases, 16 rows per accessible table and no horizontal overflow. English AD delivered 15 PCM chunks, captions and a playback-start acknowledgement at 1x; the typed score answer matched Reds 0-0 Blues, 54 minutes. No runtime errors were captured. This is not subjective audio-quality, concurrent multilingual or completed-match archive validation. The raw CSV route correctly returned 404.
-- `/history` currently returns an empty array. This is expected for a new archive until a full synthetic match completes, not evidence of a tested archive write.
+- At release verification, `/history` returned an empty array. This can mean no archived matches, disabled storage or a storage-read failure; it is not evidence of archive health or a tested archive write.
 - Submission gate: the real historical dataset must not be described as synthetic or proven eligible. Before submission, resolve whether the panel must be removed from the entry or replaced with honestly labeled simulator-derived data. Three natural goals within 120 seconds also remain unresolved.
 
 ### Historical Azure snapshot: 21 October 2026
@@ -125,12 +135,13 @@ Modes: `ad` (audio description), `commentary`, `calm`, `analyst`, `casual`, `kid
 
 ### With Azure: real voices and captions
 
-Prerequisites: the [Azure CLI](https://aka.ms/installazurecli) and PowerShell 7, signed in with `az login`.
+In addition to the .NET SDK, install the [Azure CLI](https://aka.ms/installazurecli), PowerShell 7 and Git on PATH. Run provisioning from the repository root with an interactive user signed in through `az login`; that user needs permission to deploy resources and create role assignments.
 
 ```powershell
 ./infra/provision.ps1        # everything in rg-vog-dev (Sweden Central), then builds and deploys the gateway:
                              #   Foundry resource + project (keys disabled), gpt-5.6-terra, agent guardrail;
                              #   Key Vault, container registry, Container Apps, Log Analytics + App Insights;
+                             #   Blob Storage with private vog-data and container-scoped gateway/developer roles;
                              #   registers the Foundry agents; writes .env.local (git-ignored, no secrets)
 ./infra/provision.ps1 -SkipBuild  # skips image build; still deploys infrastructure, writes settings and registers agents
 
@@ -175,8 +186,10 @@ On the listener page, select **Tap to ask**, speak, and let local silence detect
 
 ```powershell
 dotnet run --project tools/Vog.Replay -- companion --say "Who has the ball?"          # straight to the agent over Voice Live
-dotnet run --project tools/Vog.Replay -- ask --url $env:VOG_GATEWAY_URL               # through a gateway, typed and spoken
+dotnet run --project tools/Vog.Replay -- ask --url http://localhost:5080              # through a local gateway, typed and spoken
 ```
+
+For the deployed gateway, replace the URL with the provisioning output `VOG_GATEWAY_URL`. Provisioning writes it to the local dotenv file but does not export it into your shell; the `ask` command does not load that file when choosing its URL.
 
 Historical Azure measurement (Sweden Central; not rerun in this review). See the dated snapshot above for the observations retrieved on 21 October:
 
@@ -199,13 +212,14 @@ src/
   Vog.PhraseBanks    YAML phrase banks per language and persona
   Vog.Describe       describers, realizer, reminders
   Vog.Booth          Booth Producer and coverage metrics
-  Vog.Pipeline       offline composition and the golden match
+  Vog.Pipeline       offline and wall-clock live composition, shared match schedule, golden match
   Vog.Voice          Azure neural TTS, captions, WAV, word-boundary cuts
   Vog.Companion      match tools (read-only, grounded in the live match) and the Voice Live agent-mode session
-  Vog.Gateway        live broadcast over SignalR, listener page, companion relay, MCP endpoint for the agents
+  Vog.Gateway        live broadcast, listener, companion/MCP, best-effort archive/history and aggregate-data routes
 foundry/agents/      Foundry agent definitions (instructions, tools, reasoning effort), reviewed like code
 tools/Vog.Replay     CLI: commentary playback, coverage report, data card, speech rendering, gateway smoke tests
 tools/Vog.FoundrySetup  registers foundry/agents/*.agent.yaml as new Foundry agent versions
+tools/Vog.DataPrep   aggregates blob-hosted results.csv into the two historical-chart JSON blobs
 infra/               Bicep + Azure CLI provisioning and deployment (provision.ps1, teardown.ps1)
 tests/               xUnit v3 test projects
 ```
@@ -214,8 +228,8 @@ tests/               xUnit v3 test projects
 
 Nothing sensitive belongs in this repository (BUILD_PLAN.md §12):
 - The `.gitignore` excludes azd state, env files (including `.env.local`), local settings, keys, workflow checkpoints, generated audio and co-design data.
-- The AI resource has key authentication disabled. Locally, apps use your Azure CLI sign-in; in Azure, a managed identity.
-- The only secret is the key Foundry presents to the gateway's MCP endpoint. It is generated once and kept in Key Vault (the gateway reads it at startup) and in the Foundry project connection, so it never appears in an agent definition, a setting or the repository.
+- The AI resource has key authentication disabled. Gateway, Replay and FoundrySetup use Azure CLI credentials locally and the configured managed identity in Azure. DataPrep uses `DefaultAzureCredential`; its selected identity needs access to `vog-data`.
+- The application-managed MCP secret is persisted in Key Vault and the Foundry connection and loaded into gateway configuration at startup. It is excluded from agent definitions and generated local settings. Provisioning temporarily writes it to a parameters file and attempts deletion in `finally`. It reuses the stored key when retrieval succeeds; failed retrieval can currently generate a replacement. Infrastructure separately uses a Log Analytics shared key.
 - CI runs a gitleaks secret scan. Locally, install [gitleaks](https://github.com/gitleaks/gitleaks) and run `gitleaks git` before pushing.
 
 ## Credits and attributions
@@ -245,9 +259,11 @@ dotnet run --project tools/Vog.DataPrep --configuration Release -- --storage htt
 
 The tool writes `public/goals-per-decade.json` and `public/home-advantage.json`. These are private blobs: the gateway exposes only the two allowlisted aggregate files through `/data/{file}`. Expand **Football through the ages** to load both charts and their screen-reader tables. Home-win percentage counts home-team wins across all dataset matches, including neutral fixtures.
 
+DataPrep accepts `--storage <endpoint>` or the process environment variable `VogStorage__BlobEndpoint`; it does not load the repository dotenv file. The gateway's `/data/{file}` and `/history` outputs are public even though their backing blobs disallow anonymous access. Missing or unreadable chart data returns 404 and the browser displays an unavailable message without stopping live commentary.
+
 The 23 October 2026 data preparation processed 49,945 matches with no skipped rows and produced 16 decades in each chart. All four user-supplied CSV files were SHA-256-identical to the public Kaggle download. Only the results dataset feeds these two charts; scorer, shootout and former-name datasets are not used. Raw CSV data is not checked into Git or served by the gateway. These real aggregates are not established as eligible under the synthetic-data rule.
 
-Completed simulated matches are archived under `match-snapshots/` and exposed through `/history`. A newly provisioned store has no recent matches until a full live match completes.
+After a simulated match completes, the gateway attempts a best-effort upload of a lightweight summary under `match-snapshots/`. Uploads run without awaiting completion and failures are logged without retry. `/history` returns up to ten successfully read summaries, newest blob modification first. An empty array can mean no archived matches, disabled storage or a storage-read failure; a completed-match write/read round trip remains unverified.
 
 ## Demo configuration
 
