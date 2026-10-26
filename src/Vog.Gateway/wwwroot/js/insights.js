@@ -98,9 +98,10 @@ document.querySelectorAll('input[name="insight-view"]').forEach(input => input.a
 }));
 element('recap-scope').addEventListener('change', refresh);
 element('refresh-insights').addEventListener('click', refresh);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
-setInterval(() => {
+function autoRefresh() {
   if (!document.hidden && !element('match-insights').contains(document.activeElement)
       && !element('insights-highlights').querySelector('details[open]')) refresh();
-}, 15000);
+}
+document.addEventListener('visibilitychange', autoRefresh);
+setInterval(autoRefresh, 15000);
 refresh();
