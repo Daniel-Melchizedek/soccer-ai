@@ -46,23 +46,11 @@ let connection = null;
 let stopCompanion = null;
 let listeningStatus = '';
 let teams = null;
+let rejoining = false;
 
 el('start').addEventListener('click', () => (connection ? stop() : start()));
 el('lang').addEventListener('change', rejoin);
 el('mode').addEventListener('change', rejoin);
-document.querySelectorAll('[data-readout]').forEach((button) => {
-  button.addEventListener('click', () => {
-    connection?.invoke('readout', button.dataset.readout).catch((err) => setStatus(`Readout failed: ${err.message ?? err}`));
-  });
-});
-el('who-scored').addEventListener('click', () => {
-  const questions = {
-    'en-GB': 'Who scored?',
-    'es-ES': '¿Quién ha marcado?',
-    'ta-IN': 'யார் கோல் அடித்தார்?',
-  };
-  connection?.send('askText', questions[el('lang').value]).catch((err) => setStatus(`Question failed: ${err.message ?? err}`));
-});
 window.addEventListener('vog:prefs', (event) => {
   mix?.apply(event.detail);
   sonifier?.setEnabled(event.detail.sonifyBall);
@@ -79,7 +67,7 @@ el('learn-sounds').addEventListener('click', async () => {
 });
 
 async function start() {
-  el('start').disabled = true;
+  for (const id of ['start', 'lang', 'mode']) el(id).disabled = true;
   setStatus('Connecting…');
 
   try {
@@ -94,27 +82,54 @@ async function start() {
       .withAutomaticReconnect()
       .build();
 
-    connection.on('utterance', onUtterance);
-    connection.on('audio', (id, _seq, data) => player?.port.postMessage({ type: 'chunk', id, samples: toFloat32(data) }));
-    connection.on('audioEnd', (id) => player?.port.postMessage({ type: 'end', id }));
-    connection.on('cut', (id, afterMs) => player?.port.postMessage({ type: 'cut', id, afterSamples: Math.round((afterMs * SAMPLE_RATE) / 1000) }));
-    connection.on('captions', onCaptions);
-    connection.on('pitch', (message) => {
+    const joinedConnection = connection;
+    const on = (name, handler) => joinedConnection.on(name, (...args) => {
+      if (connection === joinedConnection) handler(...args);
+    });
+    on('utterance', onUtterance);
+    on('audio', (id, _seq, data) => player?.port.postMessage({ type: 'chunk', id, samples: toFloat32(data) }));
+    on('audioEnd', (id) => player?.port.postMessage({ type: 'end', id }));
+    on('cut', (id, afterMs) => player?.port.postMessage({ type: 'cut', id, afterSamples: Math.round((afterMs * SAMPLE_RATE) / 1000) }));
+    on('captions', onCaptions);
+    on('pitch', (message) => {
       sonifier?.update(message);
       crowdBed?.update(message.e);
       showAtmosphere(message.e);
       pitchMap.update(message);
     });
-    connection.on('skipped', (id) => {
+    on('skipped', (id) => {
       pending.delete(id);
       player?.port.postMessage({ type: 'skip', id });
     });
-    connection.on('state', showState);
-    connection.onreconnecting(() => setStatus('Connection lost, reconnecting…'));
-    connection.onreconnected(() => join());
+    on('state', showState);
+    connection.onreconnecting(() => {
+      if (connection !== joinedConnection) return;
+      stopCompanion?.cancel();
+      document.querySelectorAll('[data-readout], #who-scored').forEach((button) => (button.disabled = true));
+      setStatus('Connection lost, reconnecting…');
+    });
+    connection.onreconnected(async () => {
+      if (connection !== joinedConnection) return;
+      const cleanup = stopCompanion;
+      stopCompanion = null;
+      await cleanup?.();
+      if (connection !== joinedConnection) return;
+      try {
+        if (!await join()) return;
+        if (connection !== joinedConnection) return;
+        stopCompanion = await startCompanion({ ctx, connection, mix, setStatus, idleStatus: () => listeningStatus });
+      } catch (error) {
+        if (connection !== joinedConnection) return;
+        await stop();
+        setStatus(`Could not rejoin: ${error.message ?? error}`);
+      }
+    });
+    connection.onclose(() => {
+      if (connection === joinedConnection) void stop();
+    });
 
-    await connection.start();
-    await join();
+    await joinedConnection.start();
+    if (connection !== joinedConnection || !await join()) return;
     stopCompanion = await startCompanion({ ctx, connection, mix, setStatus, idleStatus: () => listeningStatus });
     el('start').textContent = 'Stop listening';
 
@@ -139,7 +154,7 @@ async function start() {
     await stop();
     setStatus(`Could not start: ${err.message ?? err}`);
   } finally {
-    el('start').disabled = false;
+    for (const id of ['start', 'lang', 'mode']) el(id).disabled = false;
   }
 }
 
@@ -177,10 +192,11 @@ async function prepareAudio() {
 }
 
 async function stop() {
-  await stopCompanion?.();
+  const cleanup = stopCompanion;
   stopCompanion = null;
   const c = connection;
   connection = null;
+  await cleanup?.();
   await c?.stop();
   sonifier?.dispose();
   sonifier = null;
@@ -197,10 +213,14 @@ async function stop() {
 }
 
 async function join() {
+  stopCompanion?.cancel();
+  const joiningConnection = connection;
+  if (!joiningConnection) return false;
   // Anything queued from the previous channel is no longer wanted.
   reset();
   player?.port.postMessage({ type: 'flush' });
-  const result = await connection.invoke('join', el('lang').value, el('mode').value, false);
+  const result = await joiningConnection.invoke('join', el('lang').value, el('mode').value, false);
+  if (connection !== joiningConnection) return false;
   teams = result;
   pitchMap.setTeams(result);
   document.querySelectorAll('[data-readout], #who-scored').forEach((button) => (button.disabled = false));
@@ -209,11 +229,20 @@ async function join() {
   const channel = `${el('lang').selectedOptions[0].text}, ${el('mode').selectedOptions[0].text}`;
   listeningStatus = `Listening: ${channel}. ${result.home} in ${result.homeKit} v ${result.away} in ${result.awayKit}.`;
   setStatus(listeningStatus);
+  return true;
 }
 
 async function rejoin() {
-  if (connection) {
-    await join();
+  if (!connection || rejoining) return;
+  rejoining = true;
+  stopCompanion?.cancel();
+  for (const id of ['start', 'lang', 'mode']) el(id).disabled = true;
+  try {
+    await stop();
+    await start();
+  } finally {
+    rejoining = false;
+    for (const id of ['start', 'lang', 'mode']) el(id).disabled = false;
   }
 }
 

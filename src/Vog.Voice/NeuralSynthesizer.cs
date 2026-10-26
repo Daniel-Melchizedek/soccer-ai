@@ -18,7 +18,7 @@ public sealed record SynthesisResult(
 /// Text to speech for one channel: one pre-connected synthesizer, 24 kHz 16-bit mono PCM out,
 /// audio streamed through <see cref="AudioChunk"/> as it arrives, word timings collected for captions.
 /// </summary>
-public sealed class NeuralSynthesizer : IDisposable
+public sealed class NeuralSynthesizer : IStreamingSynthesizer
 {
     public const int SampleRate = 24_000;
 

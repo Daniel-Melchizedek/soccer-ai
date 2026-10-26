@@ -5,12 +5,14 @@
 // reach the microphone, and turned down while the answer plays.
 import { endCompanion, showCompanion } from './captions.js';
 import { loadPrefs } from './prefs.js';
+import { createCatchup, renderCatchup } from './catchup.js';
 
 const DUCKED = 0.2;
 const RAMP_S = 0.15;
 const MAX_QUESTION_MS = 20_000;
 const THINKING_TICK_MS = 700;
 const THINKING_LIMIT_MS = 30_000;
+const INTERACTION_LIMIT_MS = 120_000;
 
 const el = (id) => document.getElementById(id);
 
@@ -51,53 +53,131 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
   let maxTimer = null;
   let typed = false;
   let current = null;
+  let playbackId = null;
+  let turn = 0;
+  let active = null;
+  let disposed = false;
+  let blocked = false;
+  let interactionTimer = null;
+  const catchup = createCatchup();
+  const handlers = new Map();
   const thinking = createThinkingSound(ctx, mix.answers);
   const talk = el('talk');
+  const readouts = [...document.querySelectorAll('[data-readout]')];
 
   const setDuck = (level) => mix.duck.gain.setTargetAtTime(level, ctx.currentTime, RAMP_S / 3);
 
   const renderLabels = () => labelTalk(mode, recording);
   started = true;
 
+  const on = (name, handler) => {
+    handlers.set(name, handler);
+    connection.on(name, handler);
+  };
+  const controls = () => {
+    for (const id of ['question', 'ask-send', 'who-scored']) el(id).disabled = disposed || blocked || Boolean(active);
+    for (const button of readouts) button.disabled = disposed || blocked || Boolean(active);
+    talk.disabled = disposed || blocked || Boolean(active && !recording);
+  };
+  const release = () => {
+    clearTimeout(interactionTimer);
+    clearTimeout(maxTimer);
+    recording = false;
+    talk.setAttribute('aria-pressed', 'false');
+    renderLabels();
+    thinking.stop();
+    current = null;
+    playbackId = null;
+    active = null;
+    setDuck(1);
+    endCompanion();
+    controls();
+  };
+  const fail = (message) => {
+    if (!active || disposed) return;
+    blocked = active.sent;
+    const result = catchup.finish('error');
+    answers.port.postMessage({ type: 'flush' });
+    mic?.node.port.postMessage({ type: 'stop' });
+    if (blocked) connection.send('askStop').catch(() => {});
+    release();
+    el('answer').setAttribute('aria-live', 'polite');
+    el('answer').textContent = message;
+    renderCatchup(el('catchup'), result);
+    setStatus(blocked ? 'Question interrupted. Stop and start listening to ask again. Commentary continues.' : idleStatus());
+  };
+  const beginInteraction = (isTyped) => {
+    if (disposed || blocked || active) return null;
+    typed = isTyped;
+    active = { turn: ++turn, sent: false };
+    catchup.begin(el('lang').value);
+    renderCatchup(el('catchup'), null);
+    answers.port.postMessage({ type: 'flush' });
+    interactionTimer = setTimeout(() => fail('The question or answer timed out.'), INTERACTION_LIMIT_MS);
+    controls();
+    return active;
+  };
+  const cancel = () => {
+    blocked = true;
+    catchup.cancel();
+    renderCatchup(el('catchup'), null);
+    el('heard').textContent = '';
+    el('answer').textContent = '';
+    el('answer').setAttribute('aria-live', 'off');
+    if (active?.sent) connection.send('askStop').catch(() => {});
+    mic?.node.port.postMessage({ type: 'stop' });
+    answers.port.postMessage({ type: 'flush' });
+    release();
+  };
+
   answers.port.onmessage = ({ data }) => {
-    if (data.type === 'ended' && data.id === current && !recording) {
-      setDuck(1);
-      endCompanion();
+    if (!disposed && active && data.type === 'ended' && data.id === playbackId && active.ended && !recording) {
+      const result = catchup.finish();
+      release();
+      renderCatchup(el('catchup'), result);
       setStatus(idleStatus());
     }
   };
 
-  connection.on('heard', (text) => (el('heard').textContent = `You asked: ${text}`));
-  connection.on('answerStart', (id) => {
+  on('utterance', (message) => { if (!disposed) catchup.receive(message); });
+  on('heard', (text) => { if (active && !disposed) el('heard').textContent = `You asked: ${text}`; });
+  on('answerStart', (id) => {
+    if (disposed || !active?.sent || recording || current !== null) return;
+    if ((id < 0) !== Boolean(active.readout)) return;
     thinking.stop();
     current = id;
+    playbackId = `answer:${active.turn}:${id}`;
     el('answer').textContent = '';
     el('answer').setAttribute('aria-live', typed ? 'polite' : 'off');
-    answers.port.postMessage({ type: 'begin', id, skipAfter: Infinity });
+    answers.port.postMessage({ type: 'begin', id: playbackId, skipAfter: Infinity });
     setDuck(DUCKED);
     setStatus('Answering…');
   });
-  connection.on('answerText', (_id, delta) => {
+  on('answerText', (id, delta) => {
+    if (disposed || !active || id !== current || active.ended) return;
     el('answer').textContent += delta;
     showCompanion(el('answer').textContent);
   });
-  connection.on('answerAudio', (id, _seq, data) => answers.port.postMessage({ type: 'chunk', id, samples: toFloat32(data) }));
-  connection.on('answerEnd', (id) => answers.port.postMessage({ type: 'end', id }));
-  connection.on('answerError', (message) => {
-    thinking.stop();
-    el('answer').setAttribute('aria-live', 'polite');
-    el('answer').textContent = message;
-    setDuck(1);
-    setStatus(idleStatus());
+  on('answerAudio', (id, _seq, data) => {
+    if (!disposed && active && id === current && !active.ended) answers.port.postMessage({ type: 'chunk', id: playbackId, samples: toFloat32(data) });
   });
-
-  async function begin() {
-    if (recording) {
+  on('answerEnd', (id, status) => {
+    if (disposed || !active || id !== current || active.ended) return;
+    if (status && status !== 'completed') {
+      fail(`Answer ${status}.`);
       return;
     }
+    active.ended = true;
+    answers.port.postMessage({ type: 'end', id: playbackId });
+  });
+  on('answerError', fail);
+
+  async function begin() {
+    const interaction = beginInteraction(false);
+    if (!interaction) return;
 
     recording = true;
-    typed = false;
+    controls();
     thinking.stop();
     talk.setAttribute('aria-pressed', 'true');
     renderLabels();
@@ -105,16 +185,24 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
     setDuck(0);
     try {
       mic ??= await openMicrophone();
+      if (disposed || active !== interaction) {
+        mic?.stream.getTracks().forEach((track) => track.stop());
+        await mic?.ctx.close();
+        mic = null;
+        return;
+      }
+      interaction.sent = true;
       await connection.send('askBegin');
+      if (disposed || active !== interaction) return;
       mic.node.port.postMessage({ type: 'start' });
+      if (!recording) {
+        mic.node.port.postMessage({ type: 'stop' });
+        return;
+      }
       maxTimer = setTimeout(end, MAX_QUESTION_MS);
       setStatus('Listening to your question…');
     } catch (err) {
-      recording = false;
-      talk.setAttribute('aria-pressed', 'false');
-      renderLabels();
-      setDuck(1);
-      setStatus(`Microphone unavailable: ${err.message ?? err}. You can type your question instead.`);
+      if (active === interaction) fail(`Microphone unavailable: ${err.message ?? err}.`);
     }
   }
 
@@ -124,6 +212,7 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
     }
 
     recording = false;
+    controls();
     clearTimeout(maxTimer);
     talk.setAttribute('aria-pressed', 'false');
     renderLabels();
@@ -137,17 +226,28 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
 
   async function openMicrophone() {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    if (disposed || blocked) {
+      stream.getTracks().forEach((track) => track.stop());
+      throw new Error('Question cancelled.');
+    }
     const micCtx = new AudioContext();
-    await micCtx.audioWorklet.addModule('js/pcm-capture.worklet.js');
+    try {
+      await micCtx.audioWorklet.addModule('js/pcm-capture.worklet.js');
+    } catch (error) {
+      stream.getTracks().forEach((track) => track.stop());
+      await micCtx.close();
+      throw error;
+    }
     const node = new AudioWorkletNode(micCtx, 'pcm-capture', { numberOfOutputs: 0 });
     micCtx.createMediaStreamSource(stream).connect(node);
     node.port.onmessage = ({ data }) => {
+      if (disposed || blocked || !active?.sent) return;
       if (data.type === 'chunk') {
-        connection.send('askAudio', toBase64(data.samples)).catch(() => {});
+        connection.send('askAudio', toBase64(data.samples)).catch((error) => fail(`Question failed: ${error.message ?? error}`));
       } else if (data.type === 'silence' && mode === 'tap') {
         end(); // the fan has finished speaking
       } else if (data.type === 'stopped') {
-        connection.send('askEnd').catch(() => {});
+        connection.send('askEnd').catch((error) => fail(`Question failed: ${error.message ?? error}`));
       }
     };
     return { ctx: micCtx, stream, node };
@@ -190,20 +290,43 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
       toggle();
     }
   };
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    const question = el('question').value.trim();
-    if (!question) {
-      return;
-    }
-
-    typed = true;
-    answers.port.postMessage({ type: 'flush' });
+  const askText = async (question) => {
+    if (!question) return;
+    const interaction = beginInteraction(true);
+    if (!interaction) return;
     el('heard').textContent = `You asked: ${question}`;
     el('question').value = '';
+    setDuck(DUCKED);
     setStatus('Thinking…');
     thinking.start();
-    await connection.send('askText', question);
+    interaction.sent = true;
+    try {
+      await connection.send('askText', question);
+    } catch (error) {
+      if (active === interaction) fail(`Question failed: ${error.message ?? error}`);
+    }
+  };
+  const onSubmit = (event) => {
+    event.preventDefault();
+    return askText(el('question').value.trim());
+  };
+  const onWhoScored = () => {
+    const questions = { 'en-GB': 'Who scored?', 'es-ES': '\u00bfQui\u00e9n ha marcado?', 'ta-IN': '\u0baf\u0bbe\u0bb0\u0bcd \u0b95\u0bcb\u0bb2\u0bcd \u0b85\u0b9f\u0bbf\u0ba4\u0bcd\u0ba4\u0bbe\u0bb0\u0bcd?' };
+    return askText(questions[el('lang').value] ?? questions['en-GB']);
+  };
+  const onReadout = async (event) => {
+    const interaction = beginInteraction(true);
+    if (!interaction) return;
+    interaction.readout = true;
+    interaction.sent = true;
+    setDuck(DUCKED);
+    setStatus('Thinking…');
+    thinking.start();
+    try {
+      await connection.invoke('readout', event.currentTarget.dataset.readout);
+    } catch (error) {
+      if (active === interaction) fail(`Readout failed: ${error.message ?? error}`);
+    }
   };
   const onPrefs = (event) => {
     if (event.detail.talkMode !== mode) {
@@ -224,19 +347,20 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
   document.addEventListener('keydown', onShortcut);
   window.addEventListener('vog:prefs', onPrefs);
   el('ask-form').addEventListener('submit', onSubmit);
+  el('who-scored').addEventListener('click', onWhoScored);
+  for (const button of readouts) button.addEventListener('click', onReadout);
   thinking.setGentle(loadPrefs().gentle);
   renderLabels();
-  for (const id of ['talk', 'question', 'ask-send']) {
-    el(id).disabled = false;
-  }
+  controls();
 
-  return async () => {
-    for (const id of ['talk', 'question', 'ask-send']) {
-      el(id).disabled = true;
-    }
-
-    end();
-    thinking.stop();
+  const cleanup = async () => {
+    if (disposed) return;
+    cancel();
+    disposed = true;
+    controls();
+    for (const [name, handler] of handlers) connection.off(name, handler);
+    answers.port.onmessage = null;
+    answers.disconnect();
     talk.removeEventListener('click', onClick);
     talk.removeEventListener('pointerdown', onPointerDown);
     talk.removeEventListener('pointerup', onPointerUp);
@@ -246,10 +370,14 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
     document.removeEventListener('keydown', onShortcut);
     window.removeEventListener('vog:prefs', onPrefs);
     el('ask-form').removeEventListener('submit', onSubmit);
+    el('who-scored').removeEventListener('click', onWhoScored);
+    for (const button of readouts) button.removeEventListener('click', onReadout);
     started = false;
     mic?.stream.getTracks().forEach((t) => t.stop());
     await mic?.ctx.close();
   };
+  cleanup.cancel = cancel;
+  return cleanup;
 }
 
 /**

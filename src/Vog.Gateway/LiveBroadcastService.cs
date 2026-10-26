@@ -113,7 +113,10 @@ public sealed class LiveBroadcastService(
                     if (options.Value.Speak(u.Intent.Kind))
                     {
                         await hub.Clients.Group(channelId).SendAsync("utterance", message);
-                        Worker(e.Channel).Enqueue(u);
+                        if (Worker(e.Channel).Enqueue(u) is { } dropped)
+                        {
+                            await hub.Clients.Group(channelId).SendAsync("skipped", dropped.UtteranceId);
+                        }
                     }
                 }
 

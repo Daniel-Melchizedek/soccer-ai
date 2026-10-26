@@ -1,6 +1,6 @@
 # Voice of the Game: Actual-Device Demo
 
-Target **110 seconds**, strictly **under 120 seconds**. This is a recording plan, not a completed demo or acceptance report. Recap deployment and Playwright checks are **in progress, not yet completed**; use [latest release verification](README.md#latest-recap-release-verification-pending) to identify the actual verified build before recording. Updated Foundry YAML/tool registration is still pending, so do not present a typed recap as deployed until checked.
+Target **110 seconds**, strictly **under 120 seconds**. This is a recording plan, not a completed demo or acceptance report. Recaps from application commit **`8cf6074`** are deployed, all three Foundry companions are registered, and deployed Playwright and typed-recap checks are recorded in the [latest release verification](README.md#latest-recap-release-verification-26-october-2026). Human listening, actual microphone, native-language and accessibility checks remain open; verify the live build and service availability before recording.
 
 ## Recording Plan
 

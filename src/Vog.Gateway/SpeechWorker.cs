@@ -16,51 +16,88 @@ public sealed class SpeechWorker : IAsyncDisposable
     private static readonly TimeSpan WarmUpRetry = TimeSpan.FromSeconds(2);
 
     private readonly ChannelSpec _channel;
-    private readonly Uri _endpoint;
-    private readonly IHubContext<CommentaryHub> _hub;
+    private readonly Func<IStreamingSynthesizer> _createSynthesizer;
+    private readonly IClientProxy _group;
     private readonly LatencyStats _stats;
     private readonly ILogger _log;
-    private readonly Channel<(Utterance Utterance, long StartedAt)> _queue = Channel.CreateUnbounded<(Utterance, long)>(new UnboundedChannelOptions { SingleReader = true });
+    private readonly PendingSpeechQueue _queue = new();
     private readonly CancellationTokenSource _stop = new();
     private readonly Task _loop;
-    private NeuralSynthesizer? _tts;
+    private IStreamingSynthesizer? _tts;
 
     public SpeechWorker(ChannelSpec channel, Uri endpoint, IHubContext<CommentaryHub> hub, LatencyStats stats, ILogger log)
+        : this(channel, () => new NeuralSynthesizer(endpoint, AzureCredentials.Shared, VoiceCatalog.For(channel.Lang, channel.Mode)),
+            hub.Clients.Group(channel.Id), stats, log)
+    {
+    }
+
+    public SpeechWorker(ChannelSpec channel, Func<IStreamingSynthesizer> createSynthesizer, IClientProxy group, LatencyStats stats, ILogger log)
     {
         _channel = channel;
-        _endpoint = endpoint;
-        _hub = hub;
+        _createSynthesizer = createSynthesizer;
+        _group = group;
         _stats = stats;
         _log = log;
         _loop = Task.Run(() => RunAsync(_stop.Token));
     }
 
     /// <summary>Never blocks: the booth's loop serves every channel.</summary>
-    public void Enqueue(Utterance utterance) => _queue.Writer.TryWrite((utterance, Stopwatch.GetTimestamp()));
+    public Utterance? Enqueue(Utterance utterance)
+    {
+        var dropped = _queue.Enqueue(utterance);
+        if (dropped is not null)
+        {
+            _stats.RecordServerSkip();
+        }
+        return dropped;
+    }
 
     private async Task RunAsync(CancellationToken ct)
     {
         var tts = await WarmUpAsync(ct);
-        var group = _hub.Clients.Group(_channel.Id);
-        await foreach (var (u, startedAt) in _queue.Reader.ReadAllAsync(ct))
+        while (await _queue.DequeueAsync(ct) is { } pending)
         {
-            // After a hold-up (warm-up, a slow request) speak what's current, not a backlog.
-            if (Staleness.SkipAfter(u.Intent.Priority) is { } limit && Stopwatch.GetElapsedTime(startedAt) > limit)
+            var (utterance, startedAt) = pending;
+            for (var attempt = 0; attempt < 2; attempt++)
             {
-                _stats.RecordServerSkip();
-                await group.SendAsync("skipped", u.UtteranceId, ct);
-                continue;
-            }
+                if (Staleness.SkipAfter(utterance.Intent.Priority) is { } limit && Stopwatch.GetElapsedTime(startedAt) > limit)
+                {
+                    _stats.RecordServerSkip();
+                    await _group.SendAsync("skipped", utterance.UtteranceId, ct);
+                    break;
+                }
 
-            try
-            {
-                await SpeakAsync(tts, group, u, startedAt, ct);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                // The line is lost; ending it lets players move on to the next one.
-                _log.LogError(ex, "Speech failed on {Channel} for '{Text}'", _channel.Id, u.Text);
-                await group.SendAsync("audioEnd", u.UtteranceId, 0L, ct);
+                var emittedAudio = 0;
+                void TrackAudio(byte[] data)
+                {
+                    if (data.Length > 0) Interlocked.Exchange(ref emittedAudio, 1);
+                }
+
+                tts.AudioChunk += TrackAudio;
+                var retry = false;
+                try
+                {
+                    await SpeakAsync(tts, _group, utterance, startedAt, ct);
+                    break;
+                }
+                catch (Exception ex) when (!ct.IsCancellationRequested)
+                {
+                    retry = attempt == 0 && Volatile.Read(ref emittedAudio) == 0;
+                    _log.LogWarning(ex, "Speech failed on {Channel} for {UtteranceId}; retry={Retry}", _channel.Id, utterance.UtteranceId, retry);
+                    if (!retry)
+                    {
+                        await _group.SendAsync("audioEnd", utterance.UtteranceId, 0L, ct);
+                    }
+                }
+                finally
+                {
+                    tts.AudioChunk -= TrackAudio;
+                }
+
+                tts.Dispose();
+                _tts = null;
+                tts = await WarmUpAsync(ct);
+                if (!retry) break;
             }
         }
     }
@@ -70,14 +107,14 @@ public sealed class SpeechWorker : IAsyncDisposable
     /// that listeners never hear. Retries until it succeeds; lines queued meanwhile go stale and are
     /// skipped, so the channel starts on what's current.
     /// </summary>
-    private async Task<NeuralSynthesizer> WarmUpAsync(CancellationToken ct)
+    private async Task<IStreamingSynthesizer> WarmUpAsync(CancellationToken ct)
     {
         var started = Stopwatch.GetTimestamp();
         while (true)
         {
             try
             {
-                _tts = new NeuralSynthesizer(_endpoint, AzureCredentials.Shared, VoiceCatalog.For(_channel.Lang, _channel.Mode));
+                _tts = _createSynthesizer();
                 await _tts.SpeakAsync(_channel.Lang.StartsWith("es", StringComparison.OrdinalIgnoreCase) ? "Listo." : "Ready.", ct);
                 _log.LogInformation("Speech ready on {Channel} in {Ms:0} ms", _channel.Id, Stopwatch.GetElapsedTime(started).TotalMilliseconds);
                 return _tts;
@@ -92,7 +129,7 @@ public sealed class SpeechWorker : IAsyncDisposable
         }
     }
 
-    private async Task SpeakAsync(NeuralSynthesizer tts, IClientProxy group, Utterance u, long startedAt, CancellationToken ct)
+    private async Task SpeakAsync(IStreamingSynthesizer tts, IClientProxy group, Utterance u, long startedAt, CancellationToken ct)
     {
         // Chunks are forwarded in order by a single sender as they stream in from the service.
         var chunks = Channel.CreateUnbounded<byte[]>(new UnboundedChannelOptions { SingleReader = true });
@@ -134,7 +171,7 @@ public sealed class SpeechWorker : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _queue.Writer.TryComplete();
+        _queue.Complete();
         await _stop.CancelAsync();
         try
         {
