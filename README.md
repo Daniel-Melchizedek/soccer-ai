@@ -13,7 +13,7 @@ Voice of the Game turns a synthetic football match into live audio description, 
 
 ## What works today
 
-Implementation status updated on **23 October 2026**; local recap browser checks passed, while Azure deployment and deployed-browser verification are **pending the next session**. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The new Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
+Implementation status updated on **26 October 2026**: scoped recaps are deployed, all three Foundry companions are registered, and local/deployed browser checks passed as detailed below. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The new Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
 
 The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, with no cloud services needed:
 
@@ -26,7 +26,7 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices authenticated with Microsoft Entra ID, 24 kHz PCM streaming and word-timed caption generation (WebVTT, at most 2 lines of 37 characters). Offline utilities support word-boundary cuts; live playback uses a sample-limit fade for interruption. |
 | (e) Render, live | `Vog.Gateway` | Plays a seeded synthetic match at natural 1x speed by default, on a shared wall-clock schedule. Full mode-specific narration streams as audio with word-timed captions. The listener page plays audio through an AudioWorklet, with procedural earcons panned to where the action is. |
-| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. The gateway now exposes six read-only MCP tools at `/mcp/<lang>`, including `get_match_recap`; the updated Foundry YAML allowlist and recap grounding prompt await registration. Commentary is muted while recording and ducked during answers. |
+| Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. The gateway exposes six read-only MCP tools at `/mcp/<lang>`, including `get_match_recap`; all three registered agents have the updated allowlist and recap grounding prompt. Commentary is muted while recording and ducked during answers. |
 
 The browser also provides independent commentary/answer/event/ball/crowd levels, ball sonification, supported-device haptics, sound learning, clear-speech and gentle-sound settings, sound tags and an atmosphere meter. Caption size, colours, opacity, outline, font and position are configurable; preferences are stored on the device. The pitch map has zoom, follow-ball, shape/number markers and a polite position description. Calm changes commentary cadence and pass filtering; crowd and gentle-sound settings are independent.
 
@@ -42,15 +42,26 @@ The public, `no-store` endpoint `/insights?scope=recent|match|halftime|fulltime&
 - Auto-refresh runs every 15 seconds, pausing in hidden tabs or while focus is in the panel or evidence is open. The nine live listening channels and natural defaults remain unchanged: seed `20261026`, speed `1`, break `120` seconds.
 - Reported full-solution Release result: **128 tests passed**, including **23 companion** and **15 gateway** tests. Six new recap tests cover actual goal-event evidence/deduplication, halftime isolation, availability validation, second-half boundaries, inclusion of the final event in fulltime counts, and empty intervals. These are test results, not deployed-browser acceptance.
 
-### Latest Recap Release Verification: Pending
+### Latest Recap Release Verification: 26 October 2026
 
-**Paused for the user's commit/push checkpoint. No new Azure build, deployment or Foundry registration has started.** Local Playwright verified Casual/Analyst selection, persistence, keyboard evidence, no overflow at actual widths 320/390/1280, `no-store`, invalid-scope 400, removed-chart-route 404, full-time unavailability and recovery after an injected HTTP 503. This is local acceptance, not deployed verification. [NEXT_SESSION.md](NEXT_SESSION.md#resume-steps) records the local task, tooling and remaining steps. Replace this placeholder after rollout with actual source provenance, image digest, Azure revision/readiness/traffic, public URL, Foundry registration results and fresh deployed-browser evidence without local asset overrides.
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=recaps-8cf6074
+
+- Source **`8cf6074`**, following recap checkpoint **`db16cb8`**, fixes tab-return refresh so focused/open evidence stays stable. ACR run **`dtq`** built a clean Git archive; immutable image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:b90a7eeb4363d94d1f493de2f2102e8175880038ffc2176eb8c4ae2f99c1ab43` was created at `2026-10-26T06:51:43Z`.
+- Revision **`ca-vog-dev-gateway--recaps-8cf6074`** is Healthy, latest-ready, one replica, 100% traffic in Single revision mode. Image-only rollout preserved configuration, secrets and infrastructure; no playback-default overrides were present.
+- Authenticated deployed MCP lists six tools. Foundry versions: **en-gb 11**, **es-es 4**, **ta-in 3**, with `gpt-5.6-terra`, reasoning `none`, six tools and the existing guardrail. A direct English agent request confirmed `get_match_recap({"scope":"match"})` succeeded.
+- Fresh full-solution Release suite: **128 passed, zero failed or skipped**. The initial interrupted run was discarded; the complete rerun passed. These results precede this documentation-only commit.
+- Deployed `run_playwright_code`, without local asset overrides, verified Casual/Analyst views, persistence, keyboard evidence and no automatic requests across separate 16-second focused/open-evidence checks, including `visibilitychange`. Injected HTTP 503 produced a retry message; removing the route restored both team rows. All test routes/instrumentation were removed and listening stopped.
+- `/healthz` returned 200; all four valid recap scopes returned 200 with `no-store`; invalid scope/language returned 400; both removed chart routes returned 404. At 08:53, recent covered exactly 120,000 ms within half one; halftime/fulltime were correctly unavailable. Local late-match checks confirmed halftime remained first-half-only. Final-whistle boundaries are covered by deterministic tests, not a completed deployed-match observation.
+- English AD sample: **101 PCM chunks, six captions, five playback acknowledgements**, with state speed `1`. The typed Voice Live recap said 0-0 at 10:48, Rafael Zandor's sole Blues shot was saved and Reds had no shots; before/after deployed snapshots at 10:40/10:51 confirmed the same facts and source event `m-20261026-e00025`. The answer delivered 25 audio chunks with no captured answer error.
+- Actual widths 320/390/1280 had document widths 305/375/1265, no horizontal overflow and nonblank pitch pixels. Screenshot output remained cropped/compressed; full visual acceptance is not claimed.
+
+At the user's request, Accenture author/committer emails on `main` were rewritten to `danielmelchizedekarockiathomas@gmail.com` and pushed with an explicit lease. All 31 commit trees, names, dates and subjects were verified unchanged. Historical hashes below are pre-rewrite identifiers; the old recap checkpoint `145bb5b` is now `db16cb8`. [NEXT_SESSION.md](NEXT_SESSION.md#resume-steps) records remaining acceptance work.
 
 Native-language review (Spanish/Tamil and recap responses), human screen-reader/co-design validation, actual microphone use, subjective audio/caption timing, concurrent multilingual playback, and a completed-match archive write/read round trip remain open. Use [DEMO.md](DEMO.md) for a target 110-second demonstration without promised goals or manufactured match timing.
 
 ### Historical Browser-Fix Release: 23 October 2026
 
-This dated release record is superseded for current implementation status by [Scoped Insights](#scoped-insights-current-worktree). It is not evidence that the recap work has been deployed; see [pending release verification](#latest-recap-release-verification-pending).
+This dated release record is superseded by [the recap release verification](#latest-recap-release-verification-26-october-2026). Its hashes are pre-email-rewrite identifiers and its chart checks are historical.
 
 The user subsequently authorized commit, push and deployment of the reviewed fixes. Application commit **`1d5ab9a`** was pushed to `origin/main` and built from a clean Git archive by ACR run **`dtp`**. The image-only update deployed `crvogdevy6po56.azurecr.io/vog-gateway@sha256:2bae9f40390d1da12522b5e37fc2534322667d28af50dbb3d47bb6b691c5950a` as revision **`ca-vog-dev-gateway--browserfix-1d5ab9a`**. Azure confirmed Healthy, latest-ready, one running replica and 100% traffic in Single revision mode. Infrastructure, secrets and Foundry registrations were not changed.
 
@@ -72,7 +83,7 @@ A subsequent code/documentation review and live Playwright session found and fix
 
 ### Historical Chart Azure Release: 23 October 2026
 
-The chart/data endpoints and eligibility actions below describe that older release only; current source has removed the charts and public proxy. Its checks do not validate the pending recap release.
+The chart/data endpoints and eligibility actions below describe that older release only; the deployed recap release has removed the charts and public proxy. Its checks do not validate the recap release.
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=charts-bottom-20261023
 
@@ -291,7 +302,7 @@ After a simulated match completes, the gateway attempts a best-effort upload of 
 
 ## Demo configuration
 
-Source defaults remain seed `20261026`, speed `1.0`, and a `120`-second between-match break; deployment verification for the recap work is pending. [DEMO.md](DEMO.md) budgets 110 seconds on an actual device without promising goals during the recording. The submission video must remain under two minutes; changing realism or the recording format requires an explicit decision.
+Source defaults remain seed `20261026`, speed `1.0`, and a `120`-second between-match break; the recap rollout preserved these defaults and live state confirmed speed `1`. [DEMO.md](DEMO.md) budgets 110 seconds on an actual device without promising goals during the recording. The submission video must remain under two minutes; changing realism or the recording format requires an explicit decision.
 
 The source code defaults (`appsettings.json`) use `Seed: 20261026, Speed: 1.0` for natural 1× pacing with full narration for all modes.
 
