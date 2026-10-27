@@ -9,7 +9,15 @@ Voice of the Game turns a synthetic football match into live audio description, 
 - Accessibility implementation ledger: [please-reasearch-online-then-mighty-hanrahan.md](please-reasearch-online-then-mighty-hanrahan.md)
 - Actual-device demo and synthetic data card: [DEMO.md](DEMO.md)
 
-> The submitted app uses synthetic matches with fictional generated leagues, clubs and players. Historical charts and the public `/data` proxy have been removed from the current worktree; no real historical data is used in the submitted app. The legacy DataPrep utility and private historical blobs remain unused, and earlier real-data usage remains credited below. No actual club data, trademarks or footage are used in the simulation. Synthetic-only data does not by itself establish full hackathon eligibility.
+> The live match uses synthetic events with fictional generated leagues, clubs and players. A separate [Football history page](src/Vog.Gateway/wwwroot/football-history.html), linked only from the listener footer, uses real CC0 international results. Separating pages does not establish compliance with the hackathon's synthetic-data requirement; resolve submission scope before claiming eligibility. Historical data does not feed the simulation, recaps or companion.
+
+## Chart.js And Football History: 27 October 2026
+
+The Analyst view now uses locally served **Chart.js 4.5.1**, not custom bars. Localized exact counts remain available alongside the chart and if the library fails to load. All metrics share one zero-based scale; unavailable recaps hide the chart. The Audio latency label describes the measured server-send to browser audio-start delay, not total event-to-ear latency.
+
+The separate `/football-history.html` page restores goals-per-match and home-team win percentage by decade from the existing private storage aggregates. It includes data tables, independent retry states, source credits and the neutral-venue caveat. `/data/{file}` accepts only `goals-per-decade.json` and `home-advantage.json`; raw CSVs stay private. No data upload, storage change or simulation change is needed.
+
+Verification before deployment: **148 .NET Release tests** and **39 browser-module tests** passed. Local reads loaded 16 decades per chart; Chart.js 4.5.1, 32 table rows and nonblank canvases were verified at actual widths 1280/390/320 with no horizontal overflow. Integrated screenshots remain compressed; full visual/accessibility acceptance is not claimed. Later release records below are historical.
 
 ## What works today
 
@@ -344,25 +352,25 @@ Nothing sensitive belongs in this repository (BUILD_PLAN.md §12):
 
 | Work | Author / Licence | How it is used |
 |---|---|---|
-| [International football results from 1872 to 2017](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) | Mart Jürisoo, **CC0 Public Domain** | Previously aggregated into goals-per-decade and home-win JSON for the removed historical panel. Retained private blobs/legacy DataPrep are unused by the submitted app; credit records that real-data usage. |
-| [football-results-dashboard](https://github.com/bbenz/football-results-dashboard) | Brian Benz, **MIT** | Historical inspiration for the removed chart experiment; not the current synthetic recap implementation |
-| [Chart.js](https://www.chartjs.org) | Chart.js contributors, **MIT** | Previously rendered the removed historical charts; current insights use native meters and tables |
+| [International football results from 1872 to 2017](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) | Mart Jürisoo, **CC0 Public Domain** | Goals-per-decade and home-win aggregates on the separate Football history page; not live match input |
+| [football-results-dashboard](https://github.com/bbenz/football-results-dashboard) | Brian Benz, **MIT** | Inspiration for the historical charts |
+| [Chart.js](https://www.chartjs.org) | Chart.js contributors, **MIT** | Version 4.5.1 renders Analyst and Football history charts; official UMD distribution and licence are self-hosted in `wwwroot/lib/chartjs` |
 | [Atkinson Hyperlegible](https://brailleinstitute.org/freefont) | Braille Institute, **SIL OFL 1.1** | Optional accessible caption font (self-hosted; licence in `fonts/atkinson-hyperlegible/`) |
 | [Microsoft Playwright](https://playwright.dev) | Microsoft, **Apache 2.0** | Browser-based testing via the Playwright MCP server |
 | [SignalR](https://github.com/dotnet/aspnetcore) | Microsoft, **MIT** (part of ASP.NET Core) | Real-time browser communication for audio, captions and pitch data |
 | Microsoft Foundry, Azure AI Speech, Azure Voice Live, Azure Container Apps, Azure Blob Storage | Microsoft | AI agents, neural TTS, real-time voice Q&A, hosting, and match/data archiving |
 
-> **Synthetic data notice:** The current submitted experience uses fictional, machine-generated matches, leagues, clubs and players, not real historical data. Historical charts and the public `/data` proxy are removed. Prior real CC0 usage is credited above; unused legacy tooling/private blobs are retained. No actual club data, trademarks or footage are used in the simulation. Synthetic-only data does not establish full eligibility.
+> **Synthetic data notice:** Live matches, leagues, clubs and players are fictional and machine-generated. The separate history page uses real CC0 results. Page separation is not an eligibility exemption. No actual club data, trademarks or footage are used in the simulation.
 
-## Legacy Historical Data And Storage
+## Historical Data And Storage
 
 `infra/modules/storage.bicep` creates a private `vog-data` container with shared-key authentication disabled. The gateway identity and provisioning developer receive container-scoped Storage Blob Data Contributor access. `infra/main.bicep` supplies `VogStorage__BlobEndpoint` to the gateway and outputs it for local configuration.
 
-Legacy DataPrep and existing historical blobs are retained unused. They are not setup prerequisites for the submitted app. The removed panel previously consumed `public/goals-per-decade.json` and `public/home-advantage.json` from private storage through an allowlisted public proxy. The current gateway no longer exposes `/data/{file}` and the listener no longer renders those charts. Historical home-win percentage counted home-team wins across all dataset matches, including neutral fixtures.
+The Football history page consumes existing `public/goals-per-decade.json` and `public/home-advantage.json` blobs through the allowlisted `/data/{file}` proxy. Missing storage or blobs return 404; storage failures return 503 without internal details. Successful aggregates are publicly cacheable for one hour. Home-win percentage counts home-team wins across all dataset matches, including neutral fixtures, and is not a causal measure of home-ground advantage.
 
-DataPrep still accepts `--storage <endpoint>` or the process environment variable `VogStorage__BlobEndpoint`; it does not load the repository dotenv file. This describes retained tooling, not a request to upload real data or re-enable the removed proxy. `/history` remains public even though its backing blobs disallow anonymous access.
+DataPrep accepts `--storage <endpoint>` or the process environment variable `VogStorage__BlobEndpoint`; it does not load the repository dotenv file. Existing aggregates need no regeneration for this release. `/history` remains the separate synthetic-match archive route.
 
-The historical 23 October 2026 preparation processed 49,945 matches with no skipped rows and produced 16 decades per chart. All four user-supplied CSV files were SHA-256-identical to the public Kaggle download. Only results fed those charts; scorer, shootout and former-name datasets were unused. Raw CSV data was not checked into Git or served by the gateway. These were real aggregates, not synthetic data or proof of eligibility; they are no longer used by the submitted app.
+The 23 October 2026 preparation processed 49,945 matches with no skipped rows and produced 16 decades per chart. All four user-supplied CSV files were SHA-256-identical to the public Kaggle download. Only results feed these charts; scorer, shootout and former-name datasets are unused. Raw CSV data is not checked into Git or served by the gateway. These are real aggregates, not synthetic data or proof of eligibility. The latest decade is incomplete.
 
 After a simulated match completes, the gateway attempts a best-effort upload of a lightweight summary under `match-snapshots/`. Uploads run without awaiting completion and failures are logged without retry. `/history` returns up to ten successfully read summaries, newest blob modification first. An empty array can mean no archived matches, disabled storage or a storage-read failure; a completed-match write/read round trip remains unverified.
 

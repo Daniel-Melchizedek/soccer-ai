@@ -72,19 +72,13 @@
 .insights .fields { flex-wrap: wrap; }
 .insights li { padding-block: 0.5rem; }
 .insights li p { margin: 0.25rem 0; }
-.insight-count-chart { display: grid; gap: 1.25rem; margin-block: 1rem; }
+.chart-frame { position: relative; height: 280px; min-width: 0; }
+.chart-frame canvas { display: block; max-width: 100%; }
+.insight-count-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-block: 1rem; }
 .insight-count-group { display: grid; gap: 0.5rem; }
 .insight-count-group h3 { margin: 0; font-size: 1rem; }
-.insight-count-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 3ch; align-items: center; gap: 0.75rem; }
+.insight-count-row { display: grid; grid-template-columns: minmax(0, 1fr) 3ch; align-items: center; gap: 0.75rem; }
 .insight-count-row > strong { text-align: right; font-variant-numeric: tabular-nums; }
-.insight-count-track { height: 1rem; background: var(--bg-raised); outline: 1px solid var(--border); }
-.insight-count-fill { display: block; height: 100%; background: var(--teal); }
-.insight-count-row.away .insight-count-fill { background: repeating-linear-gradient(135deg, transparent 0 5px, rgba(0, 0, 0, 0.4) 5px 7px), var(--accent); }
-@media (forced-colors: active) {
-  .insight-count-track { outline-color: CanvasText; }
-  .insight-count-fill { forced-color-adjust: none; background: CanvasText; }
-  .insight-count-row.away .insight-count-fill { background: repeating-linear-gradient(135deg, CanvasText 0 5px, Canvas 5px 7px); }
-}
 
 * {
   box-sizing: border-box;
@@ -827,6 +821,13 @@ input[type="range"] {
 #football-history {
   min-width: 0;
 }
+
+.history-page { padding-block: 2rem; overflow-wrap: anywhere; }
+.history-page h1 { font-size: 2.5rem; }
+.history-page nav { margin-bottom: 1.5rem; }
+.history-page table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-block: 1rem; }
+.history-page th, .history-page td { padding: 0.4rem; text-align: left; border-bottom: 1px solid var(--border); }
+.history-page th:last-child, .history-page td:last-child { text-align: right; }
 
 #football-history > summary {
   cursor: pointer;

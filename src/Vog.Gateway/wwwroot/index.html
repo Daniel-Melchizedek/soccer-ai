@@ -245,6 +245,7 @@
       <output id="insights-status" role="status">Loading match facts...</output>
       <p id="insights-score"></p>
       <div id="insights-metrics" hidden>
+        <div id="insights-chart-frame" class="chart-frame"><canvas id="insights-chart" aria-hidden="true"></canvas></div>
         <div id="insights-teams" class="insight-count-chart" role="group" aria-label="Event counts in selected recap period"></div>
       </div>
       <ol id="insights-highlights" aria-live="off"></ol>
@@ -261,16 +262,18 @@
     </section>
 
     <details class="card details">
-      <summary>Latency</summary>
+      <summary>Audio latency</summary>
       <p id="latency">No audio yet.</p>
     </details>
   </main>
 
   <footer class="footer">
     <p>The match, league, clubs, players and match intelligence are synthetic and fictional. Built with Microsoft Foundry agents, Azure Voice Live and Azure AI Speech.</p>
+    <p><a href="football-history.html">Football history</a></p>
   </footer>
 
   <script src="lib/signalr/signalr.min.js"></script>
+  <script src="lib/chartjs/chart.umd.min.js"></script>
   <script type="module" src="js/app.js"></script>
   <script type="module" src="js/insights.js"></script>
 </body>

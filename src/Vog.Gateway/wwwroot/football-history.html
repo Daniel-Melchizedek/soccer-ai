@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Football history | Voice of the Game</title>
+  <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+  <a class="skip" href="#football-history">Skip to football history</a>
+  <main id="football-history" class="history-page">
+    <nav aria-label="Back"><a href="/">Back to Voice of the Game</a></nav>
+    <h1>Football history</h1>
+    <p>International results across the decades.</p>
+    <p class="note">Real historical data, separate from the fictional live match. Snapshot prepared on 23 October 2026; the latest decade is incomplete.</p>
+
+    <section class="insights" aria-labelledby="goals-heading">
+      <h2 id="goals-heading">Goals per match</h2>
+      <p id="goals-status" role="status">Loading historical results...</p>
+      <button id="goals-retry" class="secondary" type="button" hidden>Retry goals data</button>
+      <figure id="goals-figure" hidden>
+        <div class="chart-frame"><canvas id="goals-chart" aria-hidden="true"></canvas></div>
+        <figcaption>Average total goals per international match, grouped by decade.</figcaption>
+      </figure>
+      <details id="goals-data" hidden>
+        <summary>Goals data</summary>
+        <table><caption>Average goals per match</caption><thead><tr><th scope="col">Decade</th><th scope="col">Goals</th></tr></thead><tbody id="goals-rows"></tbody></table>
+      </details>
+    </section>
+
+    <section class="insights" aria-labelledby="home-heading">
+      <h2 id="home-heading">Home-team wins</h2>
+      <p class="note">Includes neutral venues: "home" is the dataset's designated home team, not necessarily a home-ground advantage.</p>
+      <p id="home-status" role="status">Loading historical results...</p>
+      <button id="home-retry" class="secondary" type="button" hidden>Retry home-win data</button>
+      <figure id="home-figure" hidden>
+        <div class="chart-frame"><canvas id="home-chart" aria-hidden="true"></canvas></div>
+        <figcaption>Home-team wins as a percentage of all matches, including draws and neutral fixtures.</figcaption>
+      </figure>
+      <details id="home-data" hidden>
+        <summary>Home-win data</summary>
+        <table><caption>Home-team win percentage</caption><thead><tr><th scope="col">Decade</th><th scope="col">Wins</th></tr></thead><tbody id="home-rows"></tbody></table>
+      </details>
+    </section>
+
+    <section aria-labelledby="sources-heading">
+      <h2 id="sources-heading">Source</h2>
+      <p><a href="https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017">International football results</a> by Mart Jürisoo, CC0 Public Domain. These aggregates were prepared from 49,945 match records. Historical coverage and match composition vary by decade.</p>
+      <p class="note">Charts: <a href="https://www.chartjs.org/">Chart.js</a> (MIT). Inspired by Brian Benz's <a href="https://github.com/bbenz/football-results-dashboard">football-results-dashboard</a> (MIT).</p>
+    </section>
+    <noscript><p>JavaScript is required to load the historical aggregates. Download <a href="/data/goals-per-decade.json">goals data</a> or <a href="/data/home-advantage.json">home-win data</a>.</p></noscript>
+  </main>
+  <footer class="footer"><p><a href="/">Voice of the Game</a></p></footer>
+  <script src="lib/chartjs/chart.umd.min.js"></script>
+  <script type="module" src="js/football-history.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+@baseUrl = http://localhost:5093
+
+### Goals aggregate
+GET {{baseUrl}}/data/goals-per-decade.json
+
+### Home-team wins aggregate
+GET {{baseUrl}}/data/home-advantage.json
+
+### Raw files must stay private (404)
+GET {{baseUrl}}/data/results.csv

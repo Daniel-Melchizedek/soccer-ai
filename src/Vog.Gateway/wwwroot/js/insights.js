@@ -3,6 +3,7 @@ import { recapCopy } from './insights-copy.js';
 const element = id => document.getElementById(id);
 let current;
 let request;
+let chart;
 let { language, copy } = recapCopy(element('lang')?.value || document.documentElement.lang);
 const translations = new Map();
 let view = 'casual';
@@ -40,9 +41,15 @@ function localize(languageCode) {
   element('insights-teams').setAttribute('aria-label', copy.counts);
   panel.querySelector(':scope > p:last-child').textContent = copy.disclosure;
   for (const update of translations.values()) update();
+  if (chart) {
+    chart.data.labels = copy.columns.slice(1);
+    chart.update('none');
+  }
 }
 
 function render() {
+  chart?.destroy();
+  chart = null;
   translations.clear();
   const analyst = view === 'analyst';
   const available = current?.status === 'available';
@@ -95,6 +102,28 @@ function render() {
   }
   const metrics = ['shots', 'goals', 'corners'];
   const maximum = Math.max(1, ...current.teams.flatMap(team => metrics.map(metric => team[metric])));
+  if (analyst && globalThis.Chart) {
+    chart = new globalThis.Chart(element('insights-chart'), {
+      type: 'bar',
+      data: {
+        labels: copy.columns.slice(1),
+        datasets: current.teams.map((team, index) => ({
+          label: team.name,
+          data: metrics.map(metric => team[metric]),
+          backgroundColor: index === 0 ? '#2fe0d4' : '#ff8a2a'
+        }))
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', boxWidth: 12 } } },
+        scales: {
+          x: { min: 0, max: maximum, ticks: { precision: 0, color: '#d4c6f0' }, grid: { color: '#4a2d7a' } },
+          y: { ticks: { color: '#ffffff' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+  element('insights-chart-frame').hidden = !chart;
   for (const [metricIndex, metric] of metrics.entries()) {
     const group = document.createElement('div');
     group.className = 'insight-count-group';
@@ -104,20 +133,9 @@ function render() {
     for (const [teamIndex, team] of current.teams.entries()) {
       const row = document.createElement('div');
       row.className = `insight-count-row ${teamIndex === 0 ? 'home' : 'away'}`;
-      const track = document.createElement('span');
-      track.className = 'insight-count-track';
-      track.setAttribute('role', 'meter');
-      track.setAttribute('aria-valuemin', '0');
-      track.setAttribute('aria-valuemax', maximum);
-      track.setAttribute('aria-valuenow', team[metric]);
-      translated(track, text => `${team.name}: ${text.columns[metricIndex + 1]}`, 'aria-label');
-      const fill = document.createElement('span');
-      fill.className = 'insight-count-fill';
-      fill.style.width = `${team[metric] / maximum * 100}%`;
-      track.append(fill);
       const count = document.createElement('strong');
       count.textContent = team[metric];
-      row.append(english(team.name), track, count);
+      row.append(english(team.name), count);
       group.append(row);
     }
     element('insights-teams').append(group);

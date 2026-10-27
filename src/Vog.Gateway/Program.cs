@@ -23,6 +23,7 @@ builder.Services.AddOptions<AzureAiOptions>()
 builder.Services.AddSingleton<ChannelDirectory>();
 builder.Services.AddSingleton<LatencyStats>();
 builder.Services.AddSingleton<MatchArchiveService>();
+builder.Services.AddSingleton<IHistoricalData, HistoricalData>();
 builder.Services.AddSingleton<LiveBroadcastService>();
 builder.Services.AddSingleton<CompanionRelay>();
 builder.Services.AddSingleton<ReadoutService>();
@@ -33,6 +34,7 @@ builder.Services.AddMatchMcp(builder.Configuration);
 var app = builder.Build();
 
 app.MapMatchMcp();
+app.MapHistoricalData();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapHub<CommentaryHub>("/hubs/commentary");

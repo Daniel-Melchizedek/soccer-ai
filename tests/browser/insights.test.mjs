@@ -89,7 +89,7 @@ function fixture() {
   const ids = Object.fromEntries([
     'match-insights', 'insights-heading', 'insights-metrics', 'insights-highlights',
     'insights-teams', 'insights-score', 'insights-limitations',
-    'insights-status', 'recap-scope', 'refresh-insights', 'lang'
+    'insights-status', 'recap-scope', 'refresh-insights', 'lang', 'insights-chart', 'insights-chart-frame'
   ].map(id => [id, new Element()]));
   document.getElementById = id => ids[id] ?? null;
   const panel = ids['match-insights'];
@@ -132,14 +132,20 @@ function facts(count = 45) {
   };
 }
 
-async function boot({ language = 'en-GB', view = 'casual', result = facts(), fail = false } = {}) {
+async function boot({ language = 'en-GB', view = 'casual', result = facts(), fail = false, chartAvailable = true } = {}) {
   const dom = fixture();
   dom.ids.lang.value = language;
   const requests = [];
   const stored = new Map([['vog-insight-view', view]]);
   let autoRefresh;
   let languageChanged;
+  const charts = [];
   const context = createContext({
+    Chart: chartAvailable ? class {
+      constructor(canvas, config) { this.canvas = canvas; Object.assign(this, config); charts.push(this); }
+      update(mode) { assert.equal(mode, 'none'); }
+      destroy() { this.destroyed = true; }
+    } : undefined,
     document: dom.document,
     localStorage: { getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value) },
     AbortController,
@@ -167,7 +173,7 @@ async function boot({ language = 'en-GB', view = 'casual', result = facts(), fai
   await renderer.evaluate();
   const settle = () => new Promise(resolve => setImmediate(resolve));
   await settle();
-  return { ...dom, requests, stored, autoRefresh, languageChanged, settle };
+  return { ...dom, requests, stored, autoRefresh, languageChanged, settle, charts };
 }
 
 test('selector changes translate existing DOM without losing focus, evidence or raw facts', async () => {
@@ -207,10 +213,8 @@ test('selector changes translate existing DOM without losing focus, evidence or 
     assert.equal(app.panel.querySelector(':scope > p:last-child').textContent, copy.disclosure);
     assert.equal(app.ids['insights-teams'].getAttribute('aria-label'), copy.counts);
     assert.deepEqual(app.ids['insights-teams'].children.map(group => group.children[0].textContent), copy.columns.slice(1));
-    const meter = descendants(app.ids['insights-teams']).find(node => node.getAttribute('role') === 'meter');
-    assert.equal(meter.getAttribute('aria-valuenow'), '4');
-    assert.equal(meter.getAttribute('aria-valuemax'), '4');
-    assert.equal(meter.getAttribute('aria-label'), `Home <img>: ${copy.columns[1]}`);
+    assert.deepEqual(Array.from(app.charts[0].data.labels), copy.columns.slice(1));
+    assert.equal(app.charts.length, 1);
     assert.equal(app.requests.length, 1);
   }
 });
@@ -225,36 +229,39 @@ test('Analyst chart compares scoped counts on one scale with exact accessible va
     const group = chart.children[index];
     assert.equal(group.children[0].textContent, recapCopy('en-GB').copy.columns[index + 1]);
     for (const [teamIndex, team] of result.teams.entries()) {
-      const [name, meter, count] = group.children[teamIndex + 1].children;
+      const [name, count] = group.children[teamIndex + 1].children;
       assert.equal(name.textContent, team.name);
       assert.equal(name.children.length, 0);
-      assert.equal(meter.getAttribute('aria-valuemin'), '0');
-      assert.equal(meter.getAttribute('aria-valuemax'), '4');
-      assert.equal(meter.getAttribute('aria-valuenow'), String(team[metric]));
-      assert.equal(meter.children[0].style.width, `${team[metric] / 4 * 100}%`);
+      assert.equal(app.charts[0].data.datasets[teamIndex].data[index], team[metric]);
       assert.equal(count.textContent, String(team[metric]));
     }
   }
   assert.equal(descendants(chart).some(node => ['table', 'tr', 'td'].includes(node.tagName)), false);
   assert.match(app.ids['insights-score'].textContent, /9 - 8/);
+  assert.equal(app.charts[0].type, 'bar');
+  assert.equal(app.charts[0].options.indexAxis, 'y');
+  assert.equal(app.charts[0].options.scales.x.max, 4);
 });
 
 test('Analyst chart keeps zero-count intervals visible and clears unavailable results', async () => {
   const result = facts(0);
   result.teams.forEach(team => { team.shots = 0; team.goals = 0; team.corners = 0; });
   const app = await boot({ view: 'analyst', result });
-  const meters = descendants(app.ids['insights-teams']).filter(node => node.getAttribute('role') === 'meter');
-  assert.equal(meters.length, 6);
   assert.equal(app.ids['insights-metrics'].hidden, false);
-  for (const meter of meters) {
-    assert.equal(meter.getAttribute('aria-valuenow'), '0');
-    assert.equal(meter.getAttribute('aria-valuemax'), '1');
-    assert.equal(meter.children[0].style.width, '0%');
-  }
+  assert.equal(app.charts[0].options.scales.x.max, 1);
+  assert.ok(app.charts[0].data.datasets.every(dataset => dataset.data.every(value => value === 0)));
   result.status = 'unavailable';
   await app.ids['refresh-insights'].emit('click');
   assert.equal(app.ids['insights-metrics'].hidden, true);
   assert.equal(app.ids['insights-teams'].children.length, 0);
+  assert.equal(app.charts[0].destroyed, true);
+});
+
+test('exact counts remain available when Chart.js cannot load', async () => {
+  const app = await boot({ view: 'analyst', chartAvailable: false });
+  assert.equal(app.ids['insights-chart-frame'].hidden, true);
+  assert.equal(app.ids['insights-teams'].children.length, 3);
+  assert.match(app.ids['insights-teams'].textContent, /Home <img>4/);
 });
 
 test('DOM root language changes, casual selection, view persistence and refresh guard remain intact', async () => {
