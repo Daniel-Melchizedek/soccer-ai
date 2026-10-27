@@ -3,7 +3,7 @@ const WIDTH = 68;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, homeKey, awayKey }) {
+export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, homeKey, awayKey, homeKeeperKey, awayKeeperKey }) {
   const context = canvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let message = null;
@@ -19,6 +19,8 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     teams = value;
     homeKey.textContent = teams.home;
     awayKey.textContent = teams.away;
+    homeKeeperKey?.style.setProperty('--keeper-colour', colours[teams.homeKit] ?? '#f0f0f0');
+    awayKeeperKey?.style.setProperty('--keeper-colour', colours[teams.awayKit] ?? '#f0f0f0');
     draw();
   }
 

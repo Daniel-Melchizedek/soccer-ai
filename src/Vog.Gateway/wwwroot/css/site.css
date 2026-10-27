@@ -470,7 +470,18 @@ input:disabled {
 
 .pitch-marker.keeper {
   border-radius: 0;
-  background: transparent;
+  width: 1.375rem;
+  height: 1.375rem;
+  justify-content: center;
+  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 5px), var(--keeper-colour, #e53935);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: bold;
+  text-shadow: -1px 0 #fff, 1px 0 #fff, 0 -1px #fff, 0 1px #fff;
+}
+
+.pitch-marker.keeper.away-keeper {
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.8) 0 1px, transparent 1px 5px), var(--keeper-colour, #1e63ff);
 }
 
 .pitch-marker.ball {

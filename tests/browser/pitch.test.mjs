@@ -12,6 +12,11 @@ for (const kits of [
   test(`goalkeepers follow ${kits.home}/${kits.away} kits and retain H/A labels`, async () => {
     const keeperFills = [];
     const labels = [];
+    const legendColours = {};
+    const keeperKey = team => ({ style: { setProperty(name, value) {
+      assert.equal(name, '--keeper-colour');
+      legendColours[team] = value;
+    } } });
     let shape = null;
     const drawing = new Proxy({
       beginPath() { shape = null; },
@@ -47,6 +52,8 @@ for (const kits of [
       follow: control(),
       homeKey: {},
       awayKey: {},
+      homeKeeperKey: keeperKey('home'),
+      awayKeeperKey: keeperKey('away'),
     });
     renderer.setTeams({ home: 'Home', away: 'Away', homeKit: kits.home, awayKit: kits.away });
     renderer.update({
@@ -57,6 +64,7 @@ for (const kits of [
       a: [[101, 34, 1, true], [75, 48, 9, false]],
     });
     assert.deepEqual(keeperFills, kits.fills);
+    assert.deepEqual([legendColours.home, legendColours.away], kits.fills);
     assert.ok(labels.includes('H1'));
     assert.ok(labels.includes('A1'));
     assert.equal(labels.filter(label => label === '9').length, 2);

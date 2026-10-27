@@ -29,6 +29,8 @@ const pitchMap = createPitchMap({
   follow: el('pitch-follow'),
   homeKey: el('pitch-home-key'),
   awayKey: el('pitch-away-key'),
+  homeKeeperKey: el('pitch-home-keeper-key'),
+  awayKeeperKey: el('pitch-away-keeper-key'),
 });
 const atmosphere = el('atmosphere-meter');
 const atmosphereText = el('atmosphere-text');
