@@ -33,6 +33,7 @@ public sealed class CommentaryHub(
             var group = textOnly ? $"{channel.Id}:text" : channel.Id;
             log.LogDebug("Adding listener {ConnectionId} to group {Group}", connectionId, group);
             await Groups.AddToGroupAsync(connectionId, group);
+            await broadcast.StartMatchAsync(Context.ConnectionAborted);
             if (!textOnly)
             {
                 log.LogDebug("Preparing speech and readout services for channel {Channel}", channel.Id);

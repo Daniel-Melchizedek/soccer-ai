@@ -13,7 +13,7 @@ Voice of the Game turns a synthetic football match into live audio description, 
 
 ## What works today
 
-Implementation status updated on **26 October 2026**: scoped recaps are deployed, all three Foundry companions are registered, and local/deployed browser checks passed as detailed below. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The new Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
+Implementation status updated on **26 October 2026** (session date; latest rollout telemetry reports 27 October UTC): first-listener kickoff, team-coloured goalkeepers, bounded speech delivery, text catch-up and recap localization are deployed. All three Foundry companions remain registered. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
 
 The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, with no cloud services needed:
 
@@ -25,23 +25,38 @@ The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, wi
 | (d) Schedule | `Vog.Booth` | The **Booth Producer**: decides what is spoken when on a serial audio channel, using priorities, preemption, staleness rules, location obligations and dead-ball colour |
 | Composition | `Vog.Pipeline` | Runs everything together. Intents are computed once and rendered per channel (language × mode). |
 | Speech and captions | `Vog.Voice` | Azure neural voices authenticated with Microsoft Entra ID, 24 kHz PCM streaming and word-timed caption generation (WebVTT, at most 2 lines of 37 characters). Offline utilities support word-boundary cuts; live playback uses a sample-limit fade for interruption. |
-| (e) Render, live | `Vog.Gateway` | Plays a seeded synthetic match at natural 1x speed by default, on a shared wall-clock schedule. Full mode-specific narration streams as audio with word-timed captions. The listener page plays audio through an AudioWorklet, with procedural earcons panned to where the action is. |
+| (e) Render, live | `Vog.Gateway` | Plays a seeded synthetic match at natural 1x speed by default, starting when the first listener joins. Later listeners join the same match in progress. Full mode-specific narration streams as audio with word-timed captions. The listener page plays audio through an AudioWorklet, with procedural earcons panned to where the action is. |
 | Ask about the match | Foundry agent `vog-match-companion-<lang>` + `Vog.Companion` | Tap-to-ask with local silence auto-stop, optional hold-to-talk, or typed questions through Azure Voice Live in agent mode. The gateway exposes six read-only MCP tools at `/mcp/<lang>`, including `get_match_recap`; all three registered agents have the updated allowlist and recap grounding prompt. Commentary is muted while recording and ducked during answers. |
 
 The browser also provides independent commentary/answer/event/ball/crowd levels, ball sonification, supported-device haptics, sound learning, clear-speech and gentle-sound settings, sound tags and an atmosphere meter. Caption size, colours, opacity, outline, font and position are configurable; preferences are stored on the device. The pitch map has zoom, follow-ball, shape/number markers and a polite position description. Calm changes commentary cadence and pass filtering; crowd and gentle-sound settings are independent.
 
 Still planned: hosted Foundry workflows (Insight Desk, workflow-based recap, transcreation and spoken post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Easy-read captions, Immersive Reader and hands-free live-reference echo cancellation. Deterministic scoped recaps and local text catch-up are implemented as described below, not as hosted workflows. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
-### Pending-Feature Batch: Local Source Only
+### Latest Release: Kickoff And Team-Coloured Goalkeepers
 
-The following changes are implemented and tested locally on 26 October 2026, but **not committed or deployed**. The deployed application remains `8cf6074`.
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=teamkeepers-797caac-d53dc5d6a5ea
+
+- The first valid listener, including text-only, starts the shared match at zero. Later/concurrent joins, channel switches and Stop/Start do not reset it. Matches continue after listeners leave; a gateway restart creates a fresh first-listener kickoff. Separate gateways are not automatically synchronized.
+- Goalkeepers use their team's kit colour, larger square markers, `H1`/`A1` labels and opposite diagonal hatching. Outfield markers and the yellow ball are unchanged. The legend explains the home/away labels.
+- ACR run **`dts`** built the release from base **`797caac`** plus the scoped working-tree fixes, before their release commit. All **117 application/build/test files** in the clean snapshot matched the worktree; generated outputs and local settings were excluded. Snapshot SHA256: `d53dc5d6a5ea6a205470eca778d532364fa5fe4b2d00a91f0a79687bd34dea2c`. Build telemetry reports completion at `2026-10-27T05:49:00Z`.
+- Immutable image: `crvogdevy6po56.azurecr.io/vog-gateway@sha256:f03affe3356749d7f9ed2accaed4567f2a3eebbf9688d37e5675f47ecf601828`. Revision **`ca-vog-dev-gateway--teamkeepers-797caac-d53dc5d6a5ea`** was Healthy, latest-ready, one replica and 100% traffic. Configuration fingerprint matched before/after: `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`. No infrastructure, secrets, storage or Foundry registrations changed; seed `20261026`, speed `1`, break `120` and nine channels remain intact.
+- Verification: **136 .NET Release tests** and **26 Node browser tests** passed, zero failures/skips. The two renderer tests cover red/blue and swapped blue/red kits, H/A labels and unchanged outfield shirt numbers. The new image also published successfully in ACR.
+- Deployed health returned 200; before joining, score was `Not started` and recap correctly reported no kickoff. First displayed clock was **00:01**. Actual canvas observations recorded keeper fills `#e53935` and `#1e63ff` with `H1`/`A1`. Stop/Start continued from **01:12 to 01:13**, rather than resetting.
+- Bounded English AD observation received **306 PCM messages, 20 caption messages and 28 answer-audio messages**. The score shortcut answered "Inside the first minute. Reds 0, Blues 0," matching the scoreboard at question time; text catch-up reported a four-second interval with no received commentary. This is delivery/grounding evidence, not subjective audio or microphone acceptance.
+- Actual widths 320/390/1280 had no horizontal overflow and nonblank pitch pixels. The screenshot tool returned an incorrect crop, so full visual acceptance remains open. Test listening was stopped and all temporary canvas/WebSocket observation hooks removed; no fixture routes or asset overrides were installed. The deployed shared match continues in progress.
+
+Browser checks: `node --experimental-vm-modules --test tests/browser/insights.test.mjs tests/browser/catchup.test.mjs tests/browser/pitch.test.mjs`. Release tests: `dotnet test --solution VoiceOfTheGame.slnx --configuration Release --artifacts-path TestResults/listener-kickoff`.
+
+### Speech, Catch-Up And Recap Localization
+
+The following changes were implemented and tested locally on 26 October 2026 in **`797caac`** and are now included in the deployed release above.
 
 - Speech workers now use the existing 64-entry priority-aware queue. Overflow rejects/evicts an utterance, records a server skip and sends the browser a skip notification. Even critical-only overflow remains bounded by retaining newer calls. Failed synthesis gets at most one retry on a fresh synthesizer, only before any nonempty audio was emitted; partial audio is never replayed. Warm-up keeps retrying with cancellation. Per-utterance PCM chunk buffering remains unbounded, and the existing `skippedStale` metric also includes overflow skips.
 - Post-answer **text-only** catch-up captures received commentary from question activation/submission through answer playback completion. It prioritizes goals/cards, retains up to six major moments, labels source language, and distinguishes empty, truncated and failed intervals. It cannot report events absent from received commentary. It adds no model calls and does not speak or replay commentary. Explanatory catch-up text remains English.
 - Overlapping questions are blocked. Stop, channel change and reconnect discard catch-up and stale answer callbacks; channel changes establish a fresh connection. A 120-second watchdog bounds stalled interactions. After a sent question fails or times out, Stop/Start is required before asking again because responses lack server-side question correlation tokens. This deliberately conservative recovery remains a UX limitation.
 - Recap controls and generated labels follow English, Spanish or Tamil selection. Spanish/Tamil translations are explicitly draft; server facts, explanations and limitations remain English with accurate language tags. Focus and open source evidence survive label changes.
 - Validation: **132 .NET Release tests** and **24 Node browser tests** passed, zero failures/skips. Local browser fixtures verified all three recap languages at widths 1280/390/320, open evidence and source-language tags, with no horizontal overflow or captured page errors. Fixtures were removed; these checks are not live Azure acceptance. Mobile screenshot output remains compressed, so full visual/native-language/assistive-technology review is still required.
-- Local gateway launch is blocked by missing `VOG_KEY_VAULT_URI` and local configuration. Do not provision again just to restore developer settings. A static frontend-only preview is running at `http://127.0.0.1:5093/`; it has no SignalR, recap/history API or companion backend.
+- Local gateway startup is restored using Azure CLI login and the ignored VS Code task **Run gateway locally**, with known nonsecret endpoints and Key Vault configuration. The actual Release gateway runs at `http://127.0.0.1:5093/`; local archiving is disabled. Companion tools read deployed MCP, so local and deployed match facts must not be assumed synchronized. See the latest release above and [NEXT_SESSION.md](NEXT_SESSION.md) for live evidence and remaining human acceptance checks.
 
 Run the new checks with `dotnet test --solution VoiceOfTheGame.slnx --configuration Release --artifacts-path TestResults/pending-features` and `node --experimental-vm-modules --test tests/browser/insights.test.mjs tests/browser/catchup.test.mjs`.
 
@@ -51,11 +66,13 @@ The public, `no-store` endpoint `/insights?scope=recent|match|halftime|fulltime&
 
 - `recent` covers at most two match-clock minutes, clamped within the current half; `match` covers the match so far.
 - `halftime` is unavailable until the first half ends, then remains first-half-only. `fulltime` is unavailable until the final whistle.
-- Local panel controls support English, Spanish and Tamil (draft translations); server-authored evidence remains English, with that limitation disclosed. The deployed `8cf6074` panel is still English-only. Casual selects up to five decisive/latest highlights; Analyst shows the last 40 highlights and a raw event-count table. Native shot meters and expandable source event IDs expose the evidence.
+- Browser panel controls support English, Spanish and Tamil (draft translations); server-authored evidence remains English, with that limitation disclosed. Casual selects up to five decisive/latest highlights; Analyst shows the last 40 highlights and a raw event-count table. Native shot meters and expandable source event IDs expose the evidence.
 - Auto-refresh runs every 15 seconds, pausing in hidden tabs or while focus is in the panel or evidence is open. The nine live listening channels and natural defaults remain unchanged: seed `20261026`, speed `1`, break `120` seconds.
 - Reported full-solution Release result: **128 tests passed**, including **23 companion** and **15 gateway** tests. Six new recap tests cover actual goal-event evidence/deduplication, halftime isolation, availability validation, second-half boundaries, inclusion of the final event in fulltime counts, and empty intervals. These are test results, not deployed-browser acceptance.
 
 ### Latest Recap Release Verification: 26 October 2026
+
+This historical recap rollout is superseded by [the latest kickoff/goalkeeper release](#latest-release-kickoff-and-team-coloured-goalkeepers). Its acceptance observations remain scoped to that older image.
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=recaps-8cf6074
 
@@ -255,7 +272,9 @@ Historical Azure measurement (Sweden Central; not rerun in this review). See the
 
 Answer latency includes relay, Voice Live, agent and MCP tool work; these aggregate timings do not isolate each component. Bringing it down remains work for the companion. Current speech/companion queues are unbounded, and the 50-question limit is per conversation, resetting on reconnection/language change; it is not durable authentication, rate limiting or cost protection. Queue bounding, session lifecycle and provisioning-secret error handling need later code hardening.
 
-Matches use a fixed wall-clock schedule from 1 October 2026. Gateways can agree on match state only when their seed, speed, break and schedule agree. The companion reads its registered gateway's MCP context; matching state must be checked rather than inferred from the schedule alone.
+The current source starts a shared match at zero when the first valid listener joins a gateway. Later joins, channel switches and Stop/Start do not reset other listeners' match. Once started, matches continue at natural 1x speed with the configured breaks; restarting the gateway establishes a new first-listener kickoff. Separate gateways no longer automatically share an epoch. The companion reads its registered gateway's MCP context; locally it still reads the deployed match, not the local match. These kickoff changes are not deployed.
+
+Goalkeepers remain gold squares, distinguished by home/away labels (`H1`/`A1`) and opposite diagonal hatching. Fresh validation for these local fixes: **136 .NET Release tests passed**, zero failures/skips; live pitch capture and 320/390/1280 reflow checks passed. See [NEXT_SESSION.md](NEXT_SESSION.md) for the verification scope.
 ## Repository layout
 
 ```

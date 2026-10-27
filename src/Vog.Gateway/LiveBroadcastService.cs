@@ -28,6 +28,8 @@ public sealed class LiveBroadcastService(
 
     private readonly ConcurrentDictionary<string, Lazy<SpeechWorker>> _workers = new();
     private readonly Uri _endpoint = azure.Value.SpeechEndpoint!;
+    private readonly TaskCompletionSource _firstListener = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _matchReady = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private MatchPipeline? _pipeline;
 
     public MatchInfo? Info => _pipeline?.Info;
@@ -35,12 +37,23 @@ public sealed class LiveBroadcastService(
     /// <summary>The live match as of the latest tick, for the companion's tools.</summary>
     public MatchSnapshot? Snapshot => _pipeline?.Snapshot;
 
+    public async Task StartMatchAsync(CancellationToken cancellationToken)
+    {
+        _firstListener.TrySetResult();
+        await _matchReady.Task.WaitAsync(cancellationToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        var seed = options.Value.Seed;
+        var matchLength = MatchSchedule.LengthOf(GoldenMatch.Setup(seed));
+        await _firstListener.Task.WaitAsync(stoppingToken);
+        var schedule = new MatchSchedule(matchLength, TimeSpan.FromSeconds(options.Value.BreakSeconds), options.Value.Speed)
+        {
+            StartsAt = DateTimeOffset.UtcNow,
+        };
         var state = BroadcastStateAsync(stoppingToken);
         var pitch = BroadcastPitchAsync(stoppingToken);
-        var seed = options.Value.Seed;
-        var schedule = new MatchSchedule(MatchSchedule.LengthOf(GoldenMatch.Setup(seed)), TimeSpan.FromSeconds(options.Value.BreakSeconds), options.Value.Speed);
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -55,7 +68,8 @@ public sealed class LiveBroadcastService(
 
                 var runner = new LiveMatchRunner(GoldenMatch.Setup(seed), directory.Available, options.Value.Speed);
                 _pipeline = runner.Pipeline;
-                log.LogInformation("Joining {Home} v {Away} (seed {Seed}) {Minutes:0.0} minutes in, on the schedule every gateway shares", Info!.Home.Name, Info.Away.Name, seed, matchMs.Value / 60_000.0);
+                _matchReady.TrySetResult();
+                log.LogInformation("Starting shared {Home} v {Away} (seed {Seed}) {Minutes:0.0} minutes in", Info!.Home.Name, Info.Away.Name, seed, matchMs.Value / 60_000.0);
                 await runner.RunAsync(OnBoothEventAsync, stoppingToken, () => schedule.At(DateTimeOffset.UtcNow).MatchMs ?? long.MaxValue);
 
                 // Archive a lightweight match summary after each completed match.

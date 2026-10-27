@@ -4,14 +4,15 @@ using Vog.Simulator;
 namespace Vog.Pipeline;
 
 /// <summary>
-/// Kick-offs on a fixed wall-clock schedule, the same for every gateway: matches run back to back from
-/// <see cref="Epoch"/>, each followed by a break. The match is deterministic, so a gateway that starts
-/// mid-match fast-forwards to the scheduled moment and is then in step with every other gateway: all
-/// listeners, and the agents' tools reading the deployed gateway, are at the same point of the match.
+/// Matches run back to back from <see cref="StartsAt"/>, each followed by a break.
+/// The default start is <see cref="Epoch"/>; gateways can supply their first-listener kickoff.
+/// Matching schedules and simulation options are required to synchronize separate gateways.
 /// </summary>
 public sealed record MatchSchedule(long MatchLengthMs, TimeSpan Break, double Speed)
 {
     public static readonly DateTimeOffset Epoch = new(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+
+    public DateTimeOffset StartsAt { get; init; } = Epoch;
 
     /// <summary>Wall-clock length of one match and its break.</summary>
     public TimeSpan Cycle => TimeSpan.FromMilliseconds(MatchLengthMs / Speed) + Break;
@@ -22,7 +23,12 @@ public sealed record MatchSchedule(long MatchLengthMs, TimeSpan Break, double Sp
     /// </summary>
     public (long? MatchMs, TimeSpan UntilKickOff) At(DateTimeOffset now)
     {
-        var intoCycle = TimeSpan.FromTicks((now - Epoch).Ticks % Cycle.Ticks);
+        if (now < StartsAt)
+        {
+            return (null, StartsAt - now);
+        }
+
+        var intoCycle = TimeSpan.FromTicks((now - StartsAt).Ticks % Cycle.Ticks);
         var matchMs = (long)(intoCycle.TotalMilliseconds * Speed);
         return matchMs < MatchLengthMs ? (matchMs, TimeSpan.Zero) : (null, Cycle - intoCycle);
     }

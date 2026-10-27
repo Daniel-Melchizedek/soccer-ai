@@ -187,7 +187,7 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       const position = point(x, y);
       context.beginPath();
       if (goalkeeper) {
-        context.rect(position.x - 8, position.y - 8, 16, 16);
+        context.rect(position.x - 11, position.y - 11, 22, 22);
       } else if (isHome) {
         context.arc(position.x, position.y, 9, 0, Math.PI * 2);
       } else {
@@ -197,21 +197,17 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
         context.closePath();
       }
 
-      // Goalkeepers use gold (#ffd400) regardless of kit colour, matching the legend.
-      // Shape and shirt number remain the primary accessible signals; colour closes the
-      // legend-vs-canvas gap for sighted and low-vision users.
-      context.fillStyle = goalkeeper ? '#ffd400' : fill;
+      context.fillStyle = fill;
       context.fill();
       // A diagonal hatch makes the two teams distinguishable without relying on colour.
-      // For goalkeepers (gold fill) use dark stripes to maintain contrast.
       context.save();
       context.clip();
-      context.strokeStyle = goalkeeper ? 'rgba(0, 0, 0, 0.55)' : (isHome ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)');
+      context.strokeStyle = isHome ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)';
       context.lineWidth = 1.25;
       for (let offset = -12; offset <= 12; offset += 5) {
         context.beginPath();
         context.moveTo(position.x - 12, position.y + offset);
-        context.lineTo(position.x + 12, position.y + offset - 12);
+        context.lineTo(position.x + 12, position.y + offset + (goalkeeper && !isHome ? 12 : -12));
         context.stroke();
       }
       context.restore();
@@ -227,8 +223,9 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       const ball = point(clamp(Number(message.b?.[0]) || 0, 0, LENGTH), clamp(Number(message.b?.[1]) || 0, 0, WIDTH));
       const overlapsBall = Math.hypot(position.x - ball.x, position.y - ball.y) < 24;
       const numberY = overlapsBall ? position.y + (position.y < canvas.height / (window.devicePixelRatio || 1) / 2 ? 25 : -25) : position.y;
-      context.strokeText(String(number), position.x, numberY);
-      context.fillText(String(number), position.x, numberY);
+      const label = goalkeeper ? `${isHome ? 'H' : 'A'}${number}` : String(number);
+      context.strokeText(label, position.x, numberY);
+      context.fillText(label, position.x, numberY);
     }
   }
 

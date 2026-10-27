@@ -9,6 +9,27 @@ namespace Vog.Gateway.Tests;
 public sealed class BroadcastOptionsTests
 {
     [Fact]
+    public void SharedScheduleStartsAtZeroAndLaterListenersJoinInProgress()
+    {
+        var kickoff = new DateTimeOffset(2026, 10, 26, 12, 0, 0, TimeSpan.Zero);
+        var schedule = new MatchSchedule(90 * 60_000, TimeSpan.FromSeconds(120), 1) { StartsAt = kickoff };
+        Assert.Equal(0L, schedule.At(kickoff).MatchMs);
+        Assert.Equal(81 * 60_000L, schedule.At(kickoff.AddMinutes(81)).MatchMs);
+        Assert.Equal((null, TimeSpan.FromSeconds(1)), schedule.At(kickoff.AddSeconds(-1)));
+    }
+
+    [Fact]
+    public void SharedSchedulePreservesNaturalRateAndBreakBeforeNextKickoff()
+    {
+        var kickoff = new DateTimeOffset(2026, 10, 26, 12, 0, 0, TimeSpan.Zero);
+        var schedule = new MatchSchedule(90 * 60_000, TimeSpan.FromSeconds(120), 1) { StartsAt = kickoff };
+        Assert.Equal((null, TimeSpan.FromSeconds(120)), schedule.At(kickoff.AddMinutes(90)));
+        Assert.Equal((null, TimeSpan.FromSeconds(1)), schedule.At(kickoff.AddMinutes(92).AddSeconds(-1)));
+        Assert.Equal(0L, schedule.At(kickoff.AddMinutes(92)).MatchMs);
+        Assert.Equal(1000L, schedule.At(kickoff.AddMinutes(92).AddSeconds(1)).MatchMs);
+    }
+
+    [Fact]
     public void AppDefaultsUseNaturalPlaybackAndTwoMinuteBreak()
     {
         var defaults = new BroadcastOptions();
