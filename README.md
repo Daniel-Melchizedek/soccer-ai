@@ -11,6 +11,10 @@ Voice of the Game turns a synthetic football match into live audio description, 
 
 > The live match uses synthetic events with fictional generated leagues, clubs and players. A separate [Football history page](src/Vog.Gateway/wwwroot/football-history.html), linked only from the listener footer, uses real CC0 international results. Separating pages does not establish compliance with the hackathon's synthetic-data requirement; resolve submission scope before claiming eligibility. Historical data does not feed the simulation, recaps or companion.
 
+## Latest Caption And Analyst Release: 27 October 2026
+
+Application **`2020eb5`** is pushed and deployed as Healthy revision **`ca-vog-dev-gateway--captions-2020eb5`**, with 100% traffic. Analyst has a lighter chart surface, larger labels and named red/blue team colours. Captions default to a prominent fixed-bottom display, with bounded scrolling for long text; explicitly saved panel preferences remain respected. The original dynamic count axis is unchanged, including a 0-1 range when counts are zero or one. **42 browser tests** passed; the 11 Analyst tests passed again after removing a temporary axis-floor experiment. Live health/assets returned 200, and browser checks confirmed Chart.js 4.5.1, team colours and fixed captions. No fresh live audio pass is claimed. Configuration, identities and non-image template settings matched the pre-deployment snapshot. See [handoff](NEXT_SESSION.md) for the image digest and rollback. Release records below describe earlier deployments.
+
 ## Chart.js And Football History: 27 October 2026
 
 The Analyst view now uses locally served **Chart.js 4.5.1**, not custom bars. Localized exact counts remain available alongside the chart and if the library fails to load. All metrics share one zero-based scale; unavailable recaps hide the chart. The Audio latency label describes the measured server-send to browser audio-start delay, not total event-to-ear latency.

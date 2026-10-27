@@ -2,7 +2,15 @@
 
 Updated: 27 October 2026.
 
-## Latest Chart.js And Football History Release
+## Latest Caption And Analyst Release
+
+Application **`2020eb5`** is pushed and deployed, including readability commit `0b1d641`. Analyst uses a light chart surface, larger labels and team-name-based Reds/red and Blues/blue colours, including reversed team order. Captions default to fixed-bottom placement with stronger contrast; saved panel preferences remain respected. Long captions are bounded to 45dvh with scrolling. The original dynamic count axis remains unchanged: maximum is the largest scoped count, with a minimum of one. The temporary minimum-five experiment was fully reverted and the worktree was clean before deployment.
+
+ACR build **`dt10`** used a clean archive of `2020eb5`, finishing `2026-10-27T11:55:56Z`. Active/latest-ready revision **`ca-vog-dev-gateway--captions-2020eb5`** uses `crvogdevy6po56.azurecr.io/vog-gateway@sha256:12f751a5550fb3b2c2721a2d21a44c6294eed70132c0e82603b6267df2984521`. Azure confirmed Healthy, one replica and 100% traffic. Configuration, identity and template comparison matched the pre-deployment snapshot after excluding only image and revision suffix. No infrastructure, storage or Foundry-registration changes. Rollback image: `crvogdevy6po56.azurecr.io/vog-gateway@sha256:20764384c2736ac9e81983109292bf81dd7ce3fa224300a065bcf838e07e4bfa`.
+
+Verification: **42 browser-module tests** passed; **11 Analyst tests** passed again after the axis experiment was reverted. Staged Gitleaks, editor diagnostics and whitespace checks passed. Local desktop/320px checks covered floating captions while scrolling, no horizontal overflow and bounded XL Tamil text. Public `/healthz` and changed JS/CSS returned 200; the live browser confirmed Chart.js 4.5.1, named team colours, original dynamic scaling and fixed-bottom caption styling. No live listener was started for this deployment check; a fresh live audio pass is not claimed. This release-record follow-up is documentation-only and needs no rebuild. Earlier release records below are historical.
+
+## Previous Chart.js And Football History Release
 
 Application commit **`e61e110`** is pushed and deployed. Analyst uses the official, locally vendored **Chart.js 4.5.1** UMD bundle (MIT), with exact localized counts retained. A shared zero-based scale, unavailable-state hiding and recap behavior remain intact. The listener label is **Audio latency**: server-send to browser audio-start, not total event-to-ear latency. A small footer link opens `/football-history.html`.
 
