@@ -37,9 +37,7 @@ function localize(languageCode) {
   panel.querySelector('label[for="recap-scope"]').textContent = copy.recap;
   for (const option of element('recap-scope').options) option.textContent = copy.scopes[option.value];
   element('refresh-insights').textContent = copy.refresh;
-  panel.querySelector('table').setAttribute('aria-label', copy.counts);
-  panel.querySelectorAll('thead th').forEach((cell, index) => { cell.textContent = copy.columns[index]; });
-  element('shot-comparison').setAttribute('aria-label', copy.comparison);
+  element('insights-teams').setAttribute('aria-label', copy.counts);
   panel.querySelector(':scope > p:last-child').textContent = copy.disclosure;
   for (const update of translations.values()) update();
 }
@@ -51,7 +49,6 @@ function render() {
   element('insights-metrics').hidden = !available || !analyst;
   element('insights-highlights').replaceChildren();
   element('insights-teams').replaceChildren();
-  element('shot-comparison').replaceChildren();
   element('insights-score').textContent = '';
   element('insights-limitations').textContent = '';
   if (!available) {
@@ -96,29 +93,34 @@ function render() {
     }
     element('insights-highlights').append(row);
   }
-  for (const team of current.teams) {
-    const row = document.createElement('tr');
-    for (const [index, value] of [team.name, team.shots, team.goals, team.corners].entries()) {
-      const cell = document.createElement(index === 0 ? 'th' : 'td');
-      if (index === 0) {
-        cell.scope = 'row';
-        cell.lang = 'en';
-      }
-      cell.textContent = value;
-      row.append(cell);
+  const metrics = ['shots', 'goals', 'corners'];
+  const maximum = Math.max(1, ...current.teams.flatMap(team => metrics.map(metric => team[metric])));
+  for (const [metricIndex, metric] of metrics.entries()) {
+    const group = document.createElement('div');
+    group.className = 'insight-count-group';
+    const heading = document.createElement('h3');
+    translated(heading, text => text.columns[metricIndex + 1]);
+    group.append(heading);
+    for (const [teamIndex, team] of current.teams.entries()) {
+      const row = document.createElement('div');
+      row.className = `insight-count-row ${teamIndex === 0 ? 'home' : 'away'}`;
+      const track = document.createElement('span');
+      track.className = 'insight-count-track';
+      track.setAttribute('role', 'meter');
+      track.setAttribute('aria-valuemin', '0');
+      track.setAttribute('aria-valuemax', maximum);
+      track.setAttribute('aria-valuenow', team[metric]);
+      translated(track, text => `${team.name}: ${text.columns[metricIndex + 1]}`, 'aria-label');
+      const fill = document.createElement('span');
+      fill.className = 'insight-count-fill';
+      fill.style.width = `${team[metric] / maximum * 100}%`;
+      track.append(fill);
+      const count = document.createElement('strong');
+      count.textContent = team[metric];
+      row.append(english(team.name), track, count);
+      group.append(row);
     }
-    element('insights-teams').append(row);
-    const label = document.createElement('label');
-    const shots = document.createElement('span');
-    translated(shots, text => `${text.shots(team.shots)} `);
-    label.append(english(`${team.name}: `), shots);
-    const meter = document.createElement('meter');
-    meter.min = 0;
-    meter.max = Math.max(1, ...current.teams.map(item => item.shots));
-    meter.value = team.shots;
-    translated(meter, text => text.shotsLabel(team.name), 'aria-label');
-    label.append(meter);
-    element('shot-comparison').append(label);
+    element('insights-teams').append(group);
   }
   const limitations = element('insights-limitations');
   if (analyst) limitations.append(english(`${current.limitations} `));

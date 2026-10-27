@@ -40,6 +40,7 @@ class Element {
     this.attributes = {};
     this.listeners = {};
     this.selectors = {};
+    this.style = {};
     this.text = '';
   }
   set textContent(value) {
@@ -87,7 +88,7 @@ function fixture() {
   document.createElement = tag => new Element(tag);
   const ids = Object.fromEntries([
     'match-insights', 'insights-heading', 'insights-metrics', 'insights-highlights',
-    'insights-teams', 'shot-comparison', 'insights-score', 'insights-limitations',
+    'insights-teams', 'insights-score', 'insights-limitations',
     'insights-status', 'recap-scope', 'refresh-insights', 'lang'
   ].map(id => [id, new Element()]));
   document.getElementById = id => ids[id] ?? null;
@@ -103,12 +104,11 @@ function fixture() {
     return input;
   });
   document.selectors['input[name="insight-view"]'] = radios;
-  for (const selector of ['legend', 'label[for="recap-scope"]', 'table', ':scope > p:last-child']) {
+  for (const selector of ['legend', 'label[for="recap-scope"]', ':scope > p:last-child']) {
     const node = new Element();
     panel.selectors[selector] = [node];
     panel.append(node);
   }
-  panel.selectors['thead th'] = Array.from({ length: 4 }, () => new Element('th'));
   ids['recap-scope'].options = ['recent', 'match', 'halftime', 'fulltime'].map(value => {
     const option = new Element('option');
     option.value = value;
@@ -205,14 +205,56 @@ test('selector changes translate existing DOM without losing focus, evidence or 
     assert.equal(app.ids['insights-limitations'].children[0].lang, 'en');
     assert.match(app.ids['insights-limitations'].textContent, /Counts cover only this interval/);
     assert.equal(app.panel.querySelector(':scope > p:last-child').textContent, copy.disclosure);
-    assert.equal(app.panel.querySelector('table').getAttribute('aria-label'), copy.counts);
-    assert.deepEqual(app.panel.querySelectorAll('thead th').map(cell => cell.textContent), copy.columns);
-    const meter = descendants(app.ids['shot-comparison']).find(node => node.tagName === 'meter');
-    assert.equal(meter.value, 4);
-    assert.equal(meter.max, 4);
-    assert.equal(meter.getAttribute('aria-label'), copy.shotsLabel('Home <img>'));
+    assert.equal(app.ids['insights-teams'].getAttribute('aria-label'), copy.counts);
+    assert.deepEqual(app.ids['insights-teams'].children.map(group => group.children[0].textContent), copy.columns.slice(1));
+    const meter = descendants(app.ids['insights-teams']).find(node => node.getAttribute('role') === 'meter');
+    assert.equal(meter.getAttribute('aria-valuenow'), '4');
+    assert.equal(meter.getAttribute('aria-valuemax'), '4');
+    assert.equal(meter.getAttribute('aria-label'), `Home <img>: ${copy.columns[1]}`);
     assert.equal(app.requests.length, 1);
   }
+});
+
+test('Analyst chart compares scoped counts on one scale with exact accessible values', async () => {
+  const result = facts(0);
+  result.score = { home: 9, away: 8 };
+  const app = await boot({ view: 'analyst', result });
+  const chart = app.ids['insights-teams'];
+  assert.equal(chart.children.length, 3);
+  for (const [index, metric] of ['shots', 'goals', 'corners'].entries()) {
+    const group = chart.children[index];
+    assert.equal(group.children[0].textContent, recapCopy('en-GB').copy.columns[index + 1]);
+    for (const [teamIndex, team] of result.teams.entries()) {
+      const [name, meter, count] = group.children[teamIndex + 1].children;
+      assert.equal(name.textContent, team.name);
+      assert.equal(name.children.length, 0);
+      assert.equal(meter.getAttribute('aria-valuemin'), '0');
+      assert.equal(meter.getAttribute('aria-valuemax'), '4');
+      assert.equal(meter.getAttribute('aria-valuenow'), String(team[metric]));
+      assert.equal(meter.children[0].style.width, `${team[metric] / 4 * 100}%`);
+      assert.equal(count.textContent, String(team[metric]));
+    }
+  }
+  assert.equal(descendants(chart).some(node => ['table', 'tr', 'td'].includes(node.tagName)), false);
+  assert.match(app.ids['insights-score'].textContent, /9 - 8/);
+});
+
+test('Analyst chart keeps zero-count intervals visible and clears unavailable results', async () => {
+  const result = facts(0);
+  result.teams.forEach(team => { team.shots = 0; team.goals = 0; team.corners = 0; });
+  const app = await boot({ view: 'analyst', result });
+  const meters = descendants(app.ids['insights-teams']).filter(node => node.getAttribute('role') === 'meter');
+  assert.equal(meters.length, 6);
+  assert.equal(app.ids['insights-metrics'].hidden, false);
+  for (const meter of meters) {
+    assert.equal(meter.getAttribute('aria-valuenow'), '0');
+    assert.equal(meter.getAttribute('aria-valuemax'), '1');
+    assert.equal(meter.children[0].style.width, '0%');
+  }
+  result.status = 'unavailable';
+  await app.ids['refresh-insights'].emit('click');
+  assert.equal(app.ids['insights-metrics'].hidden, true);
+  assert.equal(app.ids['insights-teams'].children.length, 0);
 });
 
 test('DOM root language changes, casual selection, view persistence and refresh guard remain intact', async () => {
