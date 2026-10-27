@@ -1,8 +1,20 @@
 # Next Session Handoff
 
-Updated: 26 October 2026 (session date; latest rollout telemetry reports 27 October UTC).
+Updated: 27 October 2026.
 
-## Latest Layout Follow-Up
+## Latest History And Follow-Ball Checks
+
+Application commit **`b47dd50`** is pushed and deployed. Archive reads now select the newest summary per `(seed, homeName, awayName)` before the ten-fixture limit; different seeds/teams stay distinct. No historical blobs, write paths or simulation defaults changed. The browser also replaces Loading after failed requests/JSON parsing, using plain-text nodes for status and results.
+
+ACR **`dtv`** built a clean archive of the pushed commit (completion `2026-10-27T07:07:32Z`). Active revision **`ca-vog-dev-gateway--historyfixes-b47dd50`** uses `crvogdevy6po56.azurecr.io/vog-gateway@sha256:3a4fa853c10ed64eaf8380584be92af71dab06a70f7cafacbdb5592124d471dd`. Azure confirmed Healthy, ready, one replica and 100% traffic. Configuration fingerprint remains `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`; no infrastructure, secrets, storage or Foundry-registration changes.
+
+Verification: **4 .NET archive-selection tests** and **32 browser tests** passed. Commands: `dotnet test --project tests/Vog.Gateway.Tests --configuration Release --artifacts-path TestResults/history-fixes --filter-query '/*/*/MatchArchiveServiceTests/*'`; `node --experimental-vm-modules --test tests/browser/insights.test.mjs tests/browser/catchup.test.mjs tests/browser/pitch.test.mjs tests/browser/history.test.mjs`. Live `/healthz` and `/history` returned 200. Endpoint and polite DOM list both showed one unique Norton Borough / Brackworth Town fixture, rather than ten repeated results. Deduplication is a unique seeded-fixture view, not deletion or a diagnosis of paired archive-write timestamps.
+
+The user's Follow the ball question was tested against real match frames on the preceding `historylayout-d2e8911` image: full-pitch Follow left the viewport unchanged; at 2x ten samples panned with the ball remaining visible; Follow off kept the field fixed across five frames. At pitch edges the ball need not remain centred. Unchecking restores a fixed central viewport; the ball can leave a zoomed fixed view. A new actual-module test covers full-pitch behavior, interior following, both boundary corners, disabling Follow and zoom reset. Production pitch code did not change. Test listening stopped, zoom returned to 1x, Follow unchecked and all temporary canvas observers removed before deployment.
+
+Shared live page: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=historyfixes-b47dd50 ; left not listening. No fresh full .NET suite, natural completed archive round trip or full visual/accessibility acceptance is claimed. Documentation-only follow-up needs no rebuild. The following rollout records are historical.
+
+## Previous Layout Follow-Up
 
 Application commit **`d2e8911`** is pushed to `origin/main` and deployed. The unchanged Recent matches section now sits directly below Match intelligence and before Latency; no JavaScript, backend or archive behavior changed.
 

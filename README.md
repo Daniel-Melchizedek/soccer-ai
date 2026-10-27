@@ -13,7 +13,7 @@ Voice of the Game turns a synthetic football match into live audio description, 
 
 ## What works today
 
-Implementation status updated on **26 October 2026** (session date; latest rollout telemetry reports 27 October UTC): first-listener kickoff, team-coloured goalkeepers, bounded speech delivery, text catch-up and recap localization are deployed. All three Foundry companions remain registered. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
+Implementation status updated on **27 October 2026**: first-listener kickoff, team-coloured goalkeepers, bounded speech delivery, text catch-up, recap localization and deduplicated fixture history are deployed. All three Foundry companions remain registered. The listener is static JavaScript served by the ASP.NET Core gateway, using self-hosted SignalR with JSON and AudioWorklet playback. It is not a Blazor app and does not use Azure SignalR, Fabric or hosted-agent workflows. Live configuration still exposes nine channels: English, Spanish and Tamil, each with AudioDescription, Commentary and Calm modes. The Casual/Analyst insight views are separate from these listening channels and from the additional offline CLI modes.
 
 The offline **HOT path** (BUILD_PLAN.md §3) runs end to end on virtual time, with no cloud services needed:
 
@@ -32,7 +32,17 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, workflow-based recap, transcreation and spoken post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Easy-read captions, Immersive Reader and hands-free live-reference echo cancellation. Deterministic scoped recaps and local text catch-up are implemented as described below, not as hosted workflows. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
-### Latest Layout Update
+### Latest History Fixes
+
+Application commit **`b47dd50`** is pushed and deployed. Recent matches keeps the newest archived summary per `(seed, homeName, awayName)` before applying its ten-fixture limit; repeated deterministic runs no longer fill the list. Different seeds or team identities remain separate. Existing blobs and archive writes are unchanged. Failed history requests or JSON parsing now replace Loading with an unavailable status using plain-text DOM nodes.
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=historyfixes-b47dd50
+
+ACR **`dtv`** built a clean Git archive, completing at `2026-10-27T07:07:32Z`. Image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:3a4fa853c10ed64eaf8380584be92af71dab06a70f7cafacbdb5592124d471dd`; revision **`ca-vog-dev-gateway--historyfixes-b47dd50`** is Healthy and ready, with one replica and 100% traffic. Configuration fingerprint remains unchanged. Live health/history returned 200, and both endpoint and page showed one unique seeded fixture rather than ten repeats; the list retains polite announcements.
+
+Verification: **4 focused archive-selection .NET tests** and **32 browser tests** passed. Follow the ball needed no production change: at 1x the full pitch cannot pan; zoomed views track the ball, clamp at field edges, and revert to a fixed central view when unchecked. A new actual-module test covers these cases. Live observations on the preceding layout image confirmed full-pitch stability, ten following samples at 2x with the ball visible, and five fixed-view frames after disabling Follow. Test listening was stopped, full zoom restored, and all observation hooks removed. No fresh full .NET suite, completed archive write or full accessibility certification is claimed. Earlier rollout records below are historical.
+
+### Previous Layout Update
 
 Application commit **`d2e8911`**, pushed to `origin/main`, moves the existing Recent matches section directly below Match intelligence and before Latency. JavaScript, backend and archive behavior are unchanged.
 
