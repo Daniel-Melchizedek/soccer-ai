@@ -189,14 +189,6 @@
       <p class="note pitch-help">Goals, nets and penalty areas are shown. The map uses shapes and player numbers as well as kit colours. Ball position is announced only when its area or possession changes; use “Where's the ball?” for an on-demand update.</p>
     </section>
 
-    <!-- Recent match history (from Azure Blob Storage archive). aria-live so screen readers announce new results. -->
-    <section class="card" aria-labelledby="recent-heading">
-      <h2 id="recent-heading">Recent matches</h2>
-      <ul id="recent-matches" aria-live="polite" aria-label="Recent match results">
-        <li>Loading…</li>
-      </ul>
-    </section>
-
     <div class="columns">
       <section class="card" aria-labelledby="captions-heading">        <h2 id="captions-heading">Captions</h2>
         <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
@@ -262,6 +254,14 @@
       <ol id="insights-highlights" aria-live="off"></ol>
       <p id="insights-limitations" class="note"></p>
       <p class="note">Synthetic match evidence. Fictional teams and players. Recap explanations: English.</p>
+    </section>
+
+    <!-- Recent match history (from Azure Blob Storage archive). aria-live so screen readers announce new results. -->
+    <section class="card" aria-labelledby="recent-heading">
+      <h2 id="recent-heading">Recent matches</h2>
+      <ul id="recent-matches" aria-live="polite" aria-label="Recent match results">
+        <li>Loading…</li>
+      </ul>
     </section>
 
     <details class="card details">
