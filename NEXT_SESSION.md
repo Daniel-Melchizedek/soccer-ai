@@ -2,7 +2,17 @@
 
 Updated: 27 October 2026.
 
-## Latest History And Follow-Ball Checks
+## Latest Goalkeeper Legend Update
+
+Application commit **`266b48f`** is pushed and deployed. The goalkeeper legend now has separate coloured H/A squares with contrasting hatching instead of one transparent square. `createPitchMap.setTeams` applies the same palette used by canvas players; default CSS fills cover the pre-join red/blue display. Existing label text and pitch behavior remain unchanged. **32 browser tests passed**, including legend/canvas agreement for both red/blue and swapped blue/red kits; no new C# behavior or full .NET suite is claimed.
+
+ACR **`dtw`** built a clean archive of the pushed commit (completion `2026-10-27T07:36:16Z`). Active revision **`ca-vog-dev-gateway--keeperlegend-266b48f`** uses `crvogdevy6po56.azurecr.io/vog-gateway@sha256:d3a4a2fac04a6936fb47ffc0908a14f075961a1fb263eee6a01253bbd523a6e1`, Healthy and latest-ready, one replica, 100% traffic. Configuration fingerprint remains `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`; no infrastructure, secret, storage or Foundry-registration changes.
+
+Local and deployed DOM/style checks at actual widths 1280/390/320 confirmed red H / blue A squares, hatching, text wrapping and no horizontal overflow; `/healthz` returned 200. The live viewport capture showed coloured symbols but was compressed. Element screenshot and normal/forced listening automation could not complete due integrated-browser timing; no live join/audio pass is claimed. Reload cleared the attempt. No routes, content fixtures or canvas observers were installed; both pages were restored to desktop width, with the live page not listening.
+
+Shared live page: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=keeperlegend-266b48f ; documentation-only follow-up requires no rebuild. The following rollout records are historical.
+
+## Previous History And Follow-Ball Checks
 
 Application commit **`b47dd50`** is pushed and deployed. Archive reads now select the newest summary per `(seed, homeName, awayName)` before the ten-fixture limit; different seeds/teams stay distinct. No historical blobs, write paths or simulation defaults changed. The browser also replaces Loading after failed requests/JSON parsing, using plain-text nodes for status and results.
 

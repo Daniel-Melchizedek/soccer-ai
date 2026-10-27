@@ -32,7 +32,15 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, workflow-based recap, transcreation and spoken post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Easy-read captions, Immersive Reader and hands-free live-reference echo cancellation. Deterministic scoped recaps and local text catch-up are implemented as described below, not as hosted workflows. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
-### Latest History Fixes
+### Latest Goalkeeper Legend Update
+
+Application commit **`266b48f`** replaces the unfilled goalkeeper legend icon with separate H/A squares, using the same team-colour palette as the canvas and contrasting hatching. Colours update from team data on joining; the existing text explanation remains. **32 browser tests passed**, including matching legend/canvas colours for red/blue and swapped blue/red kits.
+
+ACR **`dtw`** built a clean Git archive, completing at `2026-10-27T07:36:16Z`. Active revision **`ca-vog-dev-gateway--keeperlegend-266b48f`** uses image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:d3a4a2fac04a6936fb47ffc0908a14f075961a1fb263eee6a01253bbd523a6e1`, Healthy and ready with one replica and 100% traffic. Configuration fingerprint is unchanged. Local and deployed checks at widths 1280/390/320 confirmed coloured square markers, readable wrapping and no horizontal overflow; live health returned 200. A viewport capture showed both colours, but was compressed. Live listening automation timed out and is not counted as a successful session check; the page was reloaded and left not listening at desktop width. No fixture routes or canvas observers were installed.
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=keeperlegend-266b48f
+
+### Previous History Fixes
 
 Application commit **`b47dd50`** is pushed and deployed. Recent matches keeps the newest archived summary per `(seed, homeName, awayName)` before applying its ten-fixture limit; repeated deterministic runs no longer fill the list. Different seeds or team identities remain separate. Existing blobs and archive writes are unchanged. Failed history requests or JSON parsing now replace Loading with an unavailable status using plain-text DOM nodes.
 
