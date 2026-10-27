@@ -249,6 +249,19 @@ test('Analyst chart compares scoped counts on one scale with exact accessible va
   assert.notEqual(app.charts[0].data.datasets[0].backgroundColor, app.charts[0].data.datasets[1].backgroundColor);
 });
 
+test('team names retain red and blue colours even when team order reverses', async () => {
+  for (const names of [['Reds', 'Blues'], ['Blues', 'Reds']]) {
+    const result = facts(0);
+    result.teams.forEach((team, index) => { team.name = names[index]; });
+    const app = await boot({ view: 'analyst', result });
+    const expected = names.map(name => name === 'Reds' ? '#c62828' : '#1e63ff');
+    assert.deepEqual(Array.from(app.charts[0].data.datasets, dataset => dataset.backgroundColor), expected);
+    for (const group of app.ids['insights-teams'].children) {
+      assert.deepEqual(group.children.slice(1).map(row => row.style.borderLeftColor), expected);
+    }
+  }
+});
+
 test('Analyst chart keeps zero-count intervals visible and clears unavailable results', async () => {
   const result = facts(0);
   result.teams.forEach(team => { team.shots = 0; team.goals = 0; team.corners = 0; });

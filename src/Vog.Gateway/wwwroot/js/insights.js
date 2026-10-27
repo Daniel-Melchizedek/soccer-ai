@@ -26,6 +26,13 @@ function english(text) {
   return node;
 }
 
+function teamColour(team, index) {
+  const name = team.name.trim().toLowerCase();
+  if (name === 'reds') return '#c62828';
+  if (name === 'blues') return '#1e63ff';
+  return index === 0 ? '#c62828' : '#1e63ff';
+}
+
 function localize(languageCode) {
   ({ language, copy } = recapCopy(languageCode));
   const panel = element('match-insights');
@@ -110,7 +117,7 @@ function render() {
         datasets: current.teams.map((team, index) => ({
           label: team.name,
           data: metrics.map(metric => team[metric]),
-          backgroundColor: index === 0 ? '#007f79' : '#bf461d',
+          backgroundColor: teamColour(team, index),
           borderRadius: 3,
           maxBarThickness: 22,
           categoryPercentage: 0.7
@@ -150,6 +157,7 @@ function render() {
     for (const [teamIndex, team] of current.teams.entries()) {
       const row = document.createElement('div');
       row.className = `insight-count-row ${teamIndex === 0 ? 'home' : 'away'}`;
+      row.style.borderLeftColor = teamColour(team, teamIndex);
       const count = document.createElement('strong');
       count.textContent = team[metric];
       row.append(english(team.name), count);

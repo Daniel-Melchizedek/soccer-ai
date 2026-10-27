@@ -79,9 +79,7 @@
 .insight-count-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-block: 1rem; }
 .insight-count-group { display: grid; gap: 0.5rem; border-top: 1px solid #c6d2d2; padding-top: 0.75rem; }
 .insight-count-group h3 { margin: 0; font-size: 1rem; color: inherit; }
-.insight-count-row { display: grid; grid-template-columns: minmax(0, 1fr) 3ch; align-items: center; gap: 0.75rem; }
-.insight-count-row > span { border-left: 4px solid #007f79; padding-left: 0.5rem; }
-.insight-count-row.away > span { border-left-color: #bf461d; }
+.insight-count-row { display: grid; grid-template-columns: minmax(0, 1fr) 3ch; align-items: center; gap: 0.75rem; border-left: 4px solid; padding-left: 0.5rem; }
 .insight-count-row > strong { text-align: right; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 
 * {
@@ -568,6 +566,17 @@ body.captions-pinned {
   padding-bottom: 9rem;
 }
 
+body.captions-pinned .caption-stage {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.captions-pinned #captions-heading {
+  display: none;
+}
+
 body.captions-pinned #caption {
   position: fixed;
   z-index: 20;
@@ -577,9 +586,11 @@ body.captions-pinned #caption {
   left: 1rem;
   right: 1rem;
   bottom: 1rem;
-  max-width: 64rem;
+  max-width: 56rem;
   margin: 0 auto;
-  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.6);
+  border: 2px solid var(--caption-fg);
+  font-weight: 700;
+  box-shadow: 0 0 0 4px #222728, 0 0.5rem 2rem rgba(0, 0, 0, 0.8);
 }
 
 body.captions-pinned #caption:empty {

@@ -10,7 +10,7 @@ export const DEFAULTS = Object.freeze({
   haptics: false,
   clearSpeech: false,
   gentle: false,
-  caption: { size: 'M', colours: 'white-black', background: 0.9, outline: 'none', font: 'system', position: 'panel' },
+  caption: { size: 'M', colours: 'white-black', background: 0.9, outline: 'none', font: 'system', position: 'bottom' },
   talkMode: 'tap',
 });
 
