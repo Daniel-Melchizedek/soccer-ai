@@ -1,0 +1,52 @@
+{
+  "name": "vog-match-companion-es-es-v4-judge-gpt-4.1-20261027090254",
+  "testing_criteria": [
+    {
+      "evaluator_name": "vog-match-companion-smoke-es-es-20261027",
+      "initialization_parameters": {
+        "deployment_name": "gpt-4.1",
+        "model": "gpt-4.1"
+      },
+      "evaluator_version": "2",
+      "type": "azure_ai_evaluator",
+      "name": "vog-match-companion-smoke-es-es-20261027",
+      "data_mapping": {
+        "query": "{{item.query}}",
+        "tool_calls": "{{sample.tool_calls}}",
+        "tool_definitions": "{{sample.tool_definitions}}",
+        "response": "{{sample.output_items}}"
+      }
+    }
+  ],
+  "metadata": {
+    "locale": "es-es",
+    "azd_agent_version": "4",
+    "agent": "vog-match-companion-es-es",
+    "agent_version": "4",
+    "azd_agent": "vog-match-companion-es-es",
+    "judge": "gpt-4.1"
+  },
+  "data_source_config": {
+    "item_schema": {
+      "required": [
+        "id",
+        "query",
+        "expected_behavior"
+      ],
+      "properties": {
+        "expected_behavior": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "include_sample_schema": true,
+    "type": "custom"
+  }
+}

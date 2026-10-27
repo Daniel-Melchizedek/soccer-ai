@@ -1,0 +1,52 @@
+{
+    "data_source_config":  {
+                               "item_schema":  {
+                                                   "properties":  {
+                                                                      "query":  {
+                                                                                    "type":  "string"
+                                                                                },
+                                                                      "expected_behavior":  {
+                                                                                                "type":  "string"
+                                                                                            },
+                                                                      "id":  {
+                                                                                 "type":  "string"
+                                                                             }
+                                                                  },
+                                                   "type":  "object",
+                                                   "required":  [
+                                                                    "id",
+                                                                    "query",
+                                                                    "expected_behavior"
+                                                                ]
+                                               },
+                               "include_sample_schema":  true,
+                               "type":  "custom"
+                           },
+    "testing_criteria":  [
+                             {
+                                 "initialization_parameters":  {
+                                                                   "deployment_name":  "gpt-4.1",
+                                                                   "model":  "gpt-4.1"
+                                                               },
+                                 "name":  "vog-match-companion-smoke-es-es-20261027",
+                                 "data_mapping":  {
+                                                      "query":  "{{item.query}}",
+                                                      "tool_calls":  "{{sample.tool_calls}}",
+                                                      "tool_definitions":  "{{sample.tool_definitions}}",
+                                                      "response":  "{{sample.output_items}}"
+                                                  },
+                                 "evaluator_name":  "vog-match-companion-smoke-es-es-20261027",
+                                 "type":  "azure_ai_evaluator",
+                                 "evaluator_version":  "1"
+                             }
+                         ],
+    "name":  "vog-match-companion-smoke-es-ES-20261027-judge-gpt-4.1",
+    "metadata":  {
+                     "agent":  "vog-match-companion-es-es",
+                     "locale":  "es-es",
+                     "judge":  "gpt-4.1",
+                     "azd_agent_version":  "4",
+                     "agent_version":  "4",
+                     "azd_agent":  "vog-match-companion-es-es"
+                 }
+}

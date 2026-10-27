@@ -24,6 +24,10 @@ param mcpApiKey string
 @description('Gateway image in the registry; empty before the first build.')
 param gatewayImage string = ''
 
+param evaluationModelName string = 'gpt-4.1'
+param evaluationModelVersion string = '2025-04-14'
+param evaluationModelCapacity int = 30
+
 @description('Commentary languages with a companion agent; each gets its own MCP connection (see below).')
 param companionLanguages array = ['en-GB', 'es-ES', 'ta-IN']
 
@@ -87,6 +91,16 @@ module foundry 'modules/ai-foundry.bicep' = {
   }
 }
 
+module evaluationModel 'modules/evaluation-model.bicep' = {
+  name: 'evaluation-model'
+  params: {
+    accountName: foundry.outputs.accountName
+    modelName: evaluationModelName
+    modelVersion: evaluationModelVersion
+    capacity: evaluationModelCapacity
+  }
+}
+
 module apps 'modules/container-apps.bicep' = {
   name: 'container-apps'
   params: {
@@ -130,6 +144,7 @@ output VOG_AI_SERVICES_ENDPOINT string = foundry.outputs.aiServicesEndpoint
 output VOG_FOUNDRY_PROJECT_ENDPOINT string = foundry.outputs.projectEndpoint
 output VOG_FOUNDRY_PROJECT_NAME string = foundry.outputs.projectName
 output VOG_AGENT_MODEL_DEPLOYMENT string = foundry.outputs.agentModelDeployment
+output VOG_EVALUATION_MODEL_DEPLOYMENT string = evaluationModel.outputs.deploymentName
 output VOG_AGENT_GUARDRAIL_ID string = foundry.outputs.agentGuardrailId
 output VOG_KEY_VAULT_NAME string = vault.outputs.name
 output VOG_KEY_VAULT_URI string = vault.outputs.uri

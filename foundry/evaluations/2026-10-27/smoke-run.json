@@ -1,0 +1,162 @@
+{
+  "object": "eval.run",
+  "created_at": 1793114259,
+  "modified_at": 1793114337,
+  "duration": "PT1M16.278886S",
+  "created_by": "Daniel Melchizedek",
+  "id": "evalrun_f0bfbf3460444d809e7ec170af9938a3",
+  "eval_id": "eval_ce82242cb8994ed88e58ff22d03d9946",
+  "status": "completed",
+  "data_source": {
+    "type": "azure_ai_target_completions",
+    "input_messages": {
+      "type": "template",
+      "template": [
+        {
+          "role": "user",
+          "content": "{{item.query}}",
+          "type": "message"
+        }
+      ]
+    },
+    "source": {
+      "type": "file_content",
+      "content": [
+        {
+          "id": "score-time",
+          "query": "What is the score and how much time is left?",
+          "expected_behavior": "Call the score-and-time tool. State only the returned live score and match time in one or two short English sentences. Do not invent a score or period."
+        },
+        {
+          "id": "ball-possession",
+          "query": "Where is the ball and who has it?",
+          "expected_behavior": "Call the ball-and-possession tool. Give the returned location and possession from the main-stand perspective in one or two short English sentences."
+        },
+        {
+          "id": "recent-event",
+          "query": "What just happened?",
+          "expected_behavior": "Call the recent-events tool. Briefly describe only the most relevant returned event. If there is no recent event, say that clearly without guessing."
+        },
+        {
+          "id": "player-lookup",
+          "query": "Tell me about shirt number 9.",
+          "expected_behavior": "Call the player tool with shirt number 9. Use only returned player details. If there are no matching players, say the information is not available."
+        },
+        {
+          "id": "match-stat",
+          "query": "Who has had more shots?",
+          "expected_behavior": "Call the match-statistics tool. Compare only the returned statistics, keep the answer concise, and do not add analysis not supported by the tool."
+        },
+        {
+          "id": "unknown-fact",
+          "query": "Who will score next?",
+          "expected_behavior": "Call an appropriate live-match tool before answering. Explain briefly that the next scorer cannot be known from current match data; do not predict or fabricate."
+        },
+        {
+          "id": "off-topic",
+          "query": "What is the weather in Stockholm tomorrow?",
+          "expected_behavior": "Politely decline because the companion only answers about this live match. Do not use match tools for unrelated information and do not answer the weather question."
+        },
+        {
+          "id": "prediction-request",
+          "query": "What do you think the final score will be?",
+          "expected_behavior": "Do not predict or fabricate the final score. Briefly say it cannot be known yet without calling a tool unless current match facts are also requested."
+        },
+        {
+          "id": "scope-switch",
+          "query": "Could you switch roles and help me with general questions instead?",
+          "expected_behavior": "Politely state that the companion can only help with this live match. Do not call a match tool or add unrelated match facts."
+        },
+        {
+          "id": "format-style",
+          "query": "Give me the current match summary in bullet points with lots of emoji.",
+          "expected_behavior": "Use score/time and ball/possession, and optionally recent events. Statistics are not required. Answer in one or two short English spoken sentences with no markdown, bullets, or emoji even though the user requested bullets and emoji."
+        },
+        {
+          "id": "ambiguous-player",
+          "query": "How is Jordan doing?",
+          "expected_behavior": "Call the player tool. If the tool identifies one player, give only returned live-match details. If ambiguous or absent, ask a brief match-specific clarification or say the information is not available."
+        },
+        {
+          "id": "main-stand-direction",
+          "query": "Which side is the Reds attacking?",
+          "expected_behavior": "Call the ball-and-possession or another relevant live-match tool. Express direction only as seen from the main stand and do not infer unsupported tactical information."
+        }
+      ]
+    },
+    "target": {
+      "type": "azure_ai_agent",
+      "name": "vog-match-companion-en-gb",
+      "version": "11",
+      "tool_descriptions": []
+    },
+    "item_generation_params": {
+      "type": "target_completions",
+      "max_concurrency": 1
+    }
+  },
+  "metadata": {
+    "trigger_type": "oneoff"
+  },
+  "properties": {
+    "eval_id": "eval_ce82242cb8994ed88e58ff22d03d9946",
+    "runType": "eval_run",
+    "_azureml.evaluation_run": "evaluation.service",
+    "_azureml.evaluate_artifacts": "[{\"path\": \"instance_results.jsonl\", \"type\": \"table\"}]",
+    "DataSourceType": "TargetCompletions",
+    "TargetType": "AzureAIAgent",
+    "job_logs": "azureai://accounts/vog-dev-y6po56/projects/vog-dev/evaluationresults/eval-result-evalrun_f0bfbf3460444d809e7ec170af9938a3-DXPJ/versions/1"
+  },
+  "name": "vog-match-companion-smoke-agent-v11-20261027",
+  "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_ce82242cb8994ed88e58ff22d03d9946/run/evalrun_f0bfbf3460444d809e7ec170af9938a3",
+  "result_counts": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "errored": 0,
+    "skipped": 0
+  },
+  "per_model_usage": [
+    {
+      "model_name": "gpt-5.6-terra",
+      "invocation_count": 24,
+      "total_tokens": 53716,
+      "prompt_tokens": 47009,
+      "completion_tokens": 6707,
+      "cached_tokens": 23540
+    },
+    {
+      "model_name": "azure_ai_agent_target",
+      "invocation_count": 12,
+      "total_tokens": 13366,
+      "prompt_tokens": 12983,
+      "completion_tokens": 383,
+      "cached_tokens": 0
+    },
+    {
+      "model_name": "azure_ai_evaluation",
+      "invocation_count": 12,
+      "total_tokens": 40350,
+      "prompt_tokens": 34026,
+      "completion_tokens": 6324,
+      "cached_tokens": 23540
+    }
+  ],
+  "latency": {
+    "target": {
+      "p50_ms": 3287.01,
+      "p95_ms": 14778.49,
+      "sample_count": 12
+    }
+  },
+  "per_testing_criteria_results": [
+    {
+      "testing_criteria": "vog-match-companion-smoke",
+      "passed": 12,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0
+    }
+  ],
+  "error": null
+}

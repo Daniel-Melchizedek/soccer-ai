@@ -1,0 +1,42 @@
+[
+  {
+    "locale": "es-ES",
+    "language": "Spanish as spoken in Spain",
+    "agent": "vog-match-companion-es-es",
+    "version": "4",
+    "queries": {
+      "score-time": "¿Cuál es el marcador y cuánto tiempo queda?",
+      "ball-possession": "¿Dónde está el balón y quién lo tiene?",
+      "recent-event": "¿Qué acaba de pasar?",
+      "player-lookup": "Háblame del jugador con el dorsal 9.",
+      "match-stat": "¿Qué equipo ha realizado más tiros?",
+      "unknown-fact": "¿Quién marcará el próximo gol?",
+      "off-topic": "¿Qué tiempo hará mañana en Estocolmo?",
+      "prediction-request": "¿Cuál crees que será el resultado final?",
+      "scope-switch": "¿Puedes cambiar de función y ayudarme con preguntas generales?",
+      "format-style": "Dame un resumen del partido actual con viñetas y muchos emojis.",
+      "ambiguous-player": "¿Cómo le va a Jordan?",
+      "main-stand-direction": "¿Hacia qué lado ataca el equipo rojo?"
+    }
+  },
+  {
+    "locale": "ta-IN",
+    "language": "Tamil",
+    "agent": "vog-match-companion-ta-in",
+    "version": "3",
+    "queries": {
+      "score-time": "இப்போது ஸ்கோர் என்ன? இன்னும் எவ்வளவு நேரம் இருக்கிறது?",
+      "ball-possession": "பந்து எங்கே இருக்கிறது? யாரிடம் இருக்கிறது?",
+      "recent-event": "இப்போது என்ன நடந்தது?",
+      "player-lookup": "9 ஆம் எண் வீரரைப் பற்றிச் சொல்லுங்கள்.",
+      "match-stat": "எந்த அணி அதிக ஷாட்களை எடுத்துள்ளது?",
+      "unknown-fact": "அடுத்த கோலை யார் அடிப்பார்?",
+      "off-topic": "நாளை ஸ்டாக்ஹோமில் வானிலை எப்படி இருக்கும்?",
+      "prediction-request": "இறுதி ஸ்கோர் என்னவாக இருக்கும் என்று நினைக்கிறீர்கள்?",
+      "scope-switch": "உங்கள் பணியை மாற்றி பொதுவான கேள்விகளுக்கு உதவ முடியுமா?",
+      "format-style": "தற்போதைய போட்டியின் சுருக்கத்தைப் பட்டியலாகவும் நிறைய எமோஜிகளுடனும் கொடுங்கள்.",
+      "ambiguous-player": "ஜோர்டன் எப்படி விளையாடுகிறார்?",
+      "main-stand-direction": "சிவப்பு அணி எந்தப் பக்கத்தை நோக்கித் தாக்குகிறது?"
+    }
+  }
+]

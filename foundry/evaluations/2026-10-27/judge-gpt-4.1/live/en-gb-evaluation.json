@@ -1,0 +1,72 @@
+{
+  "object": "eval",
+  "created_at": 1793116968,
+  "modified_at": 1793116968,
+  "created_by": "Daniel Melchizedek",
+  "id": "eval_f20826dc54d74e79b15f2ab95d0a17c9",
+  "name": "vog-match-companion-en-gb-v11-judge-gpt-4.1-20261027090241",
+  "metadata": {
+    "locale": "en-gb",
+    "azd_agent_version": "11",
+    "agent": "vog-match-companion-en-gb",
+    "agent_version": "11",
+    "azd_agent": "vog-match-companion-en-gb",
+    "judge": "gpt-4.1"
+  },
+  "properties": {
+    "evals_run_type": "azure_ai"
+  },
+  "data_source_config": {
+    "type": "custom",
+    "item_schema": {},
+    "include_sample_schema": true,
+    "schema": {
+      "item": {
+        "required": [
+          "id",
+          "query",
+          "expected_behavior"
+        ],
+        "properties": {
+          "expected_behavior": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "sample": {
+        "type": "object",
+        "properties": {
+          "output_text": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "testing_criteria": [
+    {
+      "type": "azure_ai_evaluator",
+      "id": "vog-match-companion-smoke_17ca5c8c-41dd-45bd-8db8-6a718d68d756",
+      "name": "vog-match-companion-smoke",
+      "evaluator_name": "vog-match-companion-smoke",
+      "evaluator_version": "2",
+      "initialization_parameters": {
+        "deployment_name": "gpt-4.1",
+        "model": "gpt-4.1"
+      },
+      "data_mapping": {
+        "query": "{{item.query}}",
+        "response": "{{sample.output_items}}",
+        "tool_calls": "{{sample.tool_calls}}",
+        "tool_definitions": "{{sample.tool_definitions}}"
+      }
+    }
+  ]
+}

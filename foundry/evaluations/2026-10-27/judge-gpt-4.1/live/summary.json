@@ -1,0 +1,54 @@
+{
+  "project_endpoint": "https://vog-dev-y6po56.services.ai.azure.com/api/projects/vog-dev",
+  "judge": "gpt-4.1",
+  "runs": [
+    {
+      "locale": "en-gb",
+      "agent": "vog-match-companion-en-gb",
+      "agent_version": "11",
+      "evaluation_id": "eval_f20826dc54d74e79b15f2ab95d0a17c9",
+      "run_id": "evalrun_95ad810ca3eb497a891114ff83a85aa1",
+      "status": "completed",
+      "counts": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "errored": 0,
+        "skipped": 0
+      },
+      "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_f20826dc54d74e79b15f2ab95d0a17c9/run/evalrun_95ad810ca3eb497a891114ff83a85aa1"
+    },
+    {
+      "locale": "es-es",
+      "agent": "vog-match-companion-es-es",
+      "agent_version": "4",
+      "evaluation_id": "eval_9c59b41df037431d893d5e87e8b68eb5",
+      "run_id": "evalrun_25dd7781fbad4c5fbf94017fa1d21fde",
+      "status": "completed",
+      "counts": {
+        "total": 12,
+        "passed": 12,
+        "failed": 0,
+        "errored": 0,
+        "skipped": 0
+      },
+      "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_9c59b41df037431d893d5e87e8b68eb5/run/evalrun_25dd7781fbad4c5fbf94017fa1d21fde"
+    },
+    {
+      "locale": "ta-in",
+      "agent": "vog-match-companion-ta-in",
+      "agent_version": "3",
+      "evaluation_id": "eval_ee5721cd04e747b5964753161322832e",
+      "run_id": "evalrun_3d3cd76bf22a4caf80a296f847f9c4f2",
+      "status": "completed",
+      "counts": {
+        "total": 12,
+        "passed": 11,
+        "failed": 1,
+        "errored": 0,
+        "skipped": 0
+      },
+      "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_ee5721cd04e747b5964753161322832e/run/evalrun_3d3cd76bf22a4caf80a296f847f9c4f2"
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+#requires -Version 7.0
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+$repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$sandbox = Join-Path ([IO.Path]::GetTempPath()) "vog-provision-test-$([Guid]::NewGuid().ToString('n'))"
+New-Item -ItemType Directory $sandbox | Out-Null
+
+function Assert-True([bool]$Condition, [string]$Message) {
+    if (-not $Condition) { throw $Message }
+}
+
+function Read-Argument([object[]]$Arguments, [string]$Name) {
+    $index = [Array]::IndexOf($Arguments, $Name)
+    if ($index -lt 0) { return '' }
+    return [string]$Arguments[$index + 1]
+}
+
+function global:az {
+    $arguments = @($args)
+    $global:LASTEXITCODE = 0
+    $command = $arguments -join ' '
+    $state = $global:VogProvisionTestState
+    $state.Calls.Add($command)
+    if ($arguments[0] -eq 'rest') {
+        $url = Read-Argument $arguments '--url'
+        $method = Read-Argument $arguments '--method'
+        $bodyFile = Read-Argument $arguments '--body'
+        $body = if ($bodyFile) { Get-Content $bodyFile.Substring(1) -Raw | ConvertFrom-Json } else { $null }
+        if ($url -match '/agents/') {
+            $response = @{ versions = @{ latest = @{ version = '1' } } }
+        }
+        elseif ($url -match '/evaluators/') {
+            $response = @{ version = '6' }
+        }
+        elseif ($url -match '/output_items') {
+            $lastPage = $url.Contains('after=case-6')
+            $numbers = if ($lastPage) { 7..12 } else { 1..6 }
+            $response = @{
+                data = @($numbers | ForEach-Object { @{ id = "case-$_"; results = @(@{ passed = $true; score = 0.8 }) } })
+                has_more = -not $lastPage
+                last_id = if ($lastPage) { 'case-12' } else { 'case-6' }
+            }
+        }
+        elseif ($url -match '/runs$' -and $method -eq 'post') {
+            Assert-True ($body.data_source.target.version -eq '1') 'Historical agent version was reused.'
+            Assert-True ($body.data_source.source.content.Count -eq 12) 'Missing evaluation cases.'
+            $runId = "run-$($body.data_source.target.name)"
+            $response = @{
+                id = $runId; data_source = $body.data_source; status = 'in_progress'
+                result_counts = @{ total = 0; passed = 0; failed = 0 }; report_url = 'https://example.test/report'
+            }
+            $state.Runs[$runId] = $response
+        }
+        elseif ($url -match '/runs/([^/?]+)$') {
+            $response = $state.Runs[$Matches[1]]
+            if ($state.Complete) {
+                $response.status = 'completed'
+                $response.result_counts = @{ total = 12; passed = 12; failed = 0 }
+            }
+        }
+        elseif ($url -match '/evals$' -and $method -eq 'post') {
+            Assert-True ($body.testing_criteria[0].initialization_parameters.model -eq 'gpt-4.1') 'Wrong judge model.'
+            Assert-True ($body.testing_criteria[0].initialization_parameters.deployment_name -eq 'gpt-4.1') 'Wrong judge deployment.'
+            Assert-True ($body.testing_criteria[0].evaluator_version -eq '6') 'Historical rubric version was reused.'
+            $response = @{ id = "eval-$($body.metadata.locale)" }
+        }
+        else { throw "Unexpected REST request: $method $url" }
+        $response | ConvertTo-Json -Depth 100 | Set-Content (Read-Argument $arguments '--output-file') -Encoding utf8NoBOM
+        return
+    }
+    switch -Wildcard ($command) {
+        'account show *' { return '{"name":"Test","user":"test-user"}' }
+        'ad signed-in-user show *' { return 'test-principal' }
+        'group create *' { return '/subscriptions/test/resourceGroups/rg-vog-test' }
+        'keyvault list-deleted *' {
+            if ($state.Scenario -eq 'Deleted') {
+                return '[{"name":"kv-vog-test-old","originalId":"/subscriptions/test/resourceGroups/rg-vog-test/providers/Microsoft.KeyVault/vaults/kv-vog-test-old"},{"name":"kv-vog-test-other","originalId":"/subscriptions/test/resourceGroups/other/providers/Microsoft.KeyVault/vaults/kv-vog-test-other"}]'
+            }
+            return '[]'
+        }
+        'cognitiveservices account list-deleted *' {
+            if ($state.Scenario -eq 'Deleted') {
+                return '[{"name":"vog-test-old","location":"swedencentral","id":"/subscriptions/test/providers/Microsoft.CognitiveServices/locations/swedencentral/resourceGroups/rg-vog-test/deletedAccounts/vog-test-old"},{"name":"vog-test-other","location":"swedencentral","id":"/subscriptions/test/providers/Microsoft.CognitiveServices/locations/swedencentral/resourceGroups/other/deletedAccounts/vog-test-other"}]'
+            }
+            return '[]'
+        }
+        'keyvault recover *' { return }
+        'cognitiveservices account recover *' { return }
+        'keyvault list *' { if ($state.Scenario -ne 'Fresh') { return 'kv-vog-test-old' }; return '' }
+        'containerapp list *' { if ($state.Scenario -in @('Existing', 'UnreadableKey')) { return 'registry.test/gateway:existing' }; return '' }
+        'keyvault secret show *' {
+            if ($state.Scenario -eq 'UnreadableKey') { $global:LASTEXITCODE = 1; return }
+            return 'test-existing-key'
+        }
+        'deployment group create *' {
+            $parameters = Get-Content (Read-Argument $arguments '--parameters').Substring(1) -Raw | ConvertFrom-Json
+            Assert-True ($parameters.parameters.evaluationModelName.value -eq 'gpt-4.1') 'Judge missing from infrastructure parameters.'
+            if ($state.Scenario -eq 'Existing') { Assert-True ($parameters.parameters.mcpApiKey.value -eq 'test-existing-key') 'Existing MCP key was rotated.' }
+            $values = @{
+                VOG_REGISTRY_NAME = 'registry'; VOG_STORAGE_ACCOUNT_NAME = 'storage'; VOG_GATEWAY_URL = 'https://gateway.example.test'
+                VOG_FOUNDRY_PROJECT_ENDPOINT = 'https://foundry.example.test/api/projects/test'; VOG_EVALUATION_MODEL_DEPLOYMENT = 'gpt-4.1'
+                VOG_AGENT_MODEL_DEPLOYMENT = 'gpt-5.6-terra'; VOG_AGENT_GUARDRAIL_ID = 'guardrail'; VOG_MCP_URL = 'https://gateway.example.test/mcp'
+                VOG_MCP_CONNECTION_PREFIX = 'vog-match-mcp'
+            }
+            $outputs = @{}
+            foreach ($entry in $values.GetEnumerator()) { $outputs[$entry.Key] = @{ value = $entry.Value } }
+            return $outputs | ConvertTo-Json -Depth 10
+        }
+        'acr build *' { return }
+        'acr show *' { return 'registry.example.test' }
+        'storage blob upload *' {
+            $data = Get-Content (Read-Argument $arguments '--file') -Raw | ConvertFrom-Json
+            Assert-True ($data.Count -eq 16) 'Invalid historical seed.'
+            return
+        }
+        default { throw "Unexpected Azure command: $command" }
+    }
+}
+
+function global:git { $global:LASTEXITCODE = 0; return 'testsha' }
+function global:dotnet {
+    $global:LASTEXITCODE = 0
+    Assert-True ($PWD.Path -eq $global:VogProvisionTestState.Root) 'Agent setup did not run at repository root.'
+    Assert-True ($env:VOG_FOUNDRY_PROJECT_ENDPOINT -eq 'https://foundry.example.test/api/projects/test') 'Agent setup received stale configuration.'
+}
+function global:Invoke-WebRequest { return @{ StatusCode = 200 } }
+
+try {
+    foreach ($directory in @('infra', 'scripts', 'data')) { Copy-Item (Join-Path $repoRoot $directory) $sandbox -Recurse }
+    $inputs = Join-Path $sandbox 'foundry/evaluations/2026-10-27'
+    New-Item -ItemType Directory $inputs -Force | Out-Null
+    foreach ($file in @('smoke-request.json', 'smoke-evaluation.json', 'smoke-evaluator-v1.json', 'es-es-evaluation-request.json', 'es-es-run-request.json', 'es-es-evaluator-request.json', 'ta-in-evaluation-request.json', 'ta-in-run-request.json', 'ta-in-evaluator-request.json')) {
+        Copy-Item (Join-Path $repoRoot "foundry/evaluations/2026-10-27/$file") $inputs
+    }
+    foreach ($scenario in @('Fresh', 'Deleted', 'Existing', 'UnreadableKey')) {
+        $global:VogProvisionTestState = @{ Scenario = $scenario; Root = $sandbox; Complete = $false; Runs = @{}; Calls = [Collections.Generic.List[string]]::new() }
+        $output = Join-Path $sandbox "results-$scenario"
+        $failed = $false
+        try { & (Join-Path $sandbox 'infra/provision.ps1') -Environment test -EvaluationOutputDirectory $output }
+        catch { if ($scenario -ne 'UnreadableKey') { throw }; $failed = $true }
+        $calls = $global:VogProvisionTestState.Calls
+        if ($scenario -eq 'UnreadableKey') {
+            Assert-True $failed 'Unreadable existing key did not stop provisioning.'
+            Assert-True (@($calls | Where-Object { $_ -like 'deployment group create *' }).Count -eq 0) 'Infrastructure changed after key-read failure.'
+        }
+        else {
+            Assert-True (@($calls | Where-Object { $_ -like 'storage blob upload *' }).Count -eq 2) 'Both historical datasets were not seeded.'
+            Assert-True ($global:VogProvisionTestState.Runs.Count -eq 3) 'All three evaluations were not submitted.'
+            $global:VogProvisionTestState.Complete = $true
+            & (Join-Path $sandbox 'scripts/evaluate_agents.ps1') -CollectOnly -OutputDirectory $output
+            foreach ($locale in @('en-gb', 'es-es', 'ta-in')) {
+                $items = Get-Content (Join-Path $output "$locale-output-items.json") -Raw | ConvertFrom-Json
+                Assert-True ($items.data.Count -eq 12 -and -not $items.has_more) 'Paginated evaluation results were incomplete.'
+            }
+            $summary = Get-Content (Join-Path $output 'summary.json') -Raw | ConvertFrom-Json
+            Assert-True (@($summary.runs | Where-Object status -eq 'completed').Count -eq 3) 'Summary did not reflect completion.'
+        }
+        if ($scenario -eq 'Deleted') {
+            Assert-True (@($calls | Where-Object { $_ -like '* recover *' }).Count -eq 2) 'Recovery was not scoped to the deleted environment.'
+            Assert-True (@($calls | Where-Object { $_ -like '* purge *' }).Count -eq 0) 'Provisioning must not purge resources.'
+        }
+        Write-Host "PASS: $scenario provisioning and evaluation workflow."
+    }
+}
+finally {
+    foreach ($name in @('az', 'git', 'dotnet', 'Invoke-WebRequest')) { Remove-Item "Function:/$name" }
+    Remove-Variable VogProvisionTestState -Scope Global -ErrorAction SilentlyContinue
+    Remove-Item $sandbox -Recurse -Force
+}

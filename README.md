@@ -11,6 +11,12 @@ Voice of the Game turns a synthetic football match into live audio description, 
 
 > The live match uses synthetic events with fictional generated leagues, clubs and players. A separate [Football history page](src/Vog.Gateway/wwwroot/football-history.html), linked only from the listener footer, uses real CC0 international results. Separating pages does not establish compliance with the hackathon's synthetic-data requirement; resolve submission scope before claiming eligibility. Historical data does not feed the simulation, recaps or companion.
 
+## Recreate The Azure Environment
+
+After signing in with Azure CLI, run `pwsh -File ./infra/provision.ps1` from the repository root. The script deploys infrastructure and both model deployments, builds and deploys the gateway, seeds historical data, registers all three agents, and submits their evaluations with **GPT-4.1 as the independent judge**. It discovers new agent and evaluator versions instead of relying on previous cloud IDs.
+
+See [the rebuild guide](infra/README.md) for prerequisites, soft-delete recovery, result collection, and data-retention limits. Recreating resources does **not** restore deleted match archives or old cloud evaluation runs. The full destructive delete/recreate cycle has not been tested against the live environment.
+
 ## Latest Pitch And Hold-To-Ask Release: 27 October 2026
 
 Application **`34d4495`** is pushed and deployed as **`ca-vog-dev-gateway--pitchask-34d4495`**, Healthy and latest-ready with one replica and 100% traffic. This release adds five saved pitch appearances, low-vision marker improvements and hold-to-ask lifecycle fixes. **51 browser tests** passed; two generated spoken questions completed through the local gateway and live Azure companion on the same connection. The earlier 120-second timeout remains unconfirmed, not claimed fixed. See the detailed verification and limitations below.

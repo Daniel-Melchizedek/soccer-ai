@@ -1,0 +1,66 @@
+[
+  {
+    "decade": "1870s",
+    "homeWinPct": 61.5
+  },
+  {
+    "decade": "1880s",
+    "homeWinPct": 49.1
+  },
+  {
+    "decade": "1890s",
+    "homeWinPct": 50.8
+  },
+  {
+    "decade": "1900s",
+    "homeWinPct": 44.9
+  },
+  {
+    "decade": "1910s",
+    "homeWinPct": 54.5
+  },
+  {
+    "decade": "1920s",
+    "homeWinPct": 53.1
+  },
+  {
+    "decade": "1930s",
+    "homeWinPct": 52.5
+  },
+  {
+    "decade": "1940s",
+    "homeWinPct": 53.3
+  },
+  {
+    "decade": "1950s",
+    "homeWinPct": 49
+  },
+  {
+    "decade": "1960s",
+    "homeWinPct": 52.3
+  },
+  {
+    "decade": "1970s",
+    "homeWinPct": 50.1
+  },
+  {
+    "decade": "1980s",
+    "homeWinPct": 47.2
+  },
+  {
+    "decade": "1990s",
+    "homeWinPct": 49.7
+  },
+  {
+    "decade": "2000s",
+    "homeWinPct": 48.7
+  },
+  {
+    "decade": "2010s",
+    "homeWinPct": 47.9
+  },
+  {
+    "decade": "2020s",
+    "homeWinPct": 47.6
+  }
+]

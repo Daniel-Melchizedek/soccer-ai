@@ -1,0 +1,66 @@
+[
+  {
+    "decade": "1870s",
+    "avgGoals": 4.54
+  },
+  {
+    "decade": "1880s",
+    "avgGoals": 5.58
+  },
+  {
+    "decade": "1890s",
+    "avgGoals": 5.15
+  },
+  {
+    "decade": "1900s",
+    "avgGoals": 4.16
+  },
+  {
+    "decade": "1910s",
+    "avgGoals": 4.22
+  },
+  {
+    "decade": "1920s",
+    "avgGoals": 3.88
+  },
+  {
+    "decade": "1930s",
+    "avgGoals": 4.32
+  },
+  {
+    "decade": "1940s",
+    "avgGoals": 4.34
+  },
+  {
+    "decade": "1950s",
+    "avgGoals": 4
+  },
+  {
+    "decade": "1960s",
+    "avgGoals": 3.48
+  },
+  {
+    "decade": "1970s",
+    "avgGoals": 2.98
+  },
+  {
+    "decade": "1980s",
+    "avgGoals": 2.53
+  },
+  {
+    "decade": "1990s",
+    "avgGoals": 2.78
+  },
+  {
+    "decade": "2000s",
+    "avgGoals": 2.8
+  },
+  {
+    "decade": "2010s",
+    "avgGoals": 2.74
+  },
+  {
+    "decade": "2020s",
+    "avgGoals": 2.73
+  }
+]

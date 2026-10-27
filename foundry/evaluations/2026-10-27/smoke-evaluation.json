@@ -1,0 +1,57 @@
+{
+  "object": "eval",
+  "created_at": 1791345015,
+  "modified_at": 1791345021,
+  "created_by": "Daniel Melchizedek",
+  "id": "eval_ce82242cb8994ed88e58ff22d03d9946",
+  "name": "vog-match-companion-smoke-en-GB-v5",
+  "metadata": {
+    "azd_agent": "vog-match-companion-en-gb",
+    "azd_agent_version": ""
+  },
+  "properties": {
+    "evals_run_type": "azure_ai"
+  },
+  "data_source_config": {
+    "type": "custom",
+    "item_schema": {},
+    "include_sample_schema": true,
+    "schema": {
+      "item": {
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "sample": {
+        "type": "object",
+        "properties": {
+          "output_text": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "testing_criteria": [
+    {
+      "type": "azure_ai_evaluator",
+      "id": "vog-match-companion-smoke_8bc8d5be-1d92-4f73-9c70-c678d4e7b4a4",
+      "name": "vog-match-companion-smoke",
+      "evaluator_name": "vog-match-companion-smoke",
+      "evaluator_version": "",
+      "initialization_parameters": {
+        "deployment_name": "gpt-5.6-terra",
+        "model": "gpt-5.6-terra"
+      },
+      "data_mapping": {
+        "query": "{{item.query}}",
+        "response": "{{sample.output_items}}",
+        "tool_calls": "{{sample.tool_calls}}",
+        "tool_definitions": "{{sample.tool_definitions}}"
+      }
+    }
+  ]
+}

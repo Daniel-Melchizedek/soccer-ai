@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-27",
+  "project_endpoint": "https://vog-dev-y6po56.services.ai.azure.com/api/projects/vog-dev",
+  "execution_method": "Azure CLI az rest using the existing Azure login",
+  "scope": "12 live-match smoke-test cases for each of the three deployed language agents",
+  "judge_model": "gpt-5.6-terra",
+  "pass_threshold": 0.5,
+  "totals": {
+    "completed_runs": 3,
+    "cases": 36,
+    "passed": 35,
+    "failed": 1,
+    "errored": 0,
+    "skipped": 0
+  },
+  "agents": [
+    {
+      "locale": "en-GB",
+      "agent": "vog-match-companion-en-gb",
+      "version": "11",
+      "evaluation_id": "eval_ce82242cb8994ed88e58ff22d03d9946",
+      "run_id": "evalrun_f0bfbf3460444d809e7ec170af9938a3",
+      "status": "completed",
+      "passed": 12,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "mean_score": 0.7773101478494624,
+      "cases_with_unavailable_tool_data": 0,
+      "run_artifact": "smoke-run.json",
+      "output_artifact": "smoke-output-items.json",
+      "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_ce82242cb8994ed88e58ff22d03d9946/run/evalrun_f0bfbf3460444d809e7ec170af9938a3"
+    },
+    {
+      "locale": "es-ES",
+      "agent": "vog-match-companion-es-es",
+      "version": "4",
+      "evaluation_id": "eval_0f1342dd48464a84930f68235bff147f",
+      "run_id": "evalrun_f090d1e5182c42779037c701b044d045",
+      "status": "completed",
+      "passed": 12,
+      "failed": 0,
+      "errored": 0,
+      "skipped": 0,
+      "mean_score": 0.771602618931248,
+      "cases_with_unavailable_tool_data": 0,
+      "run_artifact": "es-es-run.json",
+      "output_artifact": "es-es-output-items.json",
+      "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_0f1342dd48464a84930f68235bff147f/run/evalrun_f090d1e5182c42779037c701b044d045"
+    },
+    {
+      "locale": "ta-IN",
+      "agent": "vog-match-companion-ta-in",
+      "version": "3",
+      "evaluation_id": "eval_fdff67b00c9a4966a2b56cf55ab8a5b2",
+      "run_id": "evalrun_e84ebc0ea37343bab5b4ef983459e086",
+      "status": "completed",
+      "passed": 11,
+      "failed": 1,
+      "errored": 0,
+      "skipped": 0,
+      "mean_score": 0.7238309797281571,
+      "cases_with_unavailable_tool_data": 1,
+      "run_artifact": "ta-in-run.json",
+      "output_artifact": "ta-in-output-items.json",
+      "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_fdff67b00c9a4966a2b56cf55ab8a5b2/run/evalrun_e84ebc0ea37343bab5b4ef983459e086"
+    }
+  ],
+  "failures": [
+    {
+      "locale": "ta-IN",
+      "case_id": "match-stat",
+      "question_english_translation": "Which team has taken more shots?",
+      "tool": "get_match_stats",
+      "tool_result": "Warning: MCP server 'mcp_vog_match' action 'get_match_stats' returned no result.",
+      "agent_response": "I'm sorry, but I cannot assist with that request.",
+      "score": 0.2661290322580645,
+      "expected": "Briefly explain in Tamil that the statistics are unavailable instead of refusing an in-scope question in English.",
+      "follow_up": "Investigate the empty MCP result and the agent's language-preserving fallback. The evaluation alone does not establish why the tool returned no result."
+    }
+  ],
+  "limitations": [
+    "English reused the existing evaluation group and historical dataset unchanged. Spanish and Tamil use new groups, native-language questions, and localized rubric version 1.",
+    "The localized rubrics and expected behaviors reflect current prediction and recap instructions; the English baseline retains older descriptions. Scores are not a controlled cross-language comparison.",
+    "These are LLM-judged smoke evaluations at threshold 0.5, not comprehensive safety, accessibility, or production-readiness certification.",
+    "Match data is live, so different cases and language runs can observe different match states.",
+    "No agent definitions, application code, or infrastructure were changed."
+  ]
+}

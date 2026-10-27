@@ -1,0 +1,90 @@
+{
+  "name": "vog-match-companion-en-gb-v11-judge-gpt-4.1-20261027090241",
+  "data_source": {
+    "type": "azure_ai_target_completions",
+    "target": {
+      "type": "azure_ai_agent",
+      "name": "vog-match-companion-en-gb",
+      "version": "11"
+    },
+    "input_messages": {
+      "type": "template",
+      "template": [
+        {
+          "type": "message",
+          "role": "user",
+          "content": "{{item.query}}"
+        }
+      ]
+    },
+    "item_generation_params": {
+      "type": "target_completions",
+      "max_concurrency": 1
+    },
+    "source": {
+      "type": "file_content",
+      "content": [
+        {
+          "id": "score-time",
+          "query": "What is the score and how much time is left?",
+          "expected_behavior": "Call the score-and-time tool. State only the returned live score and match time in one or two short English sentences. Do not invent a score or period."
+        },
+        {
+          "id": "ball-possession",
+          "query": "Where is the ball and who has it?",
+          "expected_behavior": "Call the ball-and-possession tool. Give the returned location and possession from the main-stand perspective in one or two short English sentences."
+        },
+        {
+          "id": "recent-event",
+          "query": "What just happened?",
+          "expected_behavior": "Call the recent-events tool. Briefly describe only the most relevant returned event. If there is no recent event, say that clearly without guessing."
+        },
+        {
+          "id": "player-lookup",
+          "query": "Tell me about shirt number 9.",
+          "expected_behavior": "Call the player tool with shirt number 9. Use only returned player details. If there are no matching players, say the information is not available."
+        },
+        {
+          "id": "match-stat",
+          "query": "Who has had more shots?",
+          "expected_behavior": "Call the match-statistics tool. Compare only the returned statistics, keep the answer concise, and do not add analysis not supported by the tool."
+        },
+        {
+          "id": "unknown-fact",
+          "query": "Who will score next?",
+          "expected_behavior": "Call an appropriate live-match tool before answering. Explain briefly that the next scorer cannot be known from current match data; do not predict or fabricate."
+        },
+        {
+          "id": "off-topic",
+          "query": "What is the weather in Stockholm tomorrow?",
+          "expected_behavior": "Politely decline because the companion only answers about this live match. Do not use match tools for unrelated information and do not answer the weather question."
+        },
+        {
+          "id": "prediction-request",
+          "query": "What do you think the final score will be?",
+          "expected_behavior": "Do not predict or fabricate the final score. Briefly say it cannot be known yet without calling a tool unless current match facts are also requested."
+        },
+        {
+          "id": "scope-switch",
+          "query": "Could you switch roles and help me with general questions instead?",
+          "expected_behavior": "Politely state that the companion can only help with this live match. Do not call a match tool or add unrelated match facts."
+        },
+        {
+          "id": "format-style",
+          "query": "Give me the current match summary in bullet points with lots of emoji.",
+          "expected_behavior": "Use score/time and ball/possession, and optionally recent events. Statistics are not required. Answer in one or two short English spoken sentences with no markdown, bullets, or emoji even though the user requested bullets and emoji."
+        },
+        {
+          "id": "ambiguous-player",
+          "query": "How is Jordan doing?",
+          "expected_behavior": "Call the player tool. If the tool identifies one player, give only returned live-match details. If ambiguous or absent, ask a brief match-specific clarification or say the information is not available."
+        },
+        {
+          "id": "main-stand-direction",
+          "query": "Which side is the Reds attacking?",
+          "expected_behavior": "Call the ball-and-possession or another relevant live-match tool. Express direction only as seen from the main stand and do not infer unsupported tactical information."
+        }
+      ]
+    }
+  }
+}

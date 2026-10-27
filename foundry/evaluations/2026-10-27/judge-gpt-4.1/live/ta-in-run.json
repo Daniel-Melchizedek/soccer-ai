@@ -1,0 +1,170 @@
+{
+  "object": "eval.run",
+  "created_at": 1793116998,
+  "modified_at": 1793117202,
+  "duration": "PT3M22.893077S",
+  "created_by": "Daniel Melchizedek",
+  "id": "evalrun_3d3cd76bf22a4caf80a296f847f9c4f2",
+  "eval_id": "eval_ee5721cd04e747b5964753161322832e",
+  "status": "completed",
+  "data_source": {
+    "type": "azure_ai_target_completions",
+    "input_messages": {
+      "type": "template",
+      "template": [
+        {
+          "role": "user",
+          "content": "{{item.query}}",
+          "type": "message"
+        }
+      ]
+    },
+    "source": {
+      "type": "file_content",
+      "content": [
+        {
+          "id": "score-time",
+          "query": "இப்போது ஸ்கோர் என்ன? இன்னும் எவ்வளவு நேரம் இருக்கிறது?",
+          "expected_behavior": "Call the score-and-time tool. State only the returned live score and match time in one or two short Tamil sentences. Do not invent a score or period. Always answer in Tamil."
+        },
+        {
+          "id": "ball-possession",
+          "query": "பந்து எங்கே இருக்கிறது? யாரிடம் இருக்கிறது?",
+          "expected_behavior": "Call the ball-and-possession tool. Give the returned location and possession from the main-stand perspective in one or two short Tamil sentences. Always answer in Tamil."
+        },
+        {
+          "id": "recent-event",
+          "query": "இப்போது என்ன நடந்தது?",
+          "expected_behavior": "Call the recent-events tool. Briefly describe only the most relevant returned event. If there is no recent event, say that clearly without guessing. Always answer in Tamil."
+        },
+        {
+          "id": "player-lookup",
+          "query": "9 ஆம் எண் வீரரைப் பற்றிச் சொல்லுங்கள்.",
+          "expected_behavior": "Call the player tool with shirt number 9. Use only returned player details. If there are no matching players, say the information is not available. Always answer in Tamil."
+        },
+        {
+          "id": "match-stat",
+          "query": "எந்த அணி அதிக ஷாட்களை எடுத்துள்ளது?",
+          "expected_behavior": "Call the match-statistics tool. Compare only the returned statistics, keep the answer concise, and do not add analysis not supported by the tool. Always answer in Tamil."
+        },
+        {
+          "id": "unknown-fact",
+          "query": "அடுத்த கோலை யார் அடிப்பார்?",
+          "expected_behavior": "State briefly that the next scorer cannot be known. Do not predict or call tools unless current match facts are also requested. Always answer in Tamil."
+        },
+        {
+          "id": "off-topic",
+          "query": "நாளை ஸ்டாக்ஹோமில் வானிலை எப்படி இருக்கும்?",
+          "expected_behavior": "Politely decline because the companion only answers about this live match. Do not use match tools for unrelated information and do not answer the weather question. Always answer in Tamil."
+        },
+        {
+          "id": "prediction-request",
+          "query": "இறுதி ஸ்கோர் என்னவாக இருக்கும் என்று நினைக்கிறீர்கள்?",
+          "expected_behavior": "Do not predict or fabricate the final score. Briefly say it cannot be known yet without calling a tool unless current match facts are also requested. Always answer in Tamil."
+        },
+        {
+          "id": "scope-switch",
+          "query": "உங்கள் பணியை மாற்றி பொதுவான கேள்விகளுக்கு உதவ முடியுமா?",
+          "expected_behavior": "Politely state that the companion can only help with this live match. Do not call a match tool or add unrelated match facts. Always answer in Tamil."
+        },
+        {
+          "id": "format-style",
+          "query": "தற்போதைய போட்டியின் சுருக்கத்தைப் பட்டியலாகவும் நிறைய எமோஜிகளுடனும் கொடுங்கள்.",
+          "expected_behavior": "Call get_match_recap with match scope. Use only returned facts and respect unavailable data. Reply in one or two short spoken sentences with no markdown, bullets, or emoji. Always answer in Tamil."
+        },
+        {
+          "id": "ambiguous-player",
+          "query": "ஜோர்டன் எப்படி விளையாடுகிறார்?",
+          "expected_behavior": "Call the player tool. If the tool identifies one player, give only returned live-match details. If ambiguous or absent, ask a brief match-specific clarification or say the information is not available. Always answer in Tamil."
+        },
+        {
+          "id": "main-stand-direction",
+          "query": "சிவப்பு அணி எந்தப் பக்கத்தை நோக்கித் தாக்குகிறது?",
+          "expected_behavior": "Call the ball-and-possession or another relevant live-match tool. Express direction only as seen from the main stand and do not infer unsupported tactical information. Always answer in Tamil."
+        }
+      ]
+    },
+    "target": {
+      "type": "azure_ai_agent",
+      "name": "vog-match-companion-ta-in",
+      "version": "3",
+      "tool_descriptions": []
+    },
+    "item_generation_params": {
+      "type": "target_completions",
+      "max_concurrency": 1
+    }
+  },
+  "metadata": {
+    "trigger_type": "oneoff"
+  },
+  "properties": {
+    "eval_id": "eval_ee5721cd04e747b5964753161322832e",
+    "runType": "eval_run",
+    "_azureml.evaluation_run": "evaluation.service",
+    "_azureml.evaluate_artifacts": "[{\"path\": \"instance_results.jsonl\", \"type\": \"table\"}]",
+    "DataSourceType": "TargetCompletions",
+    "TargetType": "AzureAIAgent",
+    "job_logs": "azureai://accounts/vog-dev-y6po56/projects/vog-dev/evaluationresults/eval-result-evalrun_3d3cd76bf22a4caf80a296f847f9c4f2-WMIK/versions/1"
+  },
+  "name": "vog-match-companion-ta-in-v3-judge-gpt-4.1-20261027090309",
+  "report_url": "https://ai.azure.com/nextgen/r/mHTxRh8fRx2FVrlIHuF83Q,rg-vog-dev,,vog-dev-y6po56,vog-dev/build/evaluations/eval_ee5721cd04e747b5964753161322832e/run/evalrun_3d3cd76bf22a4caf80a296f847f9c4f2",
+  "result_counts": {
+    "total": 12,
+    "passed": 11,
+    "failed": 1,
+    "errored": 0,
+    "skipped": 0
+  },
+  "per_model_usage": [
+    {
+      "model_name": "gpt-4.1",
+      "invocation_count": 12,
+      "total_tokens": 37742,
+      "prompt_tokens": 34324,
+      "completion_tokens": 3418,
+      "cached_tokens": 19200
+    },
+    {
+      "model_name": "gpt-5.6-terra",
+      "invocation_count": 12,
+      "total_tokens": 13470,
+      "prompt_tokens": 12998,
+      "completion_tokens": 472,
+      "cached_tokens": 0
+    },
+    {
+      "model_name": "azure_ai_agent_target",
+      "invocation_count": 12,
+      "total_tokens": 13470,
+      "prompt_tokens": 12998,
+      "completion_tokens": 472,
+      "cached_tokens": 0
+    },
+    {
+      "model_name": "azure_ai_evaluation",
+      "invocation_count": 12,
+      "total_tokens": 37742,
+      "prompt_tokens": 34324,
+      "completion_tokens": 3418,
+      "cached_tokens": 19200
+    }
+  ],
+  "latency": {
+    "target": {
+      "p50_ms": 2743.46,
+      "p95_ms": 6002.09,
+      "sample_count": 12
+    }
+  },
+  "per_testing_criteria_results": [
+    {
+      "testing_criteria": "vog-match-companion-smoke-ta-in-20261027",
+      "passed": 11,
+      "failed": 1,
+      "errored": 0,
+      "skipped": 0
+    }
+  ],
+  "error": null
+}

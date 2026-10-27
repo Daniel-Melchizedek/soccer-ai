@@ -9,10 +9,12 @@
     2. Builds the gateway image in Azure (`az acr build`, no local Docker) and rolls it out.
     3. Writes the non-secret settings to .env.local at the repository root (git-ignored).
     4. Registers the Foundry agents (tools/Vog.FoundrySetup) against the deployed MCP endpoint.
+    5. Seeds the historical aggregates and launches all three evaluations with a separate judge.
 
     The one secret, the key Foundry presents to the gateway's MCP endpoint, is generated once, kept in
     Key Vault and reused on every later run: a new key would break the agents' tool calls until the
-    Foundry connection caught up. Safe to re-run: every step is idempotent.
+    Foundry connection caught up. Infrastructure is repeatable; agent/evaluator versions and evaluation
+    runs are new on each invocation. Matching soft-deleted resources are recovered, never purged.
 
 .EXAMPLE
     ./infra/provision.ps1
@@ -31,7 +33,18 @@ param(
 
     [string] $Subscription,
 
-    [switch] $SkipBuild
+    [switch] $SkipBuild,
+
+    [switch] $SkipEvaluations,
+
+    [string] $EvaluationModelName = 'gpt-4.1',
+
+    [string] $EvaluationModelVersion = '2025-04-14',
+
+    [ValidateRange(1, 1000)]
+    [int] $EvaluationModelCapacity = 30,
+
+    [string] $EvaluationOutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -64,6 +77,9 @@ function Deploy-Infrastructure([string] $Image, [string] $Label) {
             developerPrincipalId = @{ value = $principalId }
             mcpApiKey            = @{ value = $mcpApiKey }
             gatewayImage         = @{ value = $Image }
+            evaluationModelName = @{ value = $EvaluationModelName }
+            evaluationModelVersion = @{ value = $EvaluationModelVersion }
+            evaluationModelCapacity = @{ value = $EvaluationModelCapacity }
         }
     }
 
@@ -84,7 +100,17 @@ function Deploy-Infrastructure([string] $Image, [string] $Label) {
 }
 
 if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
-    throw 'The Azure CLI (az) is not installed. See https://aka.ms/installazurecli'
+    $cliDirectory = Join-Path ${env:ProgramFiles} 'Microsoft SDKs/Azure/CLI2/wbin'
+    if (Test-Path (Join-Path $cliDirectory 'az.cmd')) { $env:PATH = "$cliDirectory;$env:PATH" }
+    else { throw 'The Azure CLI (az) is not installed. See https://aka.ms/installazurecli' }
+}
+foreach ($command in @('dotnet', 'git')) {
+    if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "$command is required." }
+}
+$historicalFiles = @('goals-per-decade.json', 'home-advantage.json')
+foreach ($file in $historicalFiles) {
+    $data = Get-Content (Join-Path $repoRoot "data/historical/$file") -Raw -Encoding UTF8 | ConvertFrom-Json
+    if (@($data).Count -eq 0) { throw "Empty historical seed: $file" }
 }
 
 if ($Subscription) {
@@ -99,14 +125,33 @@ Write-Host "Resource group : $ResourceGroup"
 
 $principalId = Invoke-Az ad signed-in-user show --query id --output tsv
 
-Write-Host "`n[1/5] Resource group"
-Invoke-Az group create --name $ResourceGroup --location $Location --tags project=voice-of-the-game environment=$Environment --output none
+Write-Host "`n[1/8] Resource group and soft-delete recovery"
+$resourceGroupId = Invoke-Az group create --name $ResourceGroup --location $Location --tags project=voice-of-the-game environment=$Environment --query id --output tsv
+$deletedVaults = Invoke-Az keyvault list-deleted --query '[].{name:name,originalId:properties.vaultId}' --output json | ConvertFrom-Json
+$recoveredVault = $false
+foreach ($deleted in @($deletedVaults)) {
+    if ($deleted.originalId -like "$resourceGroupId/*" -and $deleted.name -like "kv-vog-$Environment-*") {
+        Invoke-Az keyvault recover --name $deleted.name --resource-group $ResourceGroup --output none
+        $recoveredVault = $true
+    }
+}
+$deletedAccounts = Invoke-Az cognitiveservices account list-deleted --query '[].{name:name,location:location,id:id}' --output json | ConvertFrom-Json
+foreach ($deleted in @($deletedAccounts)) {
+    if ($deleted.id -match "/resourceGroups/$([regex]::Escape($ResourceGroup))/deletedAccounts/" -and $deleted.name -like "vog-$Environment-*") {
+        Invoke-Az cognitiveservices account recover --name $deleted.name --resource-group $ResourceGroup --location $deleted.location --output none
+    }
+}
 
-Write-Host '[2/5] MCP key'
+Write-Host '[2/8] MCP key'
 $vaultName = Invoke-Az keyvault list --resource-group $ResourceGroup --query '[0].name' --output tsv
 $mcpApiKey = $null
-if ($vaultName) {
-    $mcpApiKey = az keyvault secret show --vault-name $vaultName --name 'Mcp--ApiKey' --query value --output tsv 2>$null
+$currentImage = Invoke-Az containerapp list --resource-group $ResourceGroup --query "[?name=='ca-vog-$Environment-gateway'].properties.template.containers[0].image | [0]" --output tsv
+if ($recoveredVault -and $currentImage) {
+    throw 'Recovered a vault while a gateway still exists. Restore vault access and rerun before rotating its MCP key.'
+}
+if ($vaultName -and -not $recoveredVault) {
+    $mcpApiKey = Invoke-Az keyvault secret show --vault-name $vaultName --name 'Mcp--ApiKey' --query value --output tsv
+    if (-not $mcpApiKey) { throw 'Existing MCP key is empty; refusing to silently rotate it.' }
 }
 
 if ($mcpApiKey) {
@@ -117,18 +162,18 @@ else {
     Write-Host '  generated a new key (fresh environment)'
 }
 
-$currentImage = Invoke-Az containerapp list --resource-group $ResourceGroup --query '[0].properties.template.containers[0].image' --output tsv
 if (-not $currentImage -or $currentImage -eq $placeholderImage) {
     $currentImage = ''
 }
+if ($SkipBuild -and -not $currentImage) { throw '-SkipBuild requires an already deployed gateway image.' }
 
-Write-Host '[3/5] Deploying infra/main.bicep (several minutes the first time)'
+Write-Host '[3/8] Deploying infra/main.bicep (several minutes the first time)'
 $outputs = Deploy-Infrastructure -Image $currentImage -Label 'infra'
 
 if (-not $SkipBuild) {
     $registry = $outputs.VOG_REGISTRY_NAME.value
     $tag = "$(git -C $repoRoot rev-parse --short HEAD)-$(Get-Date -Format 'yyyyMMddHHmmss')"
-    Write-Host "[4/5] Building vog-gateway:$tag in $registry and rolling it out"
+    Write-Host "[4/8] Building vog-gateway:$tag in $registry and rolling it out"
     Invoke-Az acr build `
         --registry $registry `
         --resource-group $ResourceGroup `
@@ -139,7 +184,7 @@ if (-not $SkipBuild) {
     $outputs = Deploy-Infrastructure -Image "$loginServer/vog-gateway:$tag" -Label 'gateway'
 }
 else {
-    Write-Host '[4/5] Skipping the image build (-SkipBuild)'
+    Write-Host '[4/8] Skipping the image build (-SkipBuild)'
 }
 
 Write-Host '      Writing .env.local (git-ignored; endpoints and names only, no keys)'
@@ -147,14 +192,41 @@ $lines = @('# Generated by infra/provision.ps1. Endpoints and names only: the MC
 foreach ($output in $outputs.PSObject.Properties) {
     # The CLI camel-cases output names (AZURE_LOCATION -> azurE_LOCATION); they are UPPER_SNAKE by design.
     $lines += "$($output.Name.ToUpperInvariant())=$($output.Value.value)"
+    [Environment]::SetEnvironmentVariable($output.Name.ToUpperInvariant(), [string]$output.Value.value, 'Process')
 }
 
 Set-Content -Path (Join-Path $repoRoot '.env.local') -Value $lines -Encoding utf8NoBOM
 
-Write-Host '[5/5] Registering the Foundry agents'
-dotnet run --project (Join-Path $repoRoot 'tools/Vog.FoundrySetup') | Out-Host
-if ($LASTEXITCODE -ne 0) {
-    throw 'Registering the Foundry agents failed.'
+Write-Host '[5/8] Seeding historical data'
+foreach ($file in $historicalFiles) {
+    Invoke-Az storage blob upload --account-name $outputs.VOG_STORAGE_ACCOUNT_NAME.value `
+        --container-name vog-data --name "public/$file" --file (Join-Path $repoRoot "data/historical/$file") `
+        --auth-mode login --overwrite true --content-type application/json --output none
+}
+
+Write-Host '[6/8] Checking gateway health'
+Invoke-WebRequest -Uri "$($outputs.VOG_GATEWAY_URL.value)/healthz" -TimeoutSec 30 `
+    -MaximumRetryCount 12 -RetryIntervalSec 10 | Out-Null
+
+Write-Host '[7/8] Registering the Foundry agents'
+Push-Location $repoRoot
+try {
+    dotnet run --project (Join-Path $repoRoot 'tools/Vog.FoundrySetup') | Out-Host
+    if ($LASTEXITCODE -ne 0) { throw 'Registering the Foundry agents failed.' }
+}
+finally { Pop-Location }
+
+Write-Host '[8/8] Foundry evaluations'
+if (-not $SkipEvaluations) {
+    $evaluationParameters = @{
+        ProjectEndpoint = $outputs.VOG_FOUNDRY_PROJECT_ENDPOINT.value
+        JudgeDeployment = $outputs.VOG_EVALUATION_MODEL_DEPLOYMENT.value
+    }
+    if ($EvaluationOutputDirectory) { $evaluationParameters.OutputDirectory = $EvaluationOutputDirectory }
+    & (Join-Path $repoRoot 'scripts/evaluate_agents.ps1') @evaluationParameters
+}
+else {
+    Write-Host 'Skipping evaluation runs (-SkipEvaluations); judge infrastructure remains deployed.'
 }
 
 Write-Host "`nDone. New role assignments can take a few minutes to take effect."
