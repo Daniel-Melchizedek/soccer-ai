@@ -2,7 +2,15 @@
 
 Updated: 27 October 2026.
 
-## Latest Goalkeeper Legend Update
+## Latest Analyst Chart Update
+
+Application commit **`3227b23`** is pushed. Analyst now compares shots, goals and corners with paired horizontal bars, exact counts and localized accessible meter labels instead of a table. All six bars share one scale; zero intervals use a maximum of one. Recap scope, scoreboard, Casual view and evidence behavior are unchanged. **34 browser tests passed**; editor diagnostics and whitespace checks passed. Real local recap counts matched the chart, and DOM geometry checks at widths 1280/390/320 found no overlap or horizontal overflow. Browser click automation timed out and screenshots captured the header rather than the chart; full visual acceptance is not claimed.
+
+ACR **`dtx`** built the clean commit archive (completion `2026-10-27T08:04:26Z`). Image-only update created **`ca-vog-dev-gateway--analystchart-3227b23`** with `crvogdevy6po56.azurecr.io/vog-gateway@sha256:f06c6fa039dbdf4d90b86acc9f548bea2e8eaeaae90fb622323433cf3cb9bae7`. Initial control-plane output showed provisioned, one replica and 100% traffic, but health was pending. Subsequent verification was blocked by Azure CLI's missing MSAL account; sign in directly with `az login` before confirming latest-ready, Healthy and the configuration fingerprint. The installed extension does not support `az containerapp wait`.
+
+Public `/healthz` returned 200 and fresh HTML/JS/CSS contain the chart and no old shots-only container. The live recap correctly reports no kickoff yet and hides the chart; no listener was started for this check. Shared page: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=analystchart-3227b23 . This handoff-only follow-up needs no rebuild. Earlier release records below are historical.
+
+## Previous Goalkeeper Legend Update
 
 Application commit **`266b48f`** is pushed and deployed. The goalkeeper legend now has separate coloured H/A squares with contrasting hatching instead of one transparent square. `createPitchMap.setTeams` applies the same palette used by canvas players; default CSS fills cover the pre-join red/blue display. Existing label text and pitch behavior remain unchanged. **32 browser tests passed**, including legend/canvas agreement for both red/blue and swapped blue/red kits; no new C# behavior or full .NET suite is claimed.
 
