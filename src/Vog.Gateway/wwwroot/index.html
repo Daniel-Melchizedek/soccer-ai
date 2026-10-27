@@ -189,10 +189,14 @@
       <p class="note pitch-help">Goals, nets and penalty areas are shown. The map uses shapes and player numbers as well as kit colours. Ball position is announced only when its area or possession changes; use “Where's the ball?” for an on-demand update.</p>
     </section>
 
+    <section class="caption-stage" aria-labelledby="captions-heading">
+      <h2 id="captions-heading">Captions</h2>
+      <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
+      <div id="caption" class="caption" aria-hidden="true" data-channel-lang></div>
+    </section>
+
     <div class="columns">
-      <section class="card" aria-labelledby="captions-heading">        <h2 id="captions-heading">Captions</h2>
-        <!-- Visual captions for Deaf and hard-of-hearing fans; hidden from screen readers to avoid reading twice. -->
-        <div id="caption" class="caption" aria-hidden="true" data-channel-lang></div>
+      <section class="card" aria-labelledby="history-heading">
         <h2 id="history-heading">Recent commentary</h2>
         <ol id="history" class="history" role="log" aria-labelledby="history-heading" aria-live="off" data-channel-lang></ol>
       </section>

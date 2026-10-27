@@ -74,11 +74,15 @@
 .insights li p { margin: 0.25rem 0; }
 .chart-frame { position: relative; height: 280px; min-width: 0; }
 .chart-frame canvas { display: block; max-width: 100%; }
+#insights-metrics { margin-block: 1rem; padding: 1rem; background: #f6f9f9; color: #202626; }
+#insights-chart-frame { height: 360px; }
 .insight-count-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-block: 1rem; }
-.insight-count-group { display: grid; gap: 0.5rem; }
-.insight-count-group h3 { margin: 0; font-size: 1rem; }
+.insight-count-group { display: grid; gap: 0.5rem; border-top: 1px solid #c6d2d2; padding-top: 0.75rem; }
+.insight-count-group h3 { margin: 0; font-size: 1rem; color: inherit; }
 .insight-count-row { display: grid; grid-template-columns: minmax(0, 1fr) 3ch; align-items: center; gap: 0.75rem; }
-.insight-count-row > strong { text-align: right; font-variant-numeric: tabular-nums; }
+.insight-count-row > span { border-left: 4px solid #007f79; padding-left: 0.5rem; }
+.insight-count-row.away > span { border-left-color: #bf461d; }
+.insight-count-row > strong { text-align: right; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 
 * {
   box-sizing: border-box;
@@ -510,6 +514,30 @@ input:disabled {
 
 /* ---- Captions and history ---- */
 
+.caption-stage {
+  min-width: 0;
+  margin-block: 1.5rem;
+  padding: 1rem;
+  background: #222728;
+  border-block: 2px solid #a8b8b8;
+}
+
+.caption-stage h2 {
+  margin: 0 0 0.75rem;
+  color: #ffffff;
+  font-size: 1rem;
+}
+
+#caption {
+  min-height: 5.5em;
+  padding: 1.25rem;
+  border: 1px solid #6e7c7c;
+  border-radius: 4px;
+  font-weight: 600;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+
 .caption {
   min-height: 4.2em;
   padding: 0.75rem 1rem;
@@ -543,6 +571,9 @@ body.captions-pinned {
 body.captions-pinned #caption {
   position: fixed;
   z-index: 20;
+  min-height: min(5.5em, 45dvh);
+  max-height: 45dvh;
+  overflow-y: auto;
   left: 1rem;
   right: 1rem;
   bottom: 1rem;
@@ -814,6 +845,10 @@ input[type="range"] {
   .talk-icon {
     forced-color-adjust: none;
   }
+
+  #insights-chart-frame { display: none; }
+  #insights-metrics, .caption-stage { background: Canvas; color: CanvasText; }
+  .caption-stage h2 { color: CanvasText; }
 }
 
 /* ---- Football history panel (historical data charts) ---- */

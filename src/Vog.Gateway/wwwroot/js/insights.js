@@ -110,15 +110,32 @@ function render() {
         datasets: current.teams.map((team, index) => ({
           label: team.name,
           data: metrics.map(metric => team[metric]),
-          backgroundColor: index === 0 ? '#2fe0d4' : '#ff8a2a'
+          backgroundColor: index === 0 ? '#007f79' : '#bf461d',
+          borderRadius: 3,
+          maxBarThickness: 22,
+          categoryPercentage: 0.7
         }))
       },
       options: {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: false,
-        plugins: { legend: { position: 'bottom', labels: { color: '#ffffff', boxWidth: 12 } } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top', align: 'start', onClick: () => {},
+            labels: { color: '#202626', boxWidth: 14, padding: 20, font: { size: 14 } }
+          },
+          tooltip: { bodyFont: { size: 14 }, titleFont: { size: 14 }, padding: 12 }
+        },
         scales: {
-          x: { min: 0, max: maximum, ticks: { precision: 0, color: '#d4c6f0' }, grid: { color: '#4a2d7a' } },
-          y: { ticks: { color: '#ffffff' }, grid: { display: false } }
+          x: {
+            min: 0, max: maximum,
+            ticks: { precision: 0, color: '#485454', font: { size: 14 } },
+            grid: { color: '#dce3e3' }, border: { display: false }
+          },
+          y: {
+            ticks: { color: '#202626', font: { size: 15, weight: 'bold' }, padding: 12 },
+            grid: { display: false }, border: { display: false }
+          }
         }
       }
     });

@@ -241,6 +241,12 @@ test('Analyst chart compares scoped counts on one scale with exact accessible va
   assert.equal(app.charts[0].type, 'bar');
   assert.equal(app.charts[0].options.indexAxis, 'y');
   assert.equal(app.charts[0].options.scales.x.max, 4);
+  assert.equal(app.charts[0].options.scales.x.min, 0);
+  assert.equal(app.charts[0].options.interaction.mode, 'index');
+  assert.equal(app.charts[0].options.interaction.intersect, false);
+  assert.equal(app.charts[0].options.plugins.legend.position, 'top');
+  assert.ok(app.charts[0].options.scales.y.ticks.font.size >= 14);
+  assert.notEqual(app.charts[0].data.datasets[0].backgroundColor, app.charts[0].data.datasets[1].backgroundColor);
 });
 
 test('Analyst chart keeps zero-count intervals visible and clears unavailable results', async () => {
