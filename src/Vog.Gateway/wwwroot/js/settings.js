@@ -56,6 +56,7 @@ function onChange(event) {
 const panel = document.getElementById('settings');
 panel.addEventListener('input', onChange);
 panel.addEventListener('change', onChange);
+document.getElementById('pitch-style')?.addEventListener('change', onChange);
 document.getElementById('reset-settings').addEventListener('click', () => {
   prefs = structuredClone(DEFAULTS);
   savePrefs(prefs);

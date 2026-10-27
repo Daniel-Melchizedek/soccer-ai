@@ -109,6 +109,7 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
   const beginInteraction = (isTyped) => {
     if (disposed || blocked || active) return null;
     typed = isTyped;
+    recording = !isTyped;
     active = { turn: ++turn, sent: false };
     catchup.begin(el('lang').value);
     renderCatchup(el('catchup'), null);
@@ -176,21 +177,23 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
     const interaction = beginInteraction(false);
     if (!interaction) return;
 
-    recording = true;
-    controls();
     thinking.stop();
     talk.setAttribute('aria-pressed', 'true');
     renderLabels();
     answers.port.postMessage({ type: 'flush' });
     setDuck(0);
+    setStatus('Preparing your microphone…');
+    maxTimer = setTimeout(end, MAX_QUESTION_MS);
     try {
-      mic ??= await openMicrophone();
+      const microphone = mic ?? await openMicrophone();
       if (disposed || active !== interaction) {
-        mic?.stream.getTracks().forEach((track) => track.stop());
-        await mic?.ctx.close();
-        mic = null;
+        if (microphone !== mic) {
+          microphone.stream.getTracks().forEach((track) => track.stop());
+          await microphone.ctx.close();
+        }
         return;
       }
+      mic = microphone;
       interaction.sent = true;
       await connection.send('askBegin');
       if (disposed || active !== interaction) return;
@@ -199,7 +202,6 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
         mic.node.port.postMessage({ type: 'stop' });
         return;
       }
-      maxTimer = setTimeout(end, MAX_QUESTION_MS);
       setStatus('Listening to your question…');
     } catch (err) {
       if (active === interaction) fail(`Microphone unavailable: ${err.message ?? err}.`);
@@ -208,6 +210,13 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
 
   function end() {
     if (!recording) {
+      return;
+    }
+
+    if (!active?.sent) {
+      catchup.cancel();
+      release();
+      setStatus(idleStatus());
       return;
     }
 
@@ -342,6 +351,9 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
   talk.addEventListener('pointerdown', onPointerDown);
   talk.addEventListener('pointerup', onPointerUp);
   talk.addEventListener('pointercancel', onPointerUp);
+  talk.addEventListener('lostpointercapture', onPointerUp);
+  talk.addEventListener('blur', onPointerUp);
+  window.addEventListener('blur', onPointerUp);
   talk.addEventListener('keydown', onKeyDown);
   talk.addEventListener('keyup', onKeyUp);
   document.addEventListener('keydown', onShortcut);
@@ -365,6 +377,9 @@ export async function startCompanion({ ctx, connection, mix, setStatus, idleStat
     talk.removeEventListener('pointerdown', onPointerDown);
     talk.removeEventListener('pointerup', onPointerUp);
     talk.removeEventListener('pointercancel', onPointerUp);
+    talk.removeEventListener('lostpointercapture', onPointerUp);
+    talk.removeEventListener('blur', onPointerUp);
+    window.removeEventListener('blur', onPointerUp);
     talk.removeEventListener('keydown', onKeyDown);
     talk.removeEventListener('keyup', onKeyUp);
     document.removeEventListener('keydown', onShortcut);

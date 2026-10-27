@@ -40,3 +40,13 @@ test('explicit panel preference and caption appearance remain respected', async 
   assert.equal(app.properties.get('--caption-fg'), '#000000');
   assert.equal(app.properties.get('--caption-bg'), 'rgba(255, 255, 255, 0.8)');
 });
+
+test('pitch style defaults to Classic and stored choices preserve other preferences', async () => {
+  for (const pitchStyle of [undefined, 'classic', 'light', 'soft', 'contrast', 'yellow']) {
+    const app = await boot(JSON.stringify({ pitchStyle, talkMode: 'hold', caption: { size: 'XL' } }));
+    const settings = app.prefs.loadPrefs();
+    assert.equal(settings.pitchStyle, pitchStyle ?? 'classic');
+    assert.equal(settings.talkMode, 'hold');
+    assert.equal(settings.caption.size, 'XL');
+  }
+});

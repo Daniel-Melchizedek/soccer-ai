@@ -82,11 +82,12 @@ class Element {
   async emit(name, event = {}) { for (const handler of this.listeners.get(name) ?? []) await handler({ preventDefault() {}, currentTarget: this, ...event }); }
 }
 
-async function companionFixture({ microphone } = {}) {
+async function companionFixture({ microphone, talkMode = 'tap' } = {}) {
   const document = new Element();
   document.createElement = () => new Element(document);
   const ids = Object.fromEntries(['talk', 'ask-help', 'heard', 'answer', 'question', 'ask-send', 'ask-form', 'who-scored', 'lang', 'catchup'].map(id => [id, new Element(document)]));
   ids.lang.value = 'en-GB';
+  ids.talk.setPointerCapture = () => {};
   document.getElementById = id => ids[id];
   const readouts = ['score', 'ball'].map(kind => Object.assign(new Element(document), { dataset: { readout: kind } }));
   document.querySelectorAll = () => readouts;
@@ -126,7 +127,7 @@ async function companionFixture({ microphone } = {}) {
   const dependencies = {
     './catchup.js': source,
     './captions.js': 'export function endCompanion() {} export function showCompanion() {}',
-    './prefs.js': 'export function loadPrefs() { return { talkMode: "tap", gentle: false }; }',
+    './prefs.js': `export function loadPrefs() { return { talkMode: ${JSON.stringify(talkMode)}, gentle: false }; }`,
   };
   const module = new SourceTextModule(await readFile(new URL('../../src/Vog.Gateway/wwwroot/js/ask.js', import.meta.url), 'utf8'), { context });
   await module.link(specifier => new SourceTextModule(dependencies[specifier], { context }));
@@ -192,6 +193,76 @@ test('talk captures before microphone permission resolves and ends only after an
   fixture.complete();
   fixture.played();
   assert.match(fixture.ids.catchup.textContent, /permission-goal/);
+  await fixture.cleanup();
+});
+
+test('successive holds keep the pressed button enabled until release', async () => {
+  const fixture = await companionFixture({ talkMode: 'hold' });
+  const disabledChanges = [];
+  Object.defineProperty(fixture.ids.talk, 'disabled', {
+    get() { return disabledChanges.at(-1) ?? false; },
+    set(value) { disabledChanges.push(value); },
+  });
+  for (const pointerId of [1, 2]) {
+    disabledChanges.length = 0;
+    await fixture.ids.talk.emit('pointerdown', { pointerId });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.ok(disabledChanges.every(value => value === false), 'Starting a hold must not disable its pointer-capture target');
+    assert.equal(fixture.ids.talk.getAttribute('aria-pressed'), 'true');
+    await fixture.ids.talk.emit('pointerup', { pointerId });
+    const capture = fixture.nodes.find(node => node.name === 'pcm-capture');
+    capture.port.onmessage({ data: { type: 'stopped' } });
+    fixture.complete(pointerId);
+    fixture.played();
+    assert.equal(fixture.ids.talk.disabled, false);
+    assert.equal(fixture.status(), 'Listening');
+  }
+  assert.equal(fixture.nodes.filter(node => node.name === 'pcm-capture').length, 1);
+  assert.deepEqual(fixture.sent.map(([name]) => name), ['askBegin', 'askEnd', 'askBegin', 'askEnd']);
+  await fixture.cleanup();
+});
+
+test('a second hold ends on lost pointer capture or focus and removes recovery handlers on cleanup', async () => {
+  for (const [target, event] of [['talk', 'lostpointercapture'], ['talk', 'blur'], ['window', 'blur']]) {
+    const fixture = await companionFixture({ talkMode: 'hold' });
+    const finishTarget = target === 'window' ? fixture.window : fixture.ids.talk;
+    for (const pointerId of [1, 2]) {
+      await fixture.ids.talk.emit('pointerdown', { pointerId });
+      await new Promise(resolve => setImmediate(resolve));
+      if (pointerId === 1) await fixture.ids.talk.emit('pointerup', { pointerId });
+      else await finishTarget.emit(event, { pointerId });
+      assert.equal(fixture.ids.talk.getAttribute('aria-pressed'), 'false');
+      const capture = fixture.nodes.find(node => node.name === 'pcm-capture');
+      assert.equal(capture.messages.at(-1).type, 'stop');
+      const stopCount = capture.messages.filter(message => message.type === 'stop').length;
+      await fixture.ids.talk.emit('pointerup', { pointerId });
+      assert.equal(capture.messages.filter(message => message.type === 'stop').length, stopCount);
+      capture.port.onmessage({ data: { type: 'stopped' } });
+      fixture.complete(pointerId);
+      fixture.played();
+      assert.equal(fixture.ids.talk.disabled, false);
+    }
+    assert.deepEqual(fixture.sent.map(([name]) => name), ['askBegin', 'askEnd', 'askBegin', 'askEnd']);
+    await fixture.cleanup();
+    assert.equal(finishTarget.listeners.get(event)?.size, 0);
+  }
+});
+
+test('releasing hold before microphone permission resolves cancels without waiting for an answer', async () => {
+  let grant;
+  let stopped = false;
+  const fixture = await companionFixture({ talkMode: 'hold', microphone: () => new Promise(resolve => { grant = resolve; }) });
+  await fixture.ids.talk.emit('pointerdown', { pointerId: 1 });
+  await fixture.ids.talk.emit('pointerup', { pointerId: 1 });
+  assert.equal(fixture.ids.talk.getAttribute('aria-pressed'), 'false');
+  assert.equal(fixture.ids.talk.disabled, false);
+  assert.equal(fixture.status(), 'Listening');
+  assert.equal(fixture.ducks.at(-1), 1);
+  grant({ getTracks: () => [{ stop() { stopped = true; } }] });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(stopped, true);
+  assert.deepEqual(fixture.sent, []);
+  assert.equal(fixture.timers.size, 0);
   await fixture.cleanup();
 });
 

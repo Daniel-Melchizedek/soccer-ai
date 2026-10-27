@@ -1,26 +1,69 @@
 const LENGTH = 105;
 const WIDTH = 68;
 
+export const PITCH_STYLES = Object.freeze({
+  classic: { background: '#08251f', line: '#d9eee5', outline: '#ffffff', shadow: '#101010', ball: '#ffd400' },
+  light: { background: '#f4f7f5', line: '#24382d', outline: '#101010', shadow: '#ffffff', ball: '#ffd400' },
+  soft: { background: '#182322', line: '#b7c9c1', outline: '#cdd9d4', shadow: '#101010', ball: '#ffd400' },
+  contrast: { background: '#000000', line: '#ffffff', outline: '#ffffff', shadow: '#000000', ball: '#ffffff', player: '#ffffff' },
+  yellow: { background: '#000000', line: '#ffd400', outline: '#ffd400', shadow: '#000000', ball: '#ffd400', player: '#ffd400' },
+});
+const SYSTEM_STYLE = { background: 'Canvas', line: 'CanvasText', outline: 'CanvasText', shadow: 'Canvas', ball: 'CanvasText', player: 'Canvas', text: 'CanvasText' };
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, homeKey, awayKey, homeKeeperKey, awayKeeperKey }) {
+function contrastingText(fill) {
+  const channels = fill.slice(1).match(/../g).map(channel => {
+    const value = Number.parseInt(channel, 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? '#000000' : '#ffffff';
+}
+
+export function createPitchMap({ canvas, description, zoomIn, zoomOut, zoomLevel, markerSize, pitchStyle, follow, homeKey, awayKey, homeKeeperKey, awayKeeperKey }) {
   const context = canvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const forcedColours = window.matchMedia('(forced-colors: active)');
   let message = null;
   let teams = { home: 'Home', away: 'Away', homeKit: 'red', awayKit: 'blue' };
   let zoom = 1;
   let followBall = false;
+  let styleName = 'classic';
   let lastDraw = -Infinity;
   let lastDescription = -Infinity;
   let lastSummary = '';
   const colours = { red: '#e53935', blue: '#1e63ff', white: '#ffffff', yellow: '#ffd400', green: '#1faa59', claret: '#7b1e3a', sky_blue: '#64c8ff', orange: '#ff8a2a', black: '#111111', purple: '#7e3ff2' };
 
+  const palette = () => forcedColours.matches ? SYSTEM_STYLE : PITCH_STYLES[styleName];
+
+  function updateLegend() {
+    const style = palette();
+    const homeFill = style.player ?? colours[teams.homeKit] ?? '#f0f0f0';
+    const awayFill = style.player ?? colours[teams.awayKit] ?? '#f0f0f0';
+    homeKey.parentElement?.style.setProperty('--kit-colour', homeFill);
+    awayKey.parentElement?.style.setProperty('--kit-colour', awayFill);
+    homeKeeperKey?.style.setProperty('--keeper-colour', homeFill);
+    awayKeeperKey?.style.setProperty('--keeper-colour', awayFill);
+    homeKeeperKey?.style.setProperty('--keeper-text', style.text ?? contrastingText(homeFill));
+    awayKeeperKey?.style.setProperty('--keeper-text', style.text ?? contrastingText(awayFill));
+    for (const [name, value] of Object.entries(style)) {
+      canvas.parentElement?.style.setProperty(`--pitch-${name}`, value);
+    }
+  }
+
+  function setStyle(value) {
+    styleName = Object.hasOwn(PITCH_STYLES, value) ? value : 'classic';
+    if (pitchStyle) pitchStyle.value = styleName;
+    updateLegend();
+    draw();
+  }
+
   function setTeams(value) {
     teams = value;
     homeKey.textContent = teams.home;
     awayKey.textContent = teams.away;
-    homeKeeperKey?.style.setProperty('--keeper-colour', colours[teams.homeKit] ?? '#f0f0f0');
-    awayKeeperKey?.style.setProperty('--keeper-colour', colours[teams.awayKit] ?? '#f0f0f0');
+    updateLegend();
     draw();
   }
 
@@ -54,8 +97,12 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
   }
 
   function draw() {
+    const style = palette();
     zoomOut.disabled = zoom === 1;
     zoomIn.disabled = zoom === 3;
+    const zoomText = `${zoom * 100}%`;
+    if (zoomLevel && zoomLevel.textContent !== zoomText) zoomLevel.textContent = zoomText;
+    const markerScale = [1, 1.4, 1.8].includes(Number(markerSize?.value)) ? Number(markerSize.value) : 1;
     const bounds = canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) {
       return;
@@ -66,7 +113,7 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     canvas.height = Math.round(bounds.height * dpr);
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, bounds.width, bounds.height);
-    context.fillStyle = '#08251f';
+    context.fillStyle = style.background;
     context.fillRect(0, 0, bounds.width, bounds.height);
     lastDraw = performance.now();
 
@@ -74,40 +121,46 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       return;
     }
 
-    const margin = 22;
+    const margin = Math.ceil(22 * markerScale);
     const viewWidth = LENGTH / zoom;
     const viewHeight = WIDTH / zoom;
     const ballX = clamp(Number(message.b?.[0]) || 0, 0, LENGTH);
     const ballY = clamp(Number(message.b?.[1]) || 0, 0, WIDTH);
     const left = followBall ? clamp(ballX - viewWidth / 2, 0, LENGTH - viewWidth) : (LENGTH - viewWidth) / 2;
     const bottom = followBall ? clamp(ballY - viewHeight / 2, 0, WIDTH - viewHeight) : (WIDTH - viewHeight) / 2;
-    const scale = Math.min((bounds.width - margin * 2) / viewWidth, (bounds.height - margin * 2) / viewHeight);
+    const portrait = bounds.height > bounds.width;
+    const scale = Math.min((bounds.width - margin * 2) / (portrait ? viewHeight : viewWidth), (bounds.height - margin * 2) / (portrait ? viewWidth : viewHeight));
     if (scale <= 0) {
       return;
     }
-    const mapWidth = viewWidth * scale;
-    const mapHeight = viewHeight * scale;
+    const mapWidth = (portrait ? viewHeight : viewWidth) * scale;
+    const mapHeight = (portrait ? viewWidth : viewHeight) * scale;
     const plotLeft = (bounds.width - mapWidth) / 2;
     const plotTop = (bounds.height - mapHeight) / 2;
-    const point = (x, y) => ({
+    const point = (x, y) => portrait ? ({
+      x: plotLeft + (bottom + viewHeight - y) * scale,
+      y: plotTop + (x - left) * scale,
+    }) : ({
       x: plotLeft + (x - left) * scale,
       y: plotTop + (bottom + viewHeight - y) * scale,
     });
 
     context.save();
     context.beginPath();
-    context.rect(plotLeft - 16, plotTop - 16, mapWidth + 32, mapHeight + 32);
+    context.rect(plotLeft - margin + 4, plotTop - margin + 4, mapWidth + 2 * margin - 8, mapHeight + 2 * margin - 8);
     context.clip();
-    context.strokeStyle = '#d9eee5';
-    context.lineWidth = 2;
+    context.strokeStyle = style.line;
+    context.lineWidth = 3;
     const field = point(0, WIDTH);
-    context.strokeRect(field.x, field.y, LENGTH * scale, WIDTH * scale);
+    const fieldEnd = point(LENGTH, 0);
+    context.strokeRect(field.x, field.y, fieldEnd.x - field.x, fieldEnd.y - field.y);
     drawGoalEnd(0, point, context);
     drawGoalEnd(LENGTH, point, context);
     const halfway = point(LENGTH / 2, WIDTH);
+    const halfwayEnd = point(LENGTH / 2, 0);
     context.beginPath();
     context.moveTo(halfway.x, halfway.y);
-    context.lineTo(halfway.x, point(LENGTH / 2, 0).y);
+    context.lineTo(halfwayEnd.x, halfwayEnd.y);
     context.stroke();
     const centre = point(LENGTH / 2, WIDTH / 2);
     context.beginPath();
@@ -115,14 +168,15 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     context.stroke();
 
     const visible = (x, y) => x >= left && x <= left + viewWidth && y >= bottom && y <= bottom + viewHeight;
-    drawPlayers(message.h, teams.homeKit, true, point, visible);
-    drawPlayers(message.a, teams.awayKit, false, point, visible);
+    drawPlayers(message.h, teams.homeKit, true, point, visible, markerScale);
+    drawPlayers(message.a, teams.awayKit, false, point, visible, markerScale);
 
     const ball = point(ballX, ballY);
     if (visible(ballX, ballY)) {
-      for (const [radius, colour] of [[14, '#101010'], [12, '#ffffff'], [10, '#101010'], [8, '#ffd400']]) {
+      const rings = [[18, style.shadow], [15, style.outline], [12, style.shadow], [8, style.ball]];
+      for (const [radius, colour] of rings) {
         context.beginPath();
-        context.arc(ball.x, ball.y, radius, 0, Math.PI * 2);
+        context.arc(ball.x, ball.y, radius * markerScale, 0, Math.PI * 2);
         context.fillStyle = colour;
         context.fill();
       }
@@ -154,7 +208,7 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     const backTop = point(goalX + inward * netDepth, goalTop);
     const backBottom = point(goalX + inward * netDepth, goalBottom);
     context.save();
-    context.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    context.fillStyle = palette().background;
     context.beginPath();
     context.moveTo(frontTop.x, frontTop.y);
     context.lineTo(backTop.x, backTop.y);
@@ -162,7 +216,7 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     context.lineTo(frontBottom.x, frontBottom.y);
     context.closePath();
     context.fill();
-    context.strokeStyle = '#ffffff';
+    context.strokeStyle = palette().line;
     context.lineWidth = 2.5;
     context.stroke();
     context.setLineDash([3, 3]);
@@ -180,8 +234,10 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     context.restore();
   }
 
-  function drawPlayers(players, kit, isHome, point, visible) {
-    const fill = colours[kit] ?? '#f0f0f0';
+  function drawPlayers(players, kit, isHome, point, visible, markerScale) {
+    const style = palette();
+    const fill = style.player ?? colours[kit] ?? '#f0f0f0';
+    const numberColour = style.text ?? contrastingText(fill);
     for (const [x, y, number, goalkeeper] of players ?? []) {
       if (!visible(x, y)) {
         continue;
@@ -189,44 +245,36 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
       const position = point(x, y);
       context.beginPath();
       if (goalkeeper) {
-        context.rect(position.x - 11, position.y - 11, 22, 22);
+        context.rect(position.x - 15 * markerScale, position.y - 15 * markerScale, 30 * markerScale, 30 * markerScale);
       } else if (isHome) {
-        context.arc(position.x, position.y, 9, 0, Math.PI * 2);
+        context.arc(position.x, position.y, 15 * markerScale, 0, Math.PI * 2);
       } else {
-        context.moveTo(position.x, position.y - 10);
-        context.lineTo(position.x + 9, position.y + 7);
-        context.lineTo(position.x - 9, position.y + 7);
+        context.moveTo(position.x, position.y - 19 * markerScale);
+        context.lineTo(position.x + 18 * markerScale, position.y + 15 * markerScale);
+        context.lineTo(position.x - 18 * markerScale, position.y + 15 * markerScale);
         context.closePath();
       }
 
       context.fillStyle = fill;
       context.fill();
-      // A diagonal hatch makes the two teams distinguishable without relying on colour.
-      context.save();
-      context.clip();
-      context.strokeStyle = isHome ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)';
-      context.lineWidth = 1.25;
-      for (let offset = -12; offset <= 12; offset += 5) {
-        context.beginPath();
-        context.moveTo(position.x - 12, position.y + offset);
-        context.lineTo(position.x + 12, position.y + offset + (goalkeeper && !isHome ? 12 : -12));
-        context.stroke();
-      }
-      context.restore();
-      context.strokeStyle = '#ffffff';
-      context.lineWidth = 2;
+      context.strokeStyle = style.shadow;
+      context.lineWidth = 6;
       context.stroke();
-      context.fillStyle = '#000000';
-      context.font = 'bold 10px system-ui';
+      context.strokeStyle = style.outline;
+      context.lineWidth = 3;
+      context.stroke();
+      context.font = `bold ${Math.round(14 * markerScale)}px "Atkinson Hyperlegible", sans-serif`;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.lineWidth = 2.5;
-      context.strokeStyle = '#ffffff';
       const ball = point(clamp(Number(message.b?.[0]) || 0, 0, LENGTH), clamp(Number(message.b?.[1]) || 0, 0, WIDTH));
-      const overlapsBall = Math.hypot(position.x - ball.x, position.y - ball.y) < 24;
-      const numberY = overlapsBall ? position.y + (position.y < canvas.height / (window.devicePixelRatio || 1) / 2 ? 25 : -25) : position.y;
+      const overlapsBall = Math.hypot(position.x - ball.x, position.y - ball.y) < 36 * markerScale;
+      const numberY = overlapsBall ? position.y + (position.y < canvas.height / (window.devicePixelRatio || 1) / 2 ? 36 : -36) * markerScale : position.y + (isHome || goalkeeper ? 0 : 3 * markerScale);
       const label = goalkeeper ? `${isHome ? 'H' : 'A'}${number}` : String(number);
-      context.strokeText(label, position.x, numberY);
+      if (overlapsBall) {
+        context.fillStyle = style.background;
+        context.fillRect(position.x - 15 * markerScale, numberY - 10 * markerScale, 30 * markerScale, 20 * markerScale);
+      }
+      context.fillStyle = overlapsBall ? style.line : numberColour;
       context.fillText(label, position.x, numberY);
     }
   }
@@ -245,7 +293,11 @@ export function createPitchMap({ canvas, description, zoomIn, zoomOut, follow, h
     followBall = follow.checked;
     draw();
   });
+  markerSize?.addEventListener('change', draw);
+  pitchStyle?.addEventListener('change', () => setStyle(pitchStyle.value));
   reducedMotion.addEventListener('change', draw);
+  forcedColours.addEventListener('change', () => { updateLegend(); draw(); });
+  setStyle(pitchStyle?.value);
 
-  return { update, setTeams };
+  return { update, setTeams, setStyle };
 }

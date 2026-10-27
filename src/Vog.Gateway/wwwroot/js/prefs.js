@@ -12,6 +12,7 @@ export const DEFAULTS = Object.freeze({
   gentle: false,
   caption: { size: 'M', colours: 'white-black', background: 0.9, outline: 'none', font: 'system', position: 'bottom' },
   talkMode: 'tap',
+  pitchStyle: 'classic',
 });
 
 /** Caption text colour, box colour (RGB) and the companion's colour, in BBC speaker order. */

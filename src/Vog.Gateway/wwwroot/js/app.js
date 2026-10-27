@@ -26,6 +26,9 @@ const pitchMap = createPitchMap({
   description: el('pitch-description'),
   zoomIn: el('pitch-zoom-in'),
   zoomOut: el('pitch-zoom-out'),
+  zoomLevel: el('pitch-zoom-level'),
+  markerSize: el('pitch-marker-size'),
+  pitchStyle: el('pitch-style'),
   follow: el('pitch-follow'),
   homeKey: el('pitch-home-key'),
   awayKey: el('pitch-away-key'),
@@ -54,6 +57,7 @@ el('start').addEventListener('click', () => (connection ? stop() : start()));
 el('lang').addEventListener('change', rejoin);
 el('mode').addEventListener('change', rejoin);
 window.addEventListener('vog:prefs', (event) => {
+  pitchMap.setStyle(event.detail.pitchStyle);
   mix?.apply(event.detail);
   sonifier?.setEnabled(event.detail.sonifyBall);
   haptics.configure(event.detail);

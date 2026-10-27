@@ -173,16 +173,19 @@
       <div class="pitch-header">
         <h2 id="pitch-heading">Live pitch map</h2>
         <div class="pitch-controls" aria-label="Pitch map controls">
-          <button id="pitch-zoom-out" class="secondary" type="button" aria-label="Zoom out">−</button>
-          <button id="pitch-zoom-in" class="secondary" type="button" aria-label="Zoom in">+</button>
+          <button id="pitch-zoom-out" class="secondary" type="button" aria-label="Zoom out" title="Zoom out" aria-controls="pitch-map">−</button>
+          <output id="pitch-zoom-level" aria-label="Pitch zoom" aria-live="polite">100%</output>
+          <button id="pitch-zoom-in" class="secondary" type="button" aria-label="Zoom in" title="Zoom in" aria-controls="pitch-map">+</button>
+          <label>Marker size <select id="pitch-marker-size" aria-controls="pitch-map"><option value="1">Standard</option><option value="1.4">Large</option><option value="1.8">Extra large</option></select></label>
+          <label>Pitch style <select id="pitch-style" data-pref="pitchStyle" aria-controls="pitch-map pitch-key"><option value="classic">Classic</option><option value="light">Light</option><option value="soft">Soft dark</option><option value="contrast">High contrast</option><option value="yellow">Yellow on black</option></select></label>
           <label><input id="pitch-follow" type="checkbox"> Follow the ball</label>
         </div>
       </div>
       <p class="pitch-key" id="pitch-key">
         <span><span class="pitch-marker home" aria-hidden="true"></span><strong id="pitch-home-key">Home</strong>: circles</span>
         <span><span class="pitch-marker away" aria-hidden="true"></span><strong id="pitch-away-key">Away</strong>: triangles</span>
-        <span><span id="pitch-home-keeper-key" class="pitch-marker keeper" aria-hidden="true">H</span><span id="pitch-away-keeper-key" class="pitch-marker keeper away-keeper" aria-hidden="true">A</span>Goalkeepers: team-coloured squares, H = home, A = away</span>
-        <span><span class="pitch-marker ball" aria-hidden="true"></span>Ball: yellow with a double outline</span>
+        <span><span id="pitch-home-keeper-key" class="pitch-marker keeper" aria-hidden="true">H</span><span id="pitch-away-keeper-key" class="pitch-marker keeper away-keeper" aria-hidden="true">A</span>Keepers: home / away</span>
+        <span><span class="pitch-marker ball" aria-hidden="true"></span>Ball</span>
       </p>
       <canvas id="pitch-map" class="pitch-canvas" aria-hidden="true"></canvas>
       <p id="pitch-description" class="note" aria-live="polite">Waiting for pitch data.</p>

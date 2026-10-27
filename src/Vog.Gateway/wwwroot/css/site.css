@@ -420,6 +420,7 @@ input:disabled {
 
 .pitch-controls {
   flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
 .pitch-header h2 {
@@ -437,6 +438,19 @@ input:disabled {
   align-items: center;
   gap: 0.4rem;
   min-height: 2.75rem;
+  flex-wrap: wrap;
+}
+
+#pitch-zoom-level {
+  min-width: 4ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+#pitch-marker-size,
+#pitch-style {
+  min-height: 2.75rem;
+  width: auto;
 }
 
 .pitch-key {
@@ -444,23 +458,28 @@ input:disabled {
   flex-wrap: wrap;
   gap: 0.5rem 1rem;
   margin: 0.75rem 0 0;
-  color: var(--muted);
-  font-size: 0.92rem;
+  padding: 0.75rem;
+  background: var(--pitch-background, #08251f);
+  color: var(--pitch-line, #d9eee5);
+  font-size: 1rem;
 }
 
-.pitch-key span {
+.pitch-key > span {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .pitch-marker {
   display: inline-block;
-  width: 1rem;
-  height: 1rem;
+  width: 1.5rem;
+  height: 1.5rem;
   flex: 0 0 auto;
-  border: 2px solid #fff;
-  background: repeating-linear-gradient(135deg, #d33 0 3px, #111 3px 5px);
+  border: 2px solid var(--pitch-outline, #fff);
+  background: var(--kit-colour, #e53935);
 }
 
 .pitch-marker.home {
@@ -468,46 +487,101 @@ input:disabled {
 }
 
 .pitch-marker.away {
-  background: repeating-linear-gradient(135deg, #286dff 0 3px, #fff 3px 5px);
+  position: relative;
+  border: 0;
+  background: var(--pitch-outline, #fff);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.pitch-marker.away::after {
+  content: "";
+  position: absolute;
+  inset: 4px 3px 3px;
+  background: var(--kit-colour, #1e63ff);
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 
 .pitch-marker.keeper {
+  display: inline-flex;
+  align-items: center;
   border-radius: 0;
-  width: 1.375rem;
-  height: 1.375rem;
+  width: 1.75rem;
+  height: 1.75rem;
   justify-content: center;
-  background: repeating-linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0 1px, transparent 1px 5px), var(--keeper-colour, #e53935);
-  color: #000;
-  font-size: 0.65rem;
+  background: var(--keeper-colour, #e53935);
+  color: var(--keeper-text, #000);
+  font-size: 1rem;
   font-weight: bold;
-  text-shadow: -1px 0 #fff, 1px 0 #fff, 0 -1px #fff, 0 1px #fff;
 }
 
 .pitch-marker.keeper.away-keeper {
-  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.8) 0 1px, transparent 1px 5px), var(--keeper-colour, #1e63ff);
+  background: var(--keeper-colour, #1e63ff);
+  color: var(--keeper-text, #fff);
 }
 
 .pitch-marker.ball {
   border-radius: 50%;
-  border-color: #111;
-  background: #ffd400;
-  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #111;
+  border-color: var(--pitch-shadow, #101010);
+  background: var(--pitch-ball, #ffd400);
+  box-shadow: 0 0 0 2px var(--pitch-outline, #fff), 0 0 0 4px var(--pitch-shadow, #101010);
   margin: 4px;
 }
 
 .pitch-canvas {
   display: block;
   width: 100%;
+  min-width: 0;
   aspect-ratio: 105 / 68;
   max-height: 34rem;
   margin-top: 0.75rem;
-  border: 2px solid #d9eee5;
+  border: 2px solid var(--pitch-line, #d9eee5);
   border-radius: 0.35rem;
 }
 
 .pitch-help {
   margin: 0.5rem 0 0;
+}
+
+#pitch-description {
+  color: var(--fg);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+@media (max-width: 40rem) {
+  .pitch-panel {
+    padding-inline: 0.75rem;
+  }
+
+  .pitch-canvas {
+    aspect-ratio: 68 / 105;
+    max-height: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .pitch-marker,
+  .pitch-marker.away,
+  .pitch-marker.keeper,
+  .pitch-marker.keeper.away-keeper,
+  .pitch-marker.ball {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+  }
+
+  .pitch-marker.ball {
+    border-style: double;
+    border-width: 5px;
+  }
+
+  .pitch-marker.away {
+    background: CanvasText;
+  }
+
+  .pitch-marker.away::after {
+    background: Canvas;
+  }
 }
 
 /* ---- Captions and history ---- */
