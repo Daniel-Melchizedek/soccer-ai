@@ -2,7 +2,17 @@
 
 Updated: 27 October 2026.
 
-## Latest Caption And Analyst Release
+## Latest Pitch And Hold-To-Ask Release
+
+Application **`34d4495`** is pushed and deployed. It includes five saved pitch styles (Classic, Light, Soft dark, High contrast, Yellow on black), matching legends, stronger marker/number contrast, marker-size controls and portrait phone rendering. Hold-to-ask now handles release during microphone permission, avoids disabling the button when a hold starts, and stops on lost pointer capture or focus.
+
+ACR build **`dt11`** used a clean Git archive, completing at `2026-10-27T12:52:17Z`. Active/latest-ready revision **`ca-vog-dev-gateway--pitchask-34d4495`** uses `crvogdevy6po56.azurecr.io/vog-gateway@sha256:30851b635a727479cdbdc3d505aa585d464ba08103eb1f679e5bebd138987240`. Azure confirmed Healthy, one replica, Single mode and 100% traffic. Configuration, identity and template comparison matched the previous snapshot after excluding only image and revision suffix. No infrastructure, storage or Foundry-registration changes. Rollback image: `crvogdevy6po56.azurecr.io/vog-gateway@sha256:12f751a5550fb3b2c2721a2d21a44c6294eed70132c0e82603b6267df2984521`.
+
+Verification: **51 browser-module tests** passed, with no editor errors in the changed microphone files. Existing local pitch checks covered all presets at widths 1280/390/320, contrast, persistence, keyboard interaction and forced colours. Playwright completed three holds with real worklets and simulated transport, then two generated spoken questions through the local gateway and live Azure companion on one connection. Both live answers completed playback and re-enabled the button; no personal microphone recording was used. The generated clip, stream overrides and test connections were removed. The reported 120-second timeout was not reproduced or fully explained; timeout quarantine still requires Stop/Start listening. Do not claim that failure fully resolved or local companion facts synchronized with the local match.
+
+Deployed `/healthz`, the page and changed JS/CSS returned 200. The browser confirmed all five presets and the new hold lifecycle code, with no asset overrides or deployed listener started. The live page is left not listening. This release-record follow-up is documentation-only and needs no rebuild. Human microphone/accessibility evaluation and the unresolved timeout remain open. Earlier release records below are historical.
+
+## Previous Caption And Analyst Release
 
 Application **`2020eb5`** is pushed and deployed, including readability commit `0b1d641`. Analyst uses a light chart surface, larger labels and team-name-based Reds/red and Blues/blue colours, including reversed team order. Captions default to fixed-bottom placement with stronger contrast; saved panel preferences remain respected. Long captions are bounded to 45dvh with scrolling. The original dynamic count axis remains unchanged: maximum is the largest scoped count, with a minimum of one. The temporary minimum-five experiment was fully reverted and the worktree was clean before deployment.
 

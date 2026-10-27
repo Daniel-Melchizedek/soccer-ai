@@ -11,7 +11,13 @@ Voice of the Game turns a synthetic football match into live audio description, 
 
 > The live match uses synthetic events with fictional generated leagues, clubs and players. A separate [Football history page](src/Vog.Gateway/wwwroot/football-history.html), linked only from the listener footer, uses real CC0 international results. Separating pages does not establish compliance with the hackathon's synthetic-data requirement; resolve submission scope before claiming eligibility. Historical data does not feed the simulation, recaps or companion.
 
-## Latest Caption And Analyst Release: 27 October 2026
+## Latest Pitch And Hold-To-Ask Release: 27 October 2026
+
+Application **`34d4495`** is pushed and deployed as **`ca-vog-dev-gateway--pitchask-34d4495`**, Healthy and latest-ready with one replica and 100% traffic. This release adds five saved pitch appearances, low-vision marker improvements and hold-to-ask lifecycle fixes. **51 browser tests** passed; two generated spoken questions completed through the local gateway and live Azure companion on the same connection. The earlier 120-second timeout remains unconfirmed, not claimed fixed. See the detailed verification and limitations below.
+
+ACR build **`dt11`** used a clean archive of the application commit. Public health and changed assets returned 200, and the deployed browser confirmed the five style options and updated hold handlers. Configuration, identity and non-image template settings are unchanged. No deployed microphone/listening test was started. Release and rollback digests are in [NEXT_SESSION.md](NEXT_SESSION.md); the release-record follow-up is documentation-only and needs no rebuild.
+
+## Previous Caption And Analyst Release: 27 October 2026
 
 Application **`2020eb5`** is pushed and deployed as Healthy revision **`ca-vog-dev-gateway--captions-2020eb5`**, with 100% traffic. Analyst has a lighter chart surface, larger labels and named red/blue team colours. Captions default to a prominent fixed-bottom display, with bounded scrolling for long text; explicitly saved panel preferences remain respected. The original dynamic count axis is unchanged, including a 0-1 range when counts are zero or one. **42 browser tests** passed; the 11 Analyst tests passed again after removing a temporary axis-floor experiment. Live health/assets returned 200, and browser checks confirmed Chart.js 4.5.1, team colours and fixed captions. No fresh live audio pass is claimed. Configuration, identities and non-image template settings matched the pre-deployment snapshot. See [handoff](NEXT_SESSION.md) for the image digest and rollback. Release records below describe earlier deployments.
 
