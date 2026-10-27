@@ -32,6 +32,14 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, workflow-based recap, transcreation and spoken post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Easy-read captions, Immersive Reader and hands-free live-reference echo cancellation. Deterministic scoped recaps and local text catch-up are implemented as described below, not as hosted workflows. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
+### Latest Copy Update
+
+The user reports verifying Spanish and Tamil. Application commit **`a51d9f3`** removes only "Spanish and Tamil are drafts awaiting native-speaker review" from the listening note; headphone guidance and other draft labels remain unchanged.
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=reviewnote-a51d9f3
+
+ACR **`dtt`** built a clean archive of the pushed commit; telemetry completion was `2026-10-27T06:02:52Z`. Image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:315d6de2d1c23054e02cdfeb209b54df0ebb31b031db280b53a8292db4342459` is deployed as **`ca-vog-dev-gateway--reviewnote-a51d9f3`**, Healthy, one replica, 100% traffic. The configuration fingerprint is unchanged. A focused source check and live DOM check confirmed sentence removal and retained headphone guidance; health returned 200. The shared page was refreshed and left not listening. No new speech, native-review or full-suite acceptance is claimed for this copy-only update; the implementation tests below remain the prior results. This supersedes the active-image details below without changing their feature evidence.
+
 ### Latest Release: Kickoff And Team-Coloured Goalkeepers
 
 Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=teamkeepers-797caac-d53dc5d6a5ea

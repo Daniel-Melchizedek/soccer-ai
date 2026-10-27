@@ -2,6 +2,14 @@
 
 Updated: 26 October 2026 (session date; latest rollout telemetry reports 27 October UTC).
 
+## Copy-Only Follow-Up
+
+The user reports verifying Spanish and Tamil and requested removal of the listening-note sentence "Spanish and Tamil are drafts awaiting native-speaker review." **`a51d9f3`** contains only that removal and is pushed to `origin/main`, using the existing Git identity. Headphone guidance, language selectors and other draft labels are unchanged.
+
+ACR **`dtt`** built a clean Git archive of `a51d9f3` (telemetry completion `2026-10-27T06:02:52Z`). Current revision: **`ca-vog-dev-gateway--reviewnote-a51d9f3`**, image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:315d6de2d1c23054e02cdfeb209b54df0ebb31b031db280b53a8292db4342459`. Azure confirmed Healthy, one replica and 100% traffic; configuration fingerprint remains `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`. No infrastructure, secrets, storage or Foundry registrations changed.
+
+Focused source and deployed DOM checks confirmed the sentence is absent and headphone guidance remains; live health was 200. The shared browser was refreshed to `?release=reviewnote-a51d9f3` and left not listening; no test join or instrumentation was needed. This rollout restarts the gateway normally, so first-listener kickoff is waiting again. No new full-suite, audio, microphone or native-review acceptance is claimed; the 136/26 results below belong to the preceding implementation. The release record below is historical for its image, but its kickoff/keeper behavior remains current. This handoff/README follow-up is documentation-only and needs no image rebuild.
+
 ## Latest Release: Kickoff And Team-Coloured Goalkeepers
 
 The user authorized Azure deployment, then requested keeper colours matching their teams and ordinary commit/push once fixes were done. The tested fixes are deployed and supersede the fixed global-epoch behavior described in older records below. Use `git log -3 --oneline`, `git status --short --branch` and the remote branch to confirm the release commit; no branch/history rewrite is needed.
