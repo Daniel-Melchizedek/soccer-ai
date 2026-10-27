@@ -2,7 +2,21 @@
 
 Updated: 27 October 2026.
 
-## Latest Analyst Chart Update
+## Latest Chart.js And Football History Release
+
+Application commit **`e61e110`** is pushed and deployed. Analyst uses the official, locally vendored **Chart.js 4.5.1** UMD bundle (MIT), with exact localized counts retained. A shared zero-based scale, unavailable-state hiding and recap behavior remain intact. The listener label is **Audio latency**: server-send to browser audio-start, not total event-to-ear latency. A small footer link opens `/football-history.html`.
+
+The separate history page restores real CC0 international results from the existing private `vog-data/public/goals-per-decade.json` and `home-advantage.json` blobs in `stvogdevy6po56`. Only these filenames are exposed through `/data/{file}`. It has charts, exact data tables, retries, source credits and neutral-venue/incomplete-decade caveats. Raw CSV remains private; no blobs were uploaded or modified. **Page separation does not establish compliance with the hackathon's synthetic-data requirement.** Live matches, recaps and companion input remain synthetic.
+
+Verification: **148 .NET Release tests** and **39 browser-module tests** passed. Commands: `dotnet test --solution VoiceOfTheGame.slnx --configuration Release --artifacts-path TestResults/football-history`; `node --experimental-vm-modules --test tests/browser/*.test.mjs`. Staged Gitleaks 8.21.2 scan, editor diagnostics and whitespace checks passed. Local actual recap counts matched Analyst datasets. Canvas sizing now prevents transient overflow during Chart.js resize; local Analyst and deployed history checked at actual widths 1280/390/320 without horizontal overflow. The deployed history charts each contain 16 decades, with 32 table rows and nonblank canvases. Integrated screenshots remain compressed: full visual/accessibility acceptance and a fresh audio/listening pass are not claimed.
+
+ACR build **`dty`** used a clean archive of `e61e110`, finishing `2026-10-27T11:13:59Z`. Active/latest-ready revision **`ca-vog-dev-gateway--history-e61e110`** uses `crvogdevy6po56.azurecr.io/vog-gateway@sha256:20764384c2736ac9e81983109292bf81dd7ce3fa224300a065bcf838e07e4bfa`. Azure confirmed Healthy, provisioned, one replica and 100% traffic. Image-only update; no infrastructure, identity, secret, storage or Foundry-registration changes. Broadcast defaults remain seed `20261026`, speed `1`, break `120`, nine channels. Previous rollback image: `crvogdevy6po56.azurecr.io/vog-gateway@sha256:f06c6fa039dbdf4d90b86acc9f548bea2e8eaeaae90fb622323433cf3cb9bae7`.
+
+Public `/healthz` returned 200; both allowlisted data routes returned 200 with one-hour public caching, and raw CSV/unknown filenames returned 404 with `no-store`. Main-page browser verification confirmed Chart.js 4.5.1, Audio latency, the footer link and chart hiding before kickoff. No deployed listener was started; `/stats` showed no listeners. The temporary text-only local join was disconnected and the local validation server stopped after checks. Live page: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/ ; history: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/football-history.html . This release-record follow-up is documentation-only and needs no rebuild.
+
+This Windows session required the full executable paths `C:\Program Files\dotnet\dotnet.exe`, `C:\Program Files\nodejs\node.exe` and `C:\Program Files\Microsoft SDKs\Azure\CLI2\wbin\az.cmd`. `az resource wait --api-version 2025-01-01` successfully awaited the exact latest-ready revision; `az containerapp wait` is unsupported. Git author identity is now configured repository-locally using the previous author, with the user's explicit approval.
+
+## Previous Analyst Chart Update
 
 Application commit **`3227b23`** is pushed. Analyst now compares shots, goals and corners with paired horizontal bars, exact counts and localized accessible meter labels instead of a table. All six bars share one scale; zero intervals use a maximum of one. Recap scope, scoreboard, Casual view and evidence behavior are unchanged. **34 browser tests passed**; editor diagnostics and whitespace checks passed. Real local recap counts matched the chart, and DOM geometry checks at widths 1280/390/320 found no overlap or horizontal overflow. Browser click automation timed out and screenshots captured the header rather than the chart; full visual acceptance is not claimed.
 
