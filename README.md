@@ -32,7 +32,15 @@ The browser also provides independent commentary/answer/event/ball/crowd levels,
 
 Still planned: hosted Foundry workflows (Insight Desk, workflow-based recap, transcreation and spoken post-answer catch-up), Fabric, a dedicated overlay/Studio, optional Blazor migration, Easy-read captions, Immersive Reader and hands-free live-reference echo cancellation. Deterministic scoped recaps and local text catch-up are implemented as described below, not as hosted workflows. Backend braille briefs/text groups exist, but the listener has no braille output-mode control or live braille feed. UI presence is not proof of assistive-technology compatibility or accessibility compliance.
 
-### Latest Copy Update
+### Latest Layout Update
+
+Application commit **`d2e8911`**, pushed to `origin/main`, moves the existing Recent matches section directly below Match intelligence and before Latency. JavaScript, backend and archive behavior are unchanged.
+
+Live app: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=historylayout-d2e8911
+
+ACR **`dtu`** built a clean archive of the pushed commit (telemetry completion `2026-10-27T06:14:55Z`). Current image: `crvogdevy6po56.azurecr.io/vog-gateway@sha256:f4452578ce9e9d8c2e996ac98f0b022db16f2f63057283cfe22e8da82743f88b`; revision **`ca-vog-dev-gateway--historylayout-d2e8911`** is Healthy, latest-ready, one replica, 100% traffic. Configuration fingerprint remains unchanged. Focused source and deployed checks confirmed section order, a single polite live list, ten readable archive records, and no overlap or horizontal overflow at actual widths 320/390/1280; `/healthz` returned 200. The shared page was left not listening at desktop width. These checks do not establish a new archive write, full visual/accessibility acceptance or a fresh full-suite result. Earlier rollout records below are historical for their images.
+
+### Previous Copy Update
 
 The user reports verifying Spanish and Tamil. Application commit **`a51d9f3`** removes only "Spanish and Tamil are drafts awaiting native-speaker review" from the listening note; headphone guidance and other draft labels remain unchanged.
 

@@ -2,11 +2,19 @@
 
 Updated: 26 October 2026 (session date; latest rollout telemetry reports 27 October UTC).
 
-## Copy-Only Follow-Up
+## Latest Layout Follow-Up
+
+Application commit **`d2e8911`** is pushed to `origin/main` and deployed. The unchanged Recent matches section now sits directly below Match intelligence and before Latency; no JavaScript, backend or archive behavior changed.
+
+ACR **`dtu`** built a clean Git archive (telemetry completion `2026-10-27T06:14:55Z`). Current revision: **`ca-vog-dev-gateway--historylayout-d2e8911`**; image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:f4452578ce9e9d8c2e996ac98f0b022db16f2f63057283cfe22e8da82743f88b`. Azure confirmed Healthy, latest-ready, one replica, 100% traffic and unchanged configuration fingerprint `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`. No infrastructure, secrets, storage or Foundry registrations changed.
+
+Focused source/live checks passed: section adjacency, one list retaining its polite live announcement, ten readable archive records, no overlap or horizontal overflow at actual widths 320/390/1280, and `/healthz` 200. Shared live page: https://ca-vog-dev-gateway.delightfulground-76ebb125.swedencentral.azurecontainerapps.io/?release=historylayout-d2e8911 ; left not listening at width 1280. No new archive write, full visual/accessibility or full-suite acceptance is claimed. Earlier image records below are historical; their feature evidence remains scoped to those observations. This documentation-only follow-up needs no rebuild or redeployment.
+
+## Previous Copy-Only Follow-Up
 
 The user reports verifying Spanish and Tamil and requested removal of the listening-note sentence "Spanish and Tamil are drafts awaiting native-speaker review." **`a51d9f3`** contains only that removal and is pushed to `origin/main`, using the existing Git identity. Headphone guidance, language selectors and other draft labels are unchanged.
 
-ACR **`dtt`** built a clean Git archive of `a51d9f3` (telemetry completion `2026-10-27T06:02:52Z`). Current revision: **`ca-vog-dev-gateway--reviewnote-a51d9f3`**, image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:315d6de2d1c23054e02cdfeb209b54df0ebb31b031db280b53a8292db4342459`. Azure confirmed Healthy, one replica and 100% traffic; configuration fingerprint remains `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`. No infrastructure, secrets, storage or Foundry registrations changed.
+ACR **`dtt`** built a clean Git archive of `a51d9f3` (telemetry completion `2026-10-27T06:02:52Z`). Recorded revision: **`ca-vog-dev-gateway--reviewnote-a51d9f3`**, image `crvogdevy6po56.azurecr.io/vog-gateway@sha256:315d6de2d1c23054e02cdfeb209b54df0ebb31b031db280b53a8292db4342459`. Azure confirmed Healthy, one replica and 100% traffic; configuration fingerprint remains `1f8584f54faedb57c0be7e35934d887d35b4a9ffc362d843efa84cc0034f3a8f`. No infrastructure, secrets, storage or Foundry registrations changed.
 
 Focused source and deployed DOM checks confirmed the sentence is absent and headphone guidance remains; live health was 200. The shared browser was refreshed to `?release=reviewnote-a51d9f3` and left not listening; no test join or instrumentation was needed. This rollout restarts the gateway normally, so first-listener kickoff is waiting again. No new full-suite, audio, microphone or native-review acceptance is claimed; the 136/26 results below belong to the preceding implementation. The release record below is historical for its image, but its kickoff/keeper behavior remains current. This handoff/README follow-up is documentation-only and needs no image rebuild.
 
