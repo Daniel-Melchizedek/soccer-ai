@@ -375,16 +375,21 @@ function toFloat32(base64) {
 async function loadHistory() {
   const list = el('recent-matches');
   if (!list) return;
+  const showStatus = message => {
+    const item = document.createElement('li');
+    item.textContent = message;
+    list.replaceChildren(item);
+  };
   try {
     const res = await fetch('/history');
     if (!res.ok) {
-      list.innerHTML = '<li>No match history available.</li>';
+      showStatus('No match history available.');
       return;
     }
     const summaries = await res.json();
-    list.innerHTML = '';
+    list.replaceChildren();
     if (!summaries.length) {
-      list.innerHTML = '<li>No matches recorded yet.</li>';
+      showStatus('No matches recorded yet.');
       return;
     }
     for (const s of summaries) {
@@ -395,7 +400,7 @@ async function loadHistory() {
       list.appendChild(item);
     }
   } catch {
-    // Silently ignore: history is supplementary, never breaks the live experience.
+    showStatus('No match history available.');
   }
 }
 

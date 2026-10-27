@@ -63,7 +63,7 @@ public sealed class MatchArchiveService(IConfiguration config, ILogger<MatchArch
         }
     }
 
-    /// <summary>Returns the most recent summaries, ordered newest-first. Returns empty list on any error.</summary>
+    /// <summary>Returns the newest summary per seeded fixture, ordered newest-first. Returns empty list on any error.</summary>
     public async Task<IReadOnlyList<MatchSummary>> GetRecentAsync(int count = 10, CancellationToken ct = default)
     {
         if (_container is null) return [];
@@ -87,7 +87,7 @@ public sealed class MatchArchiveService(IConfiguration config, ILogger<MatchArch
                 }
             }
 
-            return results.OrderByDescending(r => r.Date).Take(count).Select(r => r.Summary).ToList();
+            return SelectRecent(results, count);
         }
         catch (Exception ex)
         {
@@ -95,6 +95,14 @@ public sealed class MatchArchiveService(IConfiguration config, ILogger<MatchArch
             return [];
         }
     }
+
+    internal static IReadOnlyList<MatchSummary> SelectRecent(
+        IEnumerable<(DateTimeOffset Date, MatchSummary Summary)> results, int count) =>
+        results.OrderByDescending(result => result.Date)
+            .Select(result => result.Summary)
+            .DistinctBy(summary => (summary.Seed, summary.HomeName, summary.AwayName))
+            .Take(count)
+            .ToList();
 }
 
 /// <summary>Lightweight match summary stored after each completed match.</summary>

@@ -62,3 +62,75 @@ for (const kits of [
     assert.equal(labels.filter(label => label === '9').length, 2);
   });
 }
+
+test('follow ball pans zoomed views, clamps at pitch edges and leaves full-pitch views unchanged', async () => {
+  let ball = null;
+  let field = null;
+  const drawing = new Proxy({
+    clearRect() { ball = null; field = null; },
+    strokeRect(left, top, width, height) { field ??= { left, top, width, height }; },
+    arc(x, y, radius) { if (radius === 8) ball = { x, y }; },
+  }, { get(target, property) { return target[property] ?? (() => {}); } });
+  const control = () => ({
+    checked: false,
+    listeners: {},
+    addEventListener(name, listener) { this.listeners[name] = listener; },
+    emit(name) { this.listeners[name](); },
+  });
+  const zoomIn = control();
+  const zoomOut = control();
+  const follow = control();
+  const environment = createContext({
+    window: {
+      devicePixelRatio: 1,
+      matchMedia: () => ({ matches: false, addEventListener() {} }),
+    },
+    performance: { now: () => 10000 },
+    ResizeObserver: class { observe() {} },
+  });
+  const module = new SourceTextModule(source, { context: environment });
+  await module.link(() => { throw new Error('Unexpected pitch module import'); });
+  await module.evaluate();
+  const renderer = module.namespace.createPitchMap({
+    canvas: { getContext: () => drawing, getBoundingClientRect: () => ({ width: 640, height: 420 }) },
+    description: {}, zoomIn, zoomOut, follow, homeKey: {}, awayKey: {},
+  });
+  const update = (x, y) => renderer.update({ b: [x, y], hr: true, o: 'h', h: [], a: [] });
+
+  update(40, 25);
+  const fullPitch = { ...field };
+  const fullPitchBall = { ...ball };
+  follow.checked = true;
+  follow.emit('change');
+  assert.deepEqual(field, fullPitch);
+  assert.deepEqual(ball, fullPitchBall);
+
+  zoomIn.emit('click');
+  zoomIn.emit('click');
+  assert.deepEqual(ball, { x: 320, y: 210 });
+  const firstView = { ...field };
+  update(65, 40);
+  assert.deepEqual(ball, { x: 320, y: 210 });
+  assert.notDeepEqual(field, firstView);
+
+  follow.checked = false;
+  follow.emit('change');
+  const fixedView = { ...field };
+  update(40, 25);
+  assert.deepEqual(field, fixedView);
+  assert.notDeepEqual(ball, { x: 320, y: 210 });
+  update(0, 0);
+  assert.equal(ball, null);
+
+  follow.checked = true;
+  follow.emit('change');
+  for (const [x, y] of [[0, 0], [105, 68]]) {
+    update(x, y);
+    assert.ok(ball.x >= 22 && ball.x <= 618);
+    assert.ok(ball.y >= 22 && ball.y <= 398);
+  }
+  zoomOut.emit('click');
+  zoomOut.emit('click');
+  assert.deepEqual(field, fullPitch);
+  assert.equal(zoomOut.disabled, true);
+});

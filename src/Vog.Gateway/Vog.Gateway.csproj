@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Vog.Gateway.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Vog.Companion\Vog.Companion.csproj" />
     <ProjectReference Include="..\Vog.Pipeline\Vog.Pipeline.csproj" />
     <ProjectReference Include="..\Vog.Voice\Vog.Voice.csproj" />
