@@ -3,7 +3,7 @@ using Vog.Contracts;
 namespace Vog.Booth;
 
 /// <summary>
-/// How a channel behaves (BUILD_PLAN.md §7.2). Audio description mentions the ball's location at
+/// How a channel behaves. Audio description mentions the ball's location at
 /// least every 4 seconds in open play; Calm mode is slower and less frequent.
 /// </summary>
 /// <param name="WordsPerSecond">

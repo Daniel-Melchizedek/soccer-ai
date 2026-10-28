@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 namespace Vog.Replay;
 
 /// <summary>
-/// Spike S2 smoke test (BUILD_PLAN.md §16): joins a running gateway's channel like a browser would,
+/// Joins a running gateway's channel like a browser would,
 /// listens for a while, and checks the audio path end to end: every aired utterance gets its audio
 /// (chunks in order, then an end marker) and its captions, and reports receive-to-first-audio latency.
 /// </summary>

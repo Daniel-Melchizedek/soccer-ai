@@ -9,7 +9,7 @@ using Vog.Voice;
 namespace Vog.Replay;
 
 /// <summary>
-/// Spike S3 smoke test (BUILD_PLAN.md §16): asks the match companion questions through a running
+/// Asks the match companion questions through a running
 /// gateway, typed and spoken. A spoken question is synthesized with Azure neural TTS and streamed as
 /// push-to-talk audio in real time, so the full voice path is exercised without a microphone.
 /// </summary>

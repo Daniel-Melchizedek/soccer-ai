@@ -7,8 +7,7 @@ public sealed record VoiceProfile(string Lang, string VoiceName, string ProsodyR
 
 /// <summary>
 /// Live audio uses standard neural voices: they support the full SSML the live path needs
-/// (prosody rate, breaks, phonemes, word boundaries). HD and Omni voices don't support
-/// prosody or break, so they are reserved for recaps (BUILD_PLAN.md D7).
+/// (prosody rate, breaks, phonemes, word boundaries).
 /// </summary>
 public static class VoiceCatalog
 {

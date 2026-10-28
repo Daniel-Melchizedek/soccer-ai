@@ -7,7 +7,7 @@ using Vog.Voice;
 namespace Vog.Replay;
 
 /// <summary>
-/// Spike S1 (BUILD_PLAN.md §16): renders a window of the golden match through the booth and real
+/// Renders a window of the golden match through the booth and real
 /// neural TTS into a WAV plus word-timed WebVTT captions, and reports time-to-first-byte and how well
 /// the booth's duration estimates match real speech (which calibrates <see cref="ProducerPolicy.WordsPerSecond"/>).
 /// </summary>

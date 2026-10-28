@@ -9,8 +9,8 @@ using Vog.Voice;
 namespace Vog.Gateway;
 
 /// <summary>
-/// Relays each listener's questions to their own Voice Live conversation (the personal audio bus,
-/// BUILD_PLAN.md D1) and their answers back to them alone. A conversation starts on the first
+/// Relays each listener's questions to their own Voice Live conversation
+/// and their answers back to them alone. A conversation starts on the first
 /// question and ends when the listener leaves. Hub calls only queue work, so a slow start never
 /// holds up the listener's other messages.
 /// </summary>

@@ -100,7 +100,7 @@ public sealed class RealismTests
             Assert.True(t.Home.Goals <= 8 && t.Away.Goals <= 8, $"seed {seed}: cricket score");
         }
 
-        // Sanity bounds; the strict ranges live in `vog-replay datacard` (BUILD_PLAN.md §6.1).
+        // Sanity bounds; the strict ranges live in `vog-replay datacard`.
         Assert.InRange(completion.Average(), 0.72, 0.9);
         Assert.InRange(goals.Average(), 0.8, 4.5);
         Assert.InRange(shots.Average(), 15, 35);

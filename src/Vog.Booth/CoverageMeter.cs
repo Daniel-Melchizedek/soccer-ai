@@ -4,7 +4,7 @@ using Vog.Stats;
 
 namespace Vog.Booth;
 
-/// <summary>Accessibility quality metrics for one channel (BUILD_PLAN.md §17.1).</summary>
+/// <summary>Accessibility quality metrics for one channel.</summary>
 /// <param name="OpenPlayLatencyP95Ms">Pass and carry calls; null when the mode doesn't speak them (Calm).</param>
 /// <param name="DeadBallLatencyP95Ms">Restart, substitution and other dead-ball calls.</param>
 public sealed record CoverageReport(

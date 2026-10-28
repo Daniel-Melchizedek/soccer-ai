@@ -1,6 +1,6 @@
 # Audio-description phrase bank: Spanish (Spain), describer persona.
 # STATUS: DRAFT. Transcreated from the en-GB master; must be reviewed by a native-speaking
-# football describer before it is used on air (BUILD_PLAN.md §8.3, Transcreation Studio).
+# football describer before it is used on air.
 # Team names are plural ("los Rojos"), so verbs that follow {team} are plural.
 lang: es-ES
 persona: describer

@@ -18,7 +18,7 @@ public sealed class McpOptions
 }
 
 /// <summary>
-/// The live match as an MCP server, for the Foundry agents (BUILD_PLAN.md: one MatchQuery service).
+/// The live match as a read-only MCP server for the Foundry agents.
 /// Each language has its own path, /mcp/{lang}, so places and team names come back in the words of
 /// that language's commentary; the agent for that language is registered against that path. The
 /// endpoint is public, because Foundry Agent Service calls it from the internet, and every request

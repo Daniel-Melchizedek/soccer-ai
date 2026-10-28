@@ -32,7 +32,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   }
 }
 
-// The one model behind every Foundry agent (BUILD_PLAN.md: a mid-cost model a little above gpt-4o).
+// The shared model deployment behind the match companion agents.
 // GlobalStandard bills per token used, not per unit reserved, so the 800k TPM ceiling costs nothing idle.
 resource agentModel 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
   parent: account

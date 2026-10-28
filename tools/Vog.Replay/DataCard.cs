@@ -5,8 +5,8 @@ using Vog.Stats;
 namespace Vog.Replay;
 
 /// <summary>
-/// Synthetic data card: runs many seeded matches and checks realism against the ranges in
-/// BUILD_PLAN.md §6.1 (pass completion, shots, goals, distance and sprints per outfield player).
+/// Synthetic data card: runs many seeded matches and checks realism ranges for
+/// pass completion, shots, goals, distance and sprints per outfield player.
 /// </summary>
 internal static class DataCard
 {
