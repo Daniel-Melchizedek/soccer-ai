@@ -9,7 +9,7 @@
     2. Builds the gateway image in Azure (`az acr build`, no local Docker) and rolls it out.
     3. Writes the non-secret settings to .env.local at the repository root (git-ignored).
     4. Registers the Foundry agents (tools/Vog.FoundrySetup) against the deployed MCP endpoint.
-    5. Seeds the historical aggregates and launches all three evaluations with a separate judge.
+    5. Seeds historical aggregates and launches quality evaluations and managed red-team scans.
 
     The one secret, the key Foundry presents to the gateway's MCP endpoint, is generated once, kept in
     Key Vault and reused on every later run: a new key would break the agents' tool calls until the
@@ -37,6 +37,8 @@ param(
 
     [switch] $SkipEvaluations,
 
+    [switch] $SkipRedTeam,
+
     [string] $EvaluationModelName = 'gpt-4.1',
 
     [string] $EvaluationModelVersion = '2025-04-14',
@@ -44,11 +46,19 @@ param(
     [ValidateRange(1, 1000)]
     [int] $EvaluationModelCapacity = 30,
 
-    [string] $EvaluationOutputDirectory
+    [string] $EvaluationOutputDirectory,
+
+    [string] $RedTeamOutputDirectory
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+if (-not $SkipEvaluations -and -not $SkipRedTeam -and $RedTeamOutputDirectory -and (Test-Path $RedTeamOutputDirectory)) {
+    if (@(Get-ChildItem $RedTeamOutputDirectory -Force).Count) {
+        throw 'Use a new empty RedTeamOutputDirectory, or collect saved runs with scripts/redteam_agents.ps1 -CollectOnly.'
+    }
+}
 
 if (-not $ResourceGroup) {
     $ResourceGroup = "rg-vog-$Environment"
@@ -216,7 +226,7 @@ try {
 }
 finally { Pop-Location }
 
-Write-Host '[8/8] Foundry evaluations'
+Write-Host '[8/8] Foundry evaluations and red teaming'
 if (-not $SkipEvaluations) {
     $evaluationParameters = @{
         ProjectEndpoint = $outputs.VOG_FOUNDRY_PROJECT_ENDPOINT.value
@@ -227,6 +237,18 @@ if (-not $SkipEvaluations) {
 }
 else {
     Write-Host 'Skipping evaluation runs (-SkipEvaluations); judge infrastructure remains deployed.'
+}
+
+if (-not $SkipEvaluations -and -not $SkipRedTeam) {
+    $redTeamParameters = @{
+        ProjectEndpoint = $outputs.VOG_FOUNDRY_PROJECT_ENDPOINT.value
+        JudgeDeployment = $outputs.VOG_EVALUATION_MODEL_DEPLOYMENT.value
+    }
+    if ($RedTeamOutputDirectory) { $redTeamParameters.OutputDirectory = $RedTeamOutputDirectory }
+    & (Join-Path $repoRoot 'scripts/redteam_agents.ps1') @redTeamParameters
+}
+else {
+    Write-Host 'Skipping red-team scans (-SkipEvaluations or -SkipRedTeam); tracing remains enabled.'
 }
 
 Write-Host "`nDone. New role assignments can take a few minutes to take effect."

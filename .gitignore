@@ -6,6 +6,7 @@
 .playwright-mcp/
 # dotenv files
 .env
+/foundry/evaluations/redteam-runs/
 
 # User-specific files
 *.rsuser

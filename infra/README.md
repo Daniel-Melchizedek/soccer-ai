@@ -25,13 +25,14 @@ On Windows, the scripts also find Azure CLI in its standard installation directo
 
 1. Creates the resource group and recovers matching soft-deleted Key Vault/Foundry resources belonging to that group. It never purges them. Recovery permissions and the original subscription/group names are required to reuse retained names.
 2. Reuses the existing MCP key, or generates a new key for a fresh environment. A recovered vault without an existing gateway receives a new key through the deployment. An unreadable existing key stops deployment instead of silently rotating it.
-3. Deploys [main.bicep](main.bicep): identity/RBAC, monitoring, private storage/container, ACR, Key Vault, Foundry account/project, agent model, independent judge, gateway environment/app, guardrail and language-specific MCP connections.
+3. Deploys [main.bicep](main.bicep): identity/RBAC, monitoring, private storage/container, ACR, Key Vault, Foundry account/project, agent model, independent judge, gateway environment/app, guardrail, language-specific MCP connections and the project's Application Insights tracing connection. The provisioning user receives Monitoring Reader on Application Insights and Log Analytics Reader on its workspace.
 4. Builds the current working-tree gateway source in ACR and rolls it out. It writes nonsecret endpoints to the ignored local settings file and exports them for agent setup.
 5. Uploads the two checked-in historical aggregates to `vog-data/public/` using Entra authentication.
 6. Checks gateway health, then registers all three language agents from [the agent YAML](../foundry/agents/vog-match-companion.agent.yaml).
 7. Runs [evaluate_agents.ps1](../scripts/evaluate_agents.ps1), which discovers current agent versions, registers language-specific rubric versions, creates evaluations, and submits 12 cases per language with GPT-4.1 as judge.
+8. Runs [redteam_agents.ps1](../scripts/redteam_agents.ps1), which creates managed red-team evaluations and submits scans for all three current agent versions using Azure CLI authentication.
 
-Infrastructure converges on the declared configuration. Agent versions, evaluator versions and evaluation runs are intentionally new on every invocation. Existing evaluation results are never overwritten. `-SkipEvaluations` avoids new evaluation runs but still provisions the judge. `-SkipBuild` requires an existing gateway image; it is not a fresh-environment rebuild.
+Infrastructure converges on the declared configuration. Agent versions, evaluator versions and evaluation runs are intentionally new on every invocation. Existing evaluation results are never overwritten. `-SkipEvaluations` avoids both quality evaluations and red-team scans but still provisions the judge and tracing. `-SkipRedTeam` skips only red-team scans. `-SkipBuild` requires an existing gateway image; it is not a fresh-environment rebuild.
 
 Judge parameters are `-EvaluationModelName`, `-EvaluationModelVersion` and `-EvaluationModelCapacity`. To deploy only the judge into an existing account, use the same Bicep module:
 
@@ -57,6 +58,48 @@ pwsh -File ./scripts/evaluate_agents.ps1 -ProjectEndpoint <https-project-endpoin
 
 The judge deployment must already exist. An interrupted POST may have succeeded remotely: inspect saved artifacts and Azure state before resubmitting. Collection writes a summary and full paginated output items; individual failed quality checks are reported as results, while failed/canceled runs cause an error. Keep the artifact folder to retain evidence after resource deletion.
 
+## Agent Tracing
+
+[foundry-tracing.bicep](modules/foundry-tracing.bicep) links the project's default `AppInsights` connection to the existing workspace-backed Application Insights resource. This enables service-side tracing for all agents in the project, including playground and application calls; a gateway environment variable alone does not enable Foundry tracing. The connection string is resolved inside the deployment, not checked into source or emitted as a tracing-module output. This uses Application Insights connection-string ingestion, not managed-identity ingestion; Foundry API access continues to use Entra authentication.
+
+To enable tracing on an existing environment without rebuilding the gateway or registering new agent versions:
+
+```powershell
+az deployment group create --resource-group rg-vog-dev --template-file infra/modules/foundry-tracing.bicep --parameters accountName=<foundry-account-name> projectName=vog-dev appInsightsName=appi-vog-dev
+```
+
+Open an agent's **Traces** tab after a new conversation and allow for ingestion delay. The connection is project-wide. Trace data can contain user inputs, outputs and tool data: limit readers accordingly. The workspace uses 30-day retention. Existing conversations are not backfilled, and deleting the group does not preserve trace history. Normal provisioning recreates the connection and reader assignments; the isolated command above only creates the connection.
+
+The harmless [trace smoke request](../foundry/agents/trace-smoke-request.json) invokes the latest English agent using the current `agent_reference` Responses API property:
+
+```powershell
+az rest --method post --url "<https-project-endpoint>/openai/v1/responses" --resource https://ai.azure.com --body '@foundry/agents/trace-smoke-request.json' --query '{id:id,status:status,error:error}'
+```
+
+## Red-Team Evaluations
+
+The runner uses Foundry's cloud Evals API (`openai/v1/evals`) with `scenario: red_team`, `azure_ai_red_team` generation, and a pinned `azure_ai_agent` target. It is a managed red-team scan, not a relabeled quality evaluation. Credentials come from `az rest --resource https://ai.azure.com`; no access tokens or model keys are written to artifacts.
+
+The initial suite uses the built-in **Sensitive Data Leakage** and **Task Adherence** evaluators, one `Base64` strategy, and one turn. One turn is not a one-case limit or a fixed cost cap. The existing GPT-4.1 deployment is the task-adherence judge. Scans and telemetry incur usage charges. This is a limited baseline, not comprehensive safety certification or proof of equivalent multilingual coverage. Prohibited Actions is not enabled because it requires a separately reviewed and approved taxonomy. Availability, region support and tool coverage remain subject to the Foundry preview service.
+
+To scan an existing project without rebuilding:
+
+```powershell
+pwsh -File ./scripts/redteam_agents.ps1 -ProjectEndpoint <https-project-endpoint> -JudgeDeployment gpt-4.1
+```
+
+Use `-Locales en-gb` for one agent. Each submission saves requests, discovered versions, cloud IDs and status under a new ignored `foundry/evaluations/redteam-runs/` folder. Use `-RedTeamOutputDirectory` during provisioning, or `-OutputDirectory` on the standalone runner, to choose an empty folder. Do not check generated transcripts into Git without reviewing them for sensitive content.
+
+Submission checks status once and returns while the cloud processes scans. Collect later without creating new scans:
+
+```powershell
+pwsh -File ./scripts/redteam_agents.ps1 -CollectOnly -OutputDirectory <printed-redteam-output-directory>
+```
+
+Collection preserves successful partial submissions, downloads all output pages for completed runs, saves a summary/report URL when provided by Foundry, and reports failed/canceled runs as errors. Reusing a nonempty output directory for submission or collecting against a different project is rejected. After an interrupted POST, inspect the saved requests and cloud state before launching anything again; the service may already have accepted the request.
+
+Find the scans in Foundry's **Evaluation > Red team** view for the targeted agent. Exact portal filtering is service-controlled; the saved evaluation/run IDs identify the cloud records independently of the UI. Deleting and recreating the resource group recreates tracing configuration and submits fresh scans, not historical scan results. Keep reviewed reports separately before deletion.
+
 ## Storage And Data Retention
 
 The gateway uses private Blob Storage in two ways:
@@ -75,6 +118,6 @@ az bicep build --file infra/main.bicep --stdout
 pwsh -File ./tests/infra/provisioning.tests.ps1
 ```
 
-The offline test uses mocked Azure/HTTP/.NET commands in a temporary repository copy. It covers fresh/recovered/existing environments, foreign-resource exclusion, key-read failure, key reuse, seed uploads, new agent/rubric versions, and paginated results. It does not prove live deletion recovery, RBAC propagation, or a full rebuild.
+The offline test uses mocked Azure/HTTP/.NET commands in a temporary repository copy. It covers fresh/recovered/existing environments, foreign-resource exclusion, key-read failure, key reuse, seed uploads, new agent/rubric versions, quality and red-team submissions, paginated results, skip switches, duplicate prevention, project-context validation, failed/canceled scans and partial collection. It does not prove live deletion recovery, RBAC propagation, or a full rebuild.
 
 GPT-4.1 was deployed from the judge Bicep module and the real evaluation runner completed all three live runs on October 27, 2026: English 12/12 passed, Spanish 12/12, Tamil 11/12; no execution errors. [Saved summary](../foundry/evaluations/2026-10-27/judge-gpt-4.1/live/summary.json). These were fresh live-agent runs, not regrading identical transcripts, so differences from the original judge are not a controlled judge-only comparison. The existing live group was not deleted or fully redeployed to test the rebuild flow.

@@ -1,0 +1,7 @@
+{
+  "input": "What is the current match score? Use the match tools.",
+  "agent_reference": {
+    "type": "agent_reference",
+    "name": "vog-match-companion-en-gb"
+  }
+}

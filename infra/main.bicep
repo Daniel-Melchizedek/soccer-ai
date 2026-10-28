@@ -45,7 +45,13 @@ module identity 'modules/identity.bicep' = {
 
 module monitoring 'modules/monitoring.bicep' = {
   name: 'monitoring'
-  params: { location: location, name: name, tags: tags }
+  params: {
+    location: location
+    name: name
+    tags: tags
+    developerPrincipalId: developerPrincipalId
+    developerPrincipalType: developerPrincipalType
+  }
 }
 
 module storage 'modules/storage.bicep' = {
@@ -88,6 +94,15 @@ module foundry 'modules/ai-foundry.bicep' = {
     developerPrincipalType: developerPrincipalType
     appPrincipalId: identity.outputs.principalId
     tags: tags
+  }
+}
+
+module tracing 'modules/foundry-tracing.bicep' = {
+  name: 'foundry-tracing'
+  params: {
+    accountName: foundry.outputs.accountName
+    projectName: foundry.outputs.projectName
+    appInsightsName: monitoring.outputs.appInsightsName
   }
 }
 
